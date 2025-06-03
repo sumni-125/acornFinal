@@ -42,11 +42,11 @@ services:
       - "8081:80"
     networks:
       - ocean-network
-
+# 네트워크 꼭 설정 해주기
 networks:
   ocean-network:
     driver: bridge
-
+# 볼륨 꼭 설정 해주기
 volumes:
   ocean_mysql_data:
     driver: local
