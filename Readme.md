@@ -1,12 +1,12 @@
-### Windows OS에서는
+### Windows OS 에서 도커 사용 방법
 
 # 메뉴 방식
 ocean.bat
 
 # cmd에서 직접 명령
-ocean.bat start
-ocean.bat stop
-ocean.bat mysql
+ocean.bat start  
+ocean.bat stop  
+ocean.bat mysql  
 
 #### 배치 파일 사용법
 - `start.bat` - 도커 시작
