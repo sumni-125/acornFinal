@@ -1,7 +1,7 @@
 ### Windows OS 에서 도커 사용 방법
 
-# 메뉴 방식
-ocean.bat
+# 실행 하는 방법
+ocean 파일 에서 ocean.bat 실행 하기
 
 # cmd에서 직접 명령
 ocean.bat start  
@@ -16,6 +16,6 @@ ocean.bat mysql
 - `mysql.bat` - MySQL CLI 접속
 - `logs.bat` - 실시간 로그 확인
 
-#### 올인원 메뉴 사용
+#### cmd에서 도커 실행 시키기  
 ```cmd
 ocean.bat
