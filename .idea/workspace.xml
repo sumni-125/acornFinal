@@ -5,19 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="987390cc-f87c-4fbb-9e59-930907ec444b" name="변경" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/jwt/JwtTokenProvider.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/entity/User.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/repository/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/repository/UserRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/CustomOauth2UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/CustomOAuth2UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/CustomOAuth2UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/CustomOAuth2UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/OAuth2AuthenticationFailureHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/OAuth2AuthenticationFailureHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/OAuth2AuthenticationProcessingException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/OAuth2AuthenticationProcessingException.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/OAuth2AuthenticationSuccessHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/OAuth2AuthenticationSuccessHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/UserPrincipal.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/UserPrincipal.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/provider/GoogleOAuth2UserInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ocean/security/oauth/provider/GoogleOAuth2UserInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ocean/service/CustomOAuth2UserService.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/webapp/WEB-INF/views/auth/login.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/views/auth/login.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/webapp/WEB-INF/views/user/profile.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/views/user/profile.jsp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

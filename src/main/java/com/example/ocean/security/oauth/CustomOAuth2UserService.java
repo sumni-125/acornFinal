@@ -1,4 +1,4 @@
-package com.example.ocean.service;
+package com.example.ocean.security.oauth;
 
 import com.example.ocean.entity.User;
 import com.example.ocean.repository.UserRepository;
