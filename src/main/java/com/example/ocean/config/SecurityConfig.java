@@ -12,7 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
-// TODO : 애플리케이션의 인증(Authentication)과  인가(Authorization)을 담당
+// TODO : 애플리케이션의 인증(Authentication)과  인가(Authorization)를 담당
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -31,9 +31,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) //서버에 세션 비활성화 jwt토큰 기능 사용시 필수 항목
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // *** /auth/ :로그인,회원가입은 인증없이 접근 가능 *** , /oauth2/** : oauth2 callback URL
-                        .requestMatchers("/auth/**","/oauth2/**").permitAll()
-                        .anyRequest().authenticated() // 나머지는 인증해야지 접근 가능
+                        // *** apu/auth/ :로그인,회원가입은 인증없이 접근 가능 *** , /oauth2/** : oauth2 callback URL
+                        .requestMatchers("/api/auth/**","/oauth2/**").permitAll() // OAuth2는 Spring Sercurity에서 처리
+                        .requestMatchers("/api/**").authenticated() // 모든 API는 인증 필요
+                        .anyRequest().permitAll() // 그 외는 허용 (정적 리소스 등등)
                 )
                 // Ex) 구글 소셜 로그인 시 URL : /oauth2/authorize/google , 구글 로그인 페이지로 리다이렉트
                 .oauth2Login(oauth2 -> oauth2
