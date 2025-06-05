@@ -15,6 +15,7 @@ import lombok.*;
 @AllArgsConstructor
 public class User {
 
+    // @Id : 해당 엔티티의 기본키 지정
     @Id
     @Column(name = "user_code")
     private String userCode;

@@ -1,6 +1,6 @@
 package com.example.ocean.security.oauth.provider;
 
-import com.example.ocean.security.oauth.OAuth2AuthenticationProcessingException;
+import com.example.ocean.exception.OAuth2AuthenticationProcessingException;
 
 import java.util.Map;
 

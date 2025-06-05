@@ -1,4 +1,4 @@
-package com.example.ocean.security.oauth;
+package com.example.ocean.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

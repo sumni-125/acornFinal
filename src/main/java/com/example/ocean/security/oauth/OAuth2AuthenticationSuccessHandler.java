@@ -16,6 +16,7 @@ import java.io.IOException;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+// TODO : 로그인 성공 시 처리하는 핸들러
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -44,7 +45,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         String token = jwtTokenProvider.createToken(userPrincipal.getEmail());
 
-        return UriComponentsBuilder.fromUriString(frontUrl + "/oauth2/redirect")
+        return UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
                 .queryParam("token",token)
                 .build().toUriString();
     }

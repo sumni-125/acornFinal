@@ -33,7 +33,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 registrationId,oAuth2User.getAttributes()
         );
 
-        User user = userRepository.findbyEmail(oAuth2UserInfo.getEmail())
+        User user = userRepository.findByEmail(oAuth2UserInfo.getEmail())
                 .map(existingUser -> updateUser(existingUser,oAuth2UserInfo))
                 .orElse(createUser(oAuth2UserInfo,registrationId));
 
