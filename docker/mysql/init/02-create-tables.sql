@@ -104,7 +104,7 @@ CREATE TABLE workspace_members (
     INDEX idx_user (user_code),
     INDEX idx_role (user_role),
     INDEX idx_joined (joined_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 워크스페이스 초대 테이블
 CREATE TABLE workspace_invitations (
@@ -619,3 +619,12 @@ VALUES ('SYSTEM', 'system', 'System', 'system');
 -- CREATE USER 'ocean_app'@'%' IDENTIFIED BY 'your_secure_password';
 -- GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON ocean_db.* TO 'ocean_app'@'%';
 -- FLUSH PRIVILEGES;
+
+
+-- 40014 : MySQL 4.0.14 버전 이상에서만 실행
+-- @OLD_FOREIGN_KEY_CHECKS : 현재 설정값 백업
+-- FOREIGN_KEY_CHECKS=0 : 외래 키 체크 비활성화
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
