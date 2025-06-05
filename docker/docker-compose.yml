@@ -1,0 +1,64 @@
+services:
+  # MySQL 데이터베이스
+  ocean-mysql:
+    image: mysql:8.0
+    container_name: ocean-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: ocean_db
+      MYSQL_USER: ocean_user
+      MYSQL_PASSWORD: ocean_pass
+      TZ: Asia/Seoul
+      command: >
+        --default-authentication-plugin=mysql_native_password
+        --character-set-server=utf8mb4
+        --collation-server=utf8mb4_unicode_ci
+        --init-connect='SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
+        --skip-character-set-client-handshake
+    ports:
+      - "3306:3306"
+    volumes:
+      # 초기화 스크립트
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      # 커스텀 설정
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      # 데이터 영속성
+      - ocean_mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - ocean-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  ocean-phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ocean-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+        ocean-mysql:
+            condition: service_healthy  # MySQL이 healthy 상태일 때만 시작
+    environment:
+      PMA_HOST: ocean-mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      UPLOAD_LIMIT: 300M
+      # 인코딩 설정 추가
+      PMA_CHARSET: utf8mb4
+      PMA_COLLATION: utf8mb4_unicode_ci
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    ports:
+      - "8081:80"
+    networks:
+      - ocean-network
+# 네트워크 꼭 설정 해주기
+networks:
+  ocean-network:
+    driver: bridge
+# 볼륨 꼭 설정 해주기
+volumes:
+  ocean_mysql_data:
+    driver: local
