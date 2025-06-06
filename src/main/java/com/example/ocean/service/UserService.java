@@ -1,0 +1,25 @@
+package com.example.ocean.service;
+
+import com.example.ocean.dto.response.UserProfileResponse;
+import com.example.ocean.entity.User;
+import com.example.ocean.exception.ResourceNotFoundException;
+import com.example.ocean.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional (readOnly = true)
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    //사용자 프로필 조회
+    public UserProfileResponse getUserProfile(String userCode) {
+        User user = userRepository.findByUserCode(userCode)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+    }
+}

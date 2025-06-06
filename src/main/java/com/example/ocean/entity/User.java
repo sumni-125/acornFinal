@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -37,4 +39,25 @@ public class User {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    @Column(name = "nickname")
+    private String nickname;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "department")
+    private String department;
+
+    @Column(name = "position")
+    private String position;
+
+    @Column(name = "is_profile_complete")
+    private Boolean isProfileComplete = false;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updateAt;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
 }
