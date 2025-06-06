@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class UserProfileResponse {
     private String userCode;
     private String userId;
+    private String userName;
     private String nickName;
     private String email;
     private String userProfileImg;

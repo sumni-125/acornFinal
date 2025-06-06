@@ -4,7 +4,11 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-oauth2-client/3.5.0/2f898ddeec3d812769f5d329530eb0e9175886be/spring-boot-starter-oauth2-client-3.5.0.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-oauth2-client/3.5.0/2f898ddeec3d812769f5d329530eb0e9175886be/spring-boot-starter-oauth2-client-3.5.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-oauth2-client/3.5.0/2f898ddeec3d812769f5d329530eb0e9175886be/spring-boot-starter-oauth2-client-3.5.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

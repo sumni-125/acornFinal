@@ -31,7 +31,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) //서버에 세션 비활성화 jwt토큰 기능 사용시 필수 항목
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // *** apu/auth/ :로그인,회원가입은 인증없이 접근 가능 *** , /oauth2/** : oauth2 callback URL
+                        // apu/auth/ :로그인,회원가입은 인증없이 접근 가능 , /oauth2/** : oauth2 callback URL
+                        .requestMatchers("/", "/css/**", "/js/**","/images/**").permitAll()
                         .requestMatchers("/api/auth/**","/oauth2/**").permitAll() // OAuth2는 Spring Sercurity에서 처리
                         .requestMatchers("/api/**").authenticated() // 모든 API는 인증 필요
                         .anyRequest().permitAll() // 그 외는 허용 (정적 리소스 등등)

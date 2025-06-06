@@ -4,7 +4,11 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-oauth2-jose/6.5.0/92a74f7813f67794e11d5938d97c713aaa5c15f9/spring-security-oauth2-jose-6.5.0.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-oauth2-jose/6.5.0/acdbe4133821b9541cf71e48a623261b3a83bf04/spring-security-oauth2-jose-6.5.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-oauth2-jose/6.5.0/6e2e5afc5f43bbf7772cd2129859cb1e3406dc/spring-security-oauth2-jose-6.5.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

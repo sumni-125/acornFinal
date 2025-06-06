@@ -4,7 +4,11 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/com.nimbusds/oauth2-oidc-sdk/9.43.6/a1842456e236f53e30946b2cb0bdeb17a44cdfd3/oauth2-oidc-sdk-9.43.6.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/com.nimbusds/oauth2-oidc-sdk/9.43.6/a4b892ec7336379e780f52b8658a4d899771d314/oauth2-oidc-sdk-9.43.6-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/com.nimbusds/oauth2-oidc-sdk/9.43.6/9fbea04d33e4fad3928c52486749f56141e388e0/oauth2-oidc-sdk-9.43.6-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

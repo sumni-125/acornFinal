@@ -55,9 +55,12 @@ public class User {
     @Column(name = "is_profile_complete")
     private Boolean isProfileComplete = false;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updateAt;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @Column(name = "update_at")
+    private LocalDateTime updateAt;
 }
