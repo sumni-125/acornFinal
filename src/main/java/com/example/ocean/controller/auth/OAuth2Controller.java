@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/oauth2")
-// TODO : Spirng Secruity 내부적으로 처리 해주기 떄문에
+// TODO : Spirng Secruity가 내부적으로 처리 해주기 떄문에
 //  엔드포인트를'/api/'로 지정 하지 않는다.
 
 // /oauth2/* → OAuth2 표준 프로토콜

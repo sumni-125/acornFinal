@@ -47,11 +47,13 @@ public class UserPrincipal implements OAuth2User, UserDetails {
         this.attributes = attributes;
     }
 
+    // UserDetails의 필수 메서드들
     @Override
     public String getPassword() {
         return null;
     }
 
+    // UserDetails의 필수 메서드들
     @Override
     public String getUsername() {
         return email;

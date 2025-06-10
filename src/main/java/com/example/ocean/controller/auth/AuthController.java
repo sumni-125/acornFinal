@@ -25,6 +25,7 @@ public class AuthController {
     // 로그인 성공 후 사용자 정보 조회
     @GetMapping("/me")
     public UserInfoResponse getCurrentUser(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+
             return UserInfoResponse.builder()
                     .userCode(userPrincipal.getId())
                     .email(userPrincipal.getEmail())
@@ -34,7 +35,7 @@ public class AuthController {
     // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        // Configsecurity에서 세션을 stateless로 줬으므로 처리 불필요
+        // 시큐리티 설정에서 stateless메서드로 세션기능을 비활성화 했으므로 처리 불필요.
         // 프론트엔드에서 토큰을 삭제 하면 된다.
         return ResponseEntity.ok(new MessageResponse("로그아웃 됐습니다."));
     }

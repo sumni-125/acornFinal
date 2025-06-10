@@ -10,12 +10,6 @@ services:
       MYSQL_USER: ocean_user
       MYSQL_PASSWORD: ocean_pass
       TZ: Asia/Seoul
-      command: >
-        --default-authentication-plugin=mysql_native_password
-        --character-set-server=utf8mb4
-        --collation-server=utf8mb4_unicode_ci
-        --init-connect='SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
-        --skip-character-set-client-handshake
     ports:
       - "3306:3306"
     volumes:
@@ -25,27 +19,28 @@ services:
       - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
       # 데이터 영속성
       - ocean_mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
       - ocean-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot1234"]
       timeout: 20s
       retries: 10
+      interval: 10s
 
+  # phpMyAdmin (ARM64 호환 이미지)
   ocean-phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: arm64v8/phpmyadmin:latest
     container_name: ocean-phpmyadmin
     restart: unless-stopped
     depends_on:
-        ocean-mysql:
-            condition: service_healthy  # MySQL이 healthy 상태일 때만 시작
+      ocean-mysql:
+        condition: service_healthy
     environment:
       PMA_HOST: ocean-mysql
       PMA_PORT: 3306
       PMA_ARBITRARY: 1
       UPLOAD_LIMIT: 300M
-      # 인코딩 설정 추가
       PMA_CHARSET: utf8mb4
       PMA_COLLATION: utf8mb4_unicode_ci
       LANG: C.UTF-8
@@ -54,11 +49,36 @@ services:
       - "8081:80"
     networks:
       - ocean-network
-# 네트워크 꼭 설정 해주기
+
+  # Jenkins CI/CD
+  ocean-jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: ocean-jenkins
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.gradle:/var/jenkins_home/.gradle
+      - /Users/hyunki/Ocean:/workspace/ocean
+      # - ../jenkins/init-scripts:/var/jenkins_home/init.groovy.d
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+      - TZ=Asia/Seoul
+    user: root
+    networks:
+      - ocean-network
+
+# 네트워크 설정
 networks:
   ocean-network:
     driver: bridge
-# 볼륨 꼭 설정 해주기
+
+# 볼륨 설정
 volumes:
   ocean_mysql_data:
+    driver: local
+  jenkins_home:
     driver: local
