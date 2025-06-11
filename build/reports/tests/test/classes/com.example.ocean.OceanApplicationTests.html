@@ -41,7 +41,7 @@
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">0.332s</div>
+<div class="counter">0.518s</div>
 <p>duration</p>
 </div>
 </td>
@@ -79,7 +79,7 @@
 </thead>
 <tr>
 <td class="success">contextLoads()</td>
-<td class="success">0.332s</td>
+<td class="success">0.518s</td>
 <td class="success">passed</td>
 </tr>
 </table>
@@ -87,8 +87,8 @@
 <div class="tab">
 <h2>Standard output</h2>
 <span class="code">
-<pre>14:22:06.424 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.ocean.OceanApplicationTests]: OceanApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-14:22:06.515 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.ocean.OceanApplication for test class com.example.ocean.OceanApplicationTests
+<pre>11:34:51.490 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.ocean.OceanApplicationTests]: OceanApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+11:34:51.564 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.ocean.OceanApplication for test class com.example.ocean.OceanApplicationTests
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -99,18 +99,18 @@
 
  :: Spring Boot ::                (v3.5.0)
 
-2025-06-10T14:22:06.821+09:00  INFO 669 --- [ocean] [    Test worker] c.example.ocean.OceanApplicationTests    : Starting OceanApplicationTests using Java 17.0.15 with PID 669 (started by root in /workspace/ocean)
-2025-06-10T14:22:06.822+09:00  INFO 669 --- [ocean] [    Test worker] c.example.ocean.OceanApplicationTests    : No active profile set, falling back to 1 default profile: &quot;default&quot;
-2025-06-10T14:22:07.595+09:00  INFO 669 --- [ocean] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-06-10T14:22:07.645+09:00  INFO 669 --- [ocean] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 41 ms. Found 1 JPA repository interface.
-2025-06-10T14:22:07.928+09:00  INFO 669 --- [ocean] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-06-10T14:22:08.086+09:00  INFO 669 --- [ocean] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:1c41cc4d-d6e3-468a-a1ee-7205f732334b user=SA
-2025-06-10T14:22:08.088+09:00  INFO 669 --- [ocean] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-06-10T14:22:08.116+09:00  INFO 669 --- [ocean] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-06-10T14:22:08.159+09:00  INFO 669 --- [ocean] [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.15.Final
-2025-06-10T14:22:08.187+09:00  INFO 669 --- [ocean] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-06-10T14:22:08.388+09:00  INFO 669 --- [ocean] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-06-10T14:22:08.456+09:00  INFO 669 --- [ocean] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+2025-06-11T11:34:52.007+09:00  INFO 5328 --- [ocean] [    Test worker] c.example.ocean.OceanApplicationTests    : Starting OceanApplicationTests using Java 17.0.15 with PID 5328 (started by root in /workspace/ocean)
+2025-06-11T11:34:52.008+09:00  INFO 5328 --- [ocean] [    Test worker] c.example.ocean.OceanApplicationTests    : No active profile set, falling back to 1 default profile: &quot;default&quot;
+2025-06-11T11:34:52.696+09:00  INFO 5328 --- [ocean] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-06-11T11:34:52.762+09:00  INFO 5328 --- [ocean] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 58 ms. Found 1 JPA repository interface.
+2025-06-11T11:34:53.071+09:00  INFO 5328 --- [ocean] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-06-11T11:34:53.273+09:00  INFO 5328 --- [ocean] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:4dce440d-d037-4ff4-9210-93732d9ba136 user=SA
+2025-06-11T11:34:53.277+09:00  INFO 5328 --- [ocean] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-06-11T11:34:53.308+09:00  INFO 5328 --- [ocean] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-06-11T11:34:53.346+09:00  INFO 5328 --- [ocean] [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.15.Final
+2025-06-11T11:34:53.369+09:00  INFO 5328 --- [ocean] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-06-11T11:34:53.558+09:00  INFO 5328 --- [ocean] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-06-11T11:34:53.606+09:00  INFO 5328 --- [ocean] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 2.3.232
@@ -118,10 +118,10 @@
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2025-06-10T14:22:09.101+09:00  INFO 669 --- [ocean] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-06-10T14:22:09.128+09:00  INFO 669 --- [ocean] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-06-10T14:22:09.388+09:00  WARN 669 --- [ocean] [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2025-06-10T14:22:09.815+09:00  INFO 669 --- [ocean] [    Test worker] c.example.ocean.OceanApplicationTests    : Started OceanApplicationTests in 3.19 seconds (process running for 4.061)
+2025-06-11T11:34:54.233+09:00  INFO 5328 --- [ocean] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-06-11T11:34:54.256+09:00  INFO 5328 --- [ocean] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-06-11T11:34:54.903+09:00  WARN 5328 --- [ocean] [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-06-11T11:34:55.365+09:00  INFO 5328 --- [ocean] [    Test worker] c.example.ocean.OceanApplicationTests    : Started OceanApplicationTests in 3.638 seconds (process running for 4.6)
 </pre>
 </span>
 </div>
@@ -133,7 +133,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 8.14</a> at Jun 10, 2025, 2:22:10 PM</p>
+<a href="https://www.gradle.org">Gradle 8.14</a> at Jun 11, 2025, 11:34:56 AM</p>
 </div>
 </div>
 </body>

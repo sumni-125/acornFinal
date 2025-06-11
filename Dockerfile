@@ -1,22 +1,24 @@
 # 빌드 스테이지
-FROM gradle:8.5-jdk17-alpine AS builder
-
+FROM --platform=linux/amd64 eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
 
-# Gradle 캐시를 위한 의존성 파일 먼저 복사
-COPY build.gradle settings.gradle ./
-COPY gradle ./gradle
+# Gradle wrapper 파일 복사
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
 
-# 의존성 다운로드 (캐시 활용)
-RUN gradle dependencies --no-daemon
+# 소스 코드 복사
+COPY src src
 
-# 소스 코드 복사 및 빌드
-COPY src ./src
-RUN gradle build -x test --no-daemon
+# 실행 권한 부여
+RUN chmod +x ./gradlew
+
+# 애플리케이션 빌드
+RUN ./gradlew bootJar
 
 # 실행 스테이지
-FROM eclipse-temurin:17-jre-alpine
-
+FROM --platform=linux/amd64 eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # 필요한 패키지 설치
