@@ -2,121 +2,111 @@ pipeline {
     agent any
 
     environment {
-        // 프로젝트 설정
-        PROJECT_NAME = 'ocean'
-        DOCKER_IMAGE = "ocean-app"
-        DOCKER_TAG = "${BUILD_NUMBER}"
-
-        // Slack 알림 설정 (선택사항)
-        SLACK_CHANNEL = '#ocean-deploy'
-    }
-
-    tools {
-        // Jenkins에서 설정한 도구 이름
-        jdk 'JDK-17'
+        PROJECT_PATH = '/workspace/ocean'
+        EC2_HOST = '13.209.22.5'
+        EC2_USER = 'ubuntu'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Prepare') {
             steps {
-                checkout scm
-                script {
-                    // Git 정보 가져오기
-                    env.GIT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    env.GIT_BRANCH = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                }
-            }
-        }
-
-        stage('Build') {
-            steps {
+                echo '=== 프로젝트 준비 ==='
                 sh '''
-                    echo "Building Ocean application..."
-                    chmod +x gradlew
-                    ./gradlew clean build -x test
+                    pwd
+                    echo "Current directory: $(pwd)"
+                    echo "Checking project directory..."
+                    ls -la ${PROJECT_PATH}
+
+                    if [ -f "${PROJECT_PATH}/gradlew" ]; then
+                        echo "gradlew found!"
+                    else
+                        echo "ERROR: gradlew not found!"
+                        exit 1
+                    fi
                 '''
             }
         }
 
-        stage('Test') {
+        stage('Build Application') {
             steps {
+                echo '=== 애플리케이션 빌드 ==='
                 sh '''
-                    echo "Running tests..."
-                    ./gradlew test
+                    cd ${PROJECT_PATH}
+                    pwd
+                    ls -la
+                    chmod +x ./gradlew
+                    ./gradlew clean bootJar --no-daemon --stacktrace
                 '''
-            }
-            post {
-                always {
-                    // 테스트 결과 리포트
-                    junit '**/build/test-results/test/*.xml'
-
-                    // 코드 커버리지 리포트 (Jacoco 사용 시)
-                    publishHTML([
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'build/reports/tests/test',
-                        reportFiles: 'index.html',
-                        reportName: 'Test Report'
-                    ])
-                }
             }
         }
 
-        stage('Code Quality') {
-            when {
-                branch 'develop'
-            }
+        stage('Run Tests') {
             steps {
+                echo '=== 테스트 실행 ==='
                 sh '''
-                    echo "Running code quality checks..."
-                    ./gradlew checkstyleMain
+                    cd ${PROJECT_PATH}
+                    ./gradlew test --no-daemon
                 '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh """
-                        echo "Building Docker image..."
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
-                    """
-                }
+                echo '=== Docker 이미지 빌드 ==='
+                sh '''
+                    cd ${PROJECT_PATH}
+                    which docker
+                    docker --version
+                    docker build -t ocean-app:${BUILD_NUMBER} .
+                '''
             }
         }
 
-        stage('Deploy to Dev') {
-            when {
-                branch 'develop'
-            }
+        stage('Save Docker Image') {
             steps {
-                script {
-                    sh """
-                        echo "Deploying to development environment..."
-                        # Docker Compose를 사용한 배포
-                        cd docker
-                        docker-compose stop ocean-app || true
-                        docker-compose rm -f ocean-app || true
-                        docker-compose up -d ocean-app
-                    """
-                }
+                echo '=== Docker 이미지 저장 ==='
+                sh '''
+                    docker save ocean-app:${BUILD_NUMBER} | gzip > /tmp/ocean-app-${BUILD_NUMBER}.tar.gz
+                    ls -lh /tmp/ocean-app-${BUILD_NUMBER}.tar.gz
+                '''
             }
         }
 
-        stage('Deploy to Production') {
-            when {
-                branch 'main'
-            }
+        stage('Deploy to EC2') {
             steps {
-                input message: 'Deploy to production?', ok: 'Deploy'
+                echo '=== EC2 배포 시작 ==='
+                sshagent(['ocean-ec2-ssh']) {
+                    sh '''
+                        # 이미지 파일 전송
+                        scp -o StrictHostKeyChecking=no /tmp/ocean-app-${BUILD_NUMBER}.tar.gz ${EC2_USER}@${EC2_HOST}:/tmp/
 
-                script {
-                    sh """
-                        echo "Deploying to production environment..."
-                        # 프로덕션 배포 스크립트
-                    """
+                        # EC2에서 배포 실행
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
+                            # Docker 이미지 로드
+                            docker load < /tmp/ocean-app-${BUILD_NUMBER}.tar.gz
+
+                            # 기존 컨테이너 중지 및 제거
+                            docker stop ocean-app || true
+                            docker rm ocean-app || true
+
+                            # 새 컨테이너 실행
+                            docker run -d \
+                                --name ocean-app \
+                                -p 8080:8080 \
+                                --restart unless-stopped \
+                                ocean-app:${BUILD_NUMBER}
+
+                            # 헬스체크
+                            sleep 10
+                            curl -f http://localhost:8080/actuator/health || echo "Health check failed"
+
+                            # 임시 파일 삭제
+                            rm /tmp/ocean-app-${BUILD_NUMBER}.tar.gz
+
+                            # 컨테이너 상태 확인
+                            docker ps | grep ocean-app
+                        EOF
+                    '''
                 }
             }
         }
@@ -124,36 +114,21 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline succeeded!'
-            // Slack 알림 (설정된 경우)
-            script {
-                if (env.SLACK_WEBHOOK) {
-                    sh """
-                        curl -X POST -H 'Content-type: application/json' \
-                        --data '{"text":"✅ Build Successful: ${PROJECT_NAME} - Build #${BUILD_NUMBER} (${GIT_BRANCH})"}' \
-                        ${SLACK_WEBHOOK}
-                    """
-                }
-            }
+            echo '✅ 파이프라인 성공!'
+            echo "애플리케이션이 http://${EC2_HOST} 에서 실행 중입니다."
         }
-
         failure {
-            echo 'Pipeline failed!'
-            // Slack 알림 (설정된 경우)
-            script {
-                if (env.SLACK_WEBHOOK) {
-                    sh """
-                        curl -X POST -H 'Content-type: application/json' \
-                        --data '{"text":"❌ Build Failed: ${PROJECT_NAME} - Build #${BUILD_NUMBER} (${GIT_BRANCH})"}' \
-                        ${SLACK_WEBHOOK}
-                    """
-                }
-            }
+            echo '❌ 파이프라인 실패!'
+            sh '''
+                echo "Debug information:"
+                echo "Working directory: $(pwd)"
+                echo "Project path contents:"
+                ls -la ${PROJECT_PATH} || true
+            '''
         }
-
         always {
-            // 작업 공간 정리
-            cleanWs()
+            // 로컬 임시 파일 정리
+            sh 'rm -f /tmp/ocean-app-${BUILD_NUMBER}.tar.gz || true'
         }
     }
 }
