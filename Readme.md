@@ -1,13 +1,18 @@
 🎊 현재까지 완성된 인프라:
 
 ✅ CI/CD: GitHub → Jenkins → EC2 자동 배포  
+
 ✅ 도메인: ocean-app.click  
+
 ✅ HTTPS: Let's Encrypt SSL 인증서  
+
 ✅ 자동 갱신: 90일마다 자동으로 인증서 갱신  
 
 😒 이제해야할 것들  
-✅ 모니터링 설정 (CloudWatch, Grafana)    
-✅ 데이터베이스 (RDS MySQL)  
-   - DB설계 마무리 하고 연동하기!  
+✅ 모니터링 설정 (CloudWatch, Grafana)  
+
+✅ 데이터베이스 (RDS MySQL) : DB 설계 마무리 하고 RDS 연동 하기  
+
 ✅ 로드밸런서 (트래픽 증가 대비)    
-백업 전략 수립    
+
+백업 기능 고민 해보기
