@@ -1,21 +1,13 @@
-### Windows OS 에서 도커 사용 방법
+🎊 현재까지 완성된 인프라:
 
-# 실행 하는 방법
-ocean 파일 에서 ocean.bat 실행 하기
+✅ CI/CD: GitHub → Jenkins → EC2 자동 배포  
+✅ 도메인: ocean-app.click  
+✅ HTTPS: Let's Encrypt SSL 인증서  
+✅ 자동 갱신: 90일마다 자동으로 인증서 갱신  
 
-# cmd에서 직접 명령
-ocean.bat start  
-ocean.bat stop  
-ocean.bat mysql  
-
-#### 배치 파일 사용법
-- `start.bat` - 도커 시작
-- `stop.bat` - 도커 중지
-- `reset.bat` - 도커 초기화 (모든 데이터 삭제)
-- `status.bat` - 컨테이너 상태 확인
-- `mysql.bat` - MySQL CLI 접속
-- `logs.bat` - 실시간 로그 확인
-
-#### cmd에서 도커 실행 시키기  
-```cmd
-ocean.bat
+😒 이제해야할 것들  
+✅ 모니터링 설정 (CloudWatch, Grafana)    
+✅ 데이터베이스 (RDS MySQL)  
+   - DB설계 마무리 하고 연동하기!  
+✅ 로드밸런서 (트래픽 증가 대비)    
+백업 전략 수립    
