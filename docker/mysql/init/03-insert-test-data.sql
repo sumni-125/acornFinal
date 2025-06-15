@@ -1,10 +1,12 @@
 USE ocean_db;
 
+USE ocean_db;
+
 -- 테스트 사용자 데이터
-INSERT INTO users (user_cd, user_id, user_nm, nickname, email, provider, department, position) VALUES
-('USR001', 'testuser1', '김철수', '철수', 'test1@ocean.com', 'google', '개발팀', '팀장'),
-('USR002', 'testuser2', '이영희', '영희', 'test2@ocean.com', 'kakao', '마케팅팀', '팀원'),
-('USR003', 'testuser3', '박민수', '민수', 'test3@ocean.com', 'google', '개발팀', '팀원');
+INSERT INTO users (user_cd, user_id, user_nm, email, provider, department, position) VALUES
+('USR001', 'testuser1', '김철수', 'test1@ocean.com', 'google', '개발팀', '팀장'),
+('USR002', 'testuser2', '이영희', 'test2@ocean.com', 'kakao', '마케팅팀', '팀원'),
+('USR003', 'testuser3', '박민수', 'test3@ocean.com', 'google', '개발팀', '팀원');
 
 -- 테스트 워크스페이스
 INSERT INTO workspaces (workspace_cd, workspace_name, created_by, invite_cd) VALUES
@@ -19,9 +21,9 @@ INSERT INTO workspace_members (workspace_cd, user_cd, user_nickname, user_role) 
 ('WS002', 'USR003', '민수', 'MEMBER');
 
 -- 테스트 캘린더 이벤트
-INSERT INTO calendar_events (event_id, user_cd, workspace_cd, title, description, start_datetime, end_datetime, event_type) VALUES
-('EVT001', 'USR001', 'WS001', '스프린트 회의', '2주차 스프린트 리뷰', '2025-06-15 10:00:00', '2025-06-15 11:00:00', 'WORKSPACE'),
-('EVT002', 'USR002', NULL, '개인 일정', '병원 방문', '2025-06-16 14:00:00', '2025-06-16 15:00:00', 'PERSONAL');
+INSERT INTO calendar_events (event_id, user_cd, workspace_cd, title, description, start_datetime, end_datetime, status) VALUES
+('EVT001', 'USR001', 'WS001', '스프린트 회의', '2주차 스프린트 리뷰', '2025-06-15 10:00:00', '2025-06-15 11:00:00', 'BEFORE'),
+('EVT002', 'USR002', NULL, '개인 일정', '병원 방문', '2025-06-16 14:00:00', '2025-06-16 15:00:00', 'BEFORE');
 
 -- 테스트 미팅룸
 INSERT INTO meeting_rooms (room_cd, room_name, description, workspace_cd, host_user_cd) VALUES
