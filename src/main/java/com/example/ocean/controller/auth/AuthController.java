@@ -1,8 +1,12 @@
 package com.example.ocean.controller.auth;
 
+import com.example.ocean.dto.request.TokenRefreshRequest;
 import com.example.ocean.dto.response.MessageResponse;
+import com.example.ocean.dto.response.TokenResponse;
 import com.example.ocean.dto.response.UserInfoResponse;
 import com.example.ocean.security.oauth.UserPrincipal;
+import com.example.ocean.service.TokenService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
+    private final TokenService tokenService;
 
     //OAuth2 로그인 엔드포인트 (프론트엔드에서 호출)
     @GetMapping("/oauth2/{provider}")
@@ -38,5 +44,12 @@ public class AuthController {
         // 시큐리티 설정에서 stateless메서드로 세션기능을 비활성화 했으므로 처리 불필요.
         // 프론트엔드에서 토큰을 삭제 하면 된다.
         return ResponseEntity.ok(new MessageResponse("로그아웃 됐습니다."));
+    }
+    
+    // 토큰 갱신 엔드포인트
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        TokenResponse tokenResponse = tokenService.refreshTokens(request.getRefreshToken());
+        return ResponseEntity.ok(tokenResponse);
     }
 }

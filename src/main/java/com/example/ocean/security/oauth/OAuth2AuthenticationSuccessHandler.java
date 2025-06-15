@@ -1,5 +1,7 @@
 package com.example.ocean.security.oauth;
+import com.example.ocean.dto.response.TokenResponse;
 import com.example.ocean.security.jwt.JwtTokenProvider;
+import com.example.ocean.service.TokenService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +21,7 @@ import java.io.IOException;
 // TODO : 로그인 성공 시 처리하는 핸들러
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenService tokenService;
 
     //Spring @Value는 프로 퍼티 값을 주입 받을 떄 사용 함.
     @Value("${app.frontend.url:http://localhost:8080}")
@@ -43,10 +46,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         HttpServletResponse response,
                                         Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        String token = jwtTokenProvider.createToken(userPrincipal.getEmail());
+        
+        // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
+        TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getEmail());
 
         return UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("token",token)
+                .queryParam("token", tokenResponse.getAccessToken())
+                .queryParam("refreshToken", tokenResponse.getRefreshToken())
                 .build().toUriString();
     }
 }

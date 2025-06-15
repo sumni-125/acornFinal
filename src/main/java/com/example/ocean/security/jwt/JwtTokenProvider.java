@@ -10,9 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
-@Slf4j
-@Component
+@Slf4j // 로깅을 위한 어노테이션
+@Component // 스프링 빈으로 등록
 public class JwtTokenProvider {
 
     @Value("${app.jwt.secret}")
@@ -20,6 +21,9 @@ public class JwtTokenProvider {
 
     @Value("${app.jwt.expiration}")
     private int jwtExpirationInMs;
+    
+    @Value("${app.jwt.refresh-expiration}")
+    private int jwtRefreshExpirationInMs;
 
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
@@ -37,13 +41,34 @@ public class JwtTokenProvider {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
+    
+    public String createRefreshToken() {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationInMs);
+        
+        return Jwts.builder()
+                .setId(UUID.randomUUID().toString())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
+    }
+    
+    public Date getExpirationDateFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getExpiration();
+    }
 
     public String createToken(Authentication authentication) {
         String email = authentication.getName();
         return createToken(email);
     }
 
-    public  String getEmailFromToken(String token) {
+    public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
