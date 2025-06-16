@@ -42,9 +42,9 @@ public class SecurityConfig {
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/oauth2/authorize") // 인증 요청 시작점
                         )
-                        // ex) 구글에서 인증 후 /oauth2/callback/google로 돌아옴
+                        // 카카오 및 구글 인증 후 리다이렉트 URI
                         .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/oauth2/callback/*")
+                                .baseUri("/login/oauth2/code/*")
                         )
 
                         // ex) 인증 성공 후 사용자 정보를 가져와 customOAuth2User...에서 처리 함
