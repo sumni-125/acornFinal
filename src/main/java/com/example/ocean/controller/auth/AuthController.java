@@ -40,9 +40,12 @@ public class AuthController {
 
     // 로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
-        // 시큐리티 설정에서 stateless메서드로 세션기능을 비활성화 했으므로 처리 불필요.
-        // 프론트엔드에서 토큰을 삭제 하면 된다.
+    public ResponseEntity<?> logout(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (userPrincipal != null) {
+            // 서버에서 토큰 무효화 처리
+            tokenService.logout(userPrincipal.getId());
+            log.info("사용자 {} 로그아웃 처리 완료", userPrincipal.getEmail());
+        }
         return ResponseEntity.ok(new MessageResponse("로그아웃 됐습니다."));
     }
     

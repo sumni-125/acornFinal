@@ -85,6 +85,8 @@ public class TokenService {
         // 새 토큰 생성
         TokenResponse newTokens = createTokens(user.getEmail());
 
+        // TODO : 이전 리프레시 토큰 블랙 리스트에 추가 하는 로직 고려 해보기
+
         return newTokens;
     }
 
