@@ -50,9 +50,13 @@ services:
     networks:
       - ocean-network
 
-  # Jenkins CI/CD
+  # Jenkins CI/CD (Docker CLI 포함)
   ocean-jenkins:
     image: jenkins/jenkins:lts-jdk17
+    #build:
+    #  context: ./jenkins
+    #  dockerfile: Dockerfile
+    # image: jenkins/jenkins:lts-jdk17  # 커스텀 이미지로 대체
     container_name: ocean-jenkins
     restart: unless-stopped
     ports:
