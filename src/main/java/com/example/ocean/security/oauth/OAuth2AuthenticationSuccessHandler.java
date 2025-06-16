@@ -50,7 +50,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
         TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getEmail());
 
-        return UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
+        return UriComponentsBuilder.fromUriString(frontendUrl)
+                .path("/")
                 .queryParam("token", tokenResponse.getAccessToken())
                 .queryParam("refreshToken", tokenResponse.getRefreshToken())
                 .build().toUriString();
