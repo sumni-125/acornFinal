@@ -10,12 +10,14 @@ import com.example.ocean.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -64,6 +66,7 @@ public class TokenService {
     }
 
     @Transactional
+    // 리프레쉬 토큰 기능
     public TokenResponse refreshTokens(String refreshToken) {
         // 리프레시 토큰 유효성 검사
         if (!jwtTokenProvider.validateToken(refreshToken)) {
@@ -76,7 +79,39 @@ public class TokenService {
 
         User user = userTokens.getUser();
 
+        // 이전 리프레시 토큰 저장 (필요 시 블랙리스트 처리를 위해)
+        String oldRefreshToken = userTokens.getRefreshToken();
+
         // 새 토큰 생성
-        return createTokens(user.getEmail());
+        TokenResponse newTokens = createTokens(user.getEmail());
+
+        return newTokens;
+    }
+
+    // 로그아웃 시 토큰 무효화
+    @Transactional
+    public void logout(String userCode) {
+        UserTokens userTokens = userTokensRepository.findById(userCode)
+                .orElseThrow( () -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+            userTokens.setAccessToken(null);
+            userTokens.setRefreshToken(null);
+            userTokens.setTokenExpiresAt(null);
+            userTokensRepository.save(userTokens);
+    }
+
+    // 만료된 토큰을 스케줄링으로 정리
+    @Scheduled(cron = "0 0 0 * * ?") // 매일 자정에 실행
+    public void cleanupExpiredTokens() {
+        LocalDateTime now = LocalDateTime.now();
+        List<UserTokens> expiredTokens = userTokensRepository.findByTokenExpiresAtBefore(now);
+
+        for (UserTokens token : expiredTokens) {
+            token.setRefreshToken(null);
+            token.setAccessToken(null);
+            userTokensRepository.save(token);
+        }
+
+        log.info("만료된 토큰 {}개가 정리 되었습니다.", expiredTokens.size());
     }
 } 
