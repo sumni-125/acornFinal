@@ -56,7 +56,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     // UserDetails의 필수 메서드들
     @Override
     public String getUsername() {
-        return email;
+        return email != null ? email : id; // 이메일이 없으면 ID 반환
     }
 
     // UserDetails의 필수 메서드들

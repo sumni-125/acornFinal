@@ -48,7 +48,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         
         // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
-        TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getEmail());
+        TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getUsername());
 
         return UriComponentsBuilder.fromUriString(frontendUrl)
                 .path("/")

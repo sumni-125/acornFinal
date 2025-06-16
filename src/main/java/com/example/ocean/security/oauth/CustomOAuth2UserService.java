@@ -33,9 +33,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 registrationId,oAuth2User.getAttributes()
         );
 
-        User user = userRepository.findByEmail(oAuth2UserInfo.getEmail())
-                .map(existingUser -> updateUser(existingUser,oAuth2UserInfo))
-                .orElse(createUser(oAuth2UserInfo,registrationId));
+        // 소셜 ID와 제공자로 사용자 조회
+        User user = userRepository.findByUserIdAndProvider(oAuth2UserInfo.getId(), registrationId.toUpperCase())
+                .map(existingUser -> updateUser(existingUser, oAuth2UserInfo))
+                .orElse(createUser(oAuth2UserInfo, registrationId));
 
         return UserPrincipal.create(user,oAuth2User.getAttributes());
     }

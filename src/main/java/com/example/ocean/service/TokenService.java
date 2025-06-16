@@ -32,11 +32,13 @@ public class TokenService {
     private int jwtExpirationInMs;
 
     @Transactional
-    public TokenResponse createTokens(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+    public TokenResponse createTokens(String identifier) {
+        // 이메일 또는 사용자 ID로 사용자 찾기
+        User user = userRepository.findByEmail(identifier)
+                .orElseGet(() -> userRepository.findByUserCode(identifier)
+                        .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다.")));
 
-        String accessToken = jwtTokenProvider.createToken(email);
+        String accessToken = jwtTokenProvider.createToken(identifier);
         String refreshToken = jwtTokenProvider.createRefreshToken();
 
         // 토큰 만료 시간 계산
