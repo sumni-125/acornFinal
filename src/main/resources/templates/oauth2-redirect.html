@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 처리 중...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(180deg, #0a1628 0%, #1e3a5f 50%, #2d5a87 100%);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+        
+        .loading-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .loading-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-message {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <h1 class="loading-title">로그인 처리 중</h1>
+        <p class="loading-message">잠시만 기다려 주세요...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // URL에서 토큰 파라미터 추출
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const refreshToken = urlParams.get('refreshToken');
+            const error = urlParams.get('error');
+            
+            if (error) {
+                // 에러가 있는 경우 처리
+                alert('로그인 중 오류가 발생했습니다: ' + error);
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (token && refreshToken) {
+                // 토큰을 로컬 스토리지에 저장
+                localStorage.setItem('accessToken', token);
+                localStorage.setItem('refreshToken', refreshToken);
+                
+                // 사용자 인증 상태 설정
+                localStorage.setItem('isAuthenticated', 'true');
+                
+                // 메인 페이지로 리다이렉트
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                // 토큰이 없는 경우 처리
+                alert('로그인 정보를 가져올 수 없습니다.');
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html> 

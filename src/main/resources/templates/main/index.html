@@ -151,6 +151,75 @@
             transform: scale(1.1);
             filter: drop-shadow(0 0 15px rgba(79, 172, 254, 0.7));
         }
+        
+        /* 사용자 메뉴 스타일 */
+        .header {
+            justify-content: space-between;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .user-email {
+            font-size: 14px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .logout-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .logout-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .login-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
 
         /* 메인 컨텐츠 영역 */
         .main-container {
@@ -609,6 +678,20 @@
             </div>
             Ocean WorkSpace
         </div>
+        
+        <!-- 사용자 메뉴 -->
+        <div class="user-menu" id="userMenu" style="display: none;">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <span class="user-initial">U</span>
+                </div>
+                <span class="user-email" id="userEmail">사용자</span>
+            </div>
+            <button class="logout-button" id="logoutButton">로그아웃</button>
+        </div>
+        
+        <!-- 로그인 버튼 -->
+        <a href="/login" class="login-button" id="loginButton">로그인</a>
     </header>
 
     <!-- 메인 컨텐츠 -->
@@ -679,16 +762,94 @@
                     </div>
                     
                     <!-- 시작 버튼 -->
-                    <button class="cta-button" id="cta-button">
-                    <span class="number-badge">1</span>
-                    Start Your Space
-                </button>
+                    <a href="/login" class="cta-button" id="cta-button">
+                        <span class="number-badge">1</span>
+                        시작하기
+                    </a>
             </div>
         </div>
         </div>
     </div>
 
     <script>
+        // 인증 상태 확인 및 UI 업데이트
+        function checkAuthStatus() {
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            const accessToken = localStorage.getItem('accessToken');
+            const userMenu = document.getElementById('userMenu');
+            const loginButton = document.getElementById('loginButton');
+            
+            if (isAuthenticated && accessToken) {
+                // 로그인 상태
+                userMenu.style.display = 'flex';
+                loginButton.style.display = 'none';
+                
+                // 사용자 정보 가져오기
+                fetchUserInfo(accessToken);
+            } else {
+                // 로그아웃 상태
+                userMenu.style.display = 'none';
+                loginButton.style.display = 'block';
+            }
+        }
+        
+        // 사용자 정보 가져오기
+        function fetchUserInfo(token) {
+            fetch('/api/auth/me', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('인증 실패');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 사용자 정보 표시
+                document.getElementById('userEmail').textContent = data.email || '사용자';
+                
+                // 이니셜 표시
+                const initial = data.email ? data.email.charAt(0).toUpperCase() : 'U';
+                document.querySelector('.user-initial').textContent = initial;
+            })
+            .catch(error => {
+                console.error('사용자 정보 가져오기 실패:', error);
+                // 인증 오류 시 로그아웃 처리
+                logout();
+            });
+        }
+        
+        // 로그아웃 처리
+        function logout() {
+            const accessToken = localStorage.getItem('accessToken');
+            
+            // 서버에 로그아웃 요청
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .finally(() => {
+                // 로컬 스토리지 정리
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('isAuthenticated');
+                
+                // 페이지 새로고침
+                window.location.reload();
+            });
+        }
+        
+        // 로그아웃 버튼 이벤트 리스너
+        document.getElementById('logoutButton').addEventListener('click', logout);
+        
+        // 페이지 로드 시 인증 상태 확인
+        document.addEventListener('DOMContentLoaded', checkAuthStatus);
+        
         // 파티클 생성
         const particlesContainer = document.getElementById('particles');
         
