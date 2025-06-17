@@ -52,21 +52,42 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     protected String determineTargetUrl(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) {
-        log.info("토큰 생성 시작");
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        log.info("UserPrincipal - Username: {}, UserCode: {}", userPrincipal.getUsername(), userPrincipal.getUserCode());
-        
-        // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
-        TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getUsername());
-        log.info("토큰 생성 완료 - AccessToken 길이: {}", tokenResponse.getAccessToken().length());
+        try {
+            log.info("토큰 생성 시작");
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            log.info("UserPrincipal - Username: {}, UserCode: {}", userPrincipal.getUsername(), userPrincipal.getUserCode());
+            
+            if (tokenService == null) {
+                log.error("TokenService is null!");
+                throw new IllegalStateException("TokenService is not initialized");
+            }
+            
+            // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
+            TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getUsername());
+            
+            if (tokenResponse == null) {
+                log.error("TokenResponse is null!");
+                throw new IllegalStateException("Failed to create tokens");
+            }
+            
+            log.info("토큰 생성 완료 - AccessToken 길이: {}", tokenResponse.getAccessToken().length());
 
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
-                .path("/")
-                .queryParam("token", tokenResponse.getAccessToken())
-                .queryParam("refreshToken", tokenResponse.getRefreshToken())
-                .build().toUriString();
-                
-        log.info("최종 리다이렉트 URL 생성 완료");
-        return targetUrl;
+            String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                    .path("/")
+                    .queryParam("token", tokenResponse.getAccessToken())
+                    .queryParam("refreshToken", tokenResponse.getRefreshToken())
+                    .build().toUriString();
+                    
+            log.info("최종 리다이렉트 URL 생성 완료");
+            return targetUrl;
+        } catch (Exception e) {
+            log.error("토큰 생성 중 오류 발생", e);
+            // 임시로 에러 페이지로 리다이렉트
+            return UriComponentsBuilder.fromUriString(frontendUrl)
+                    .path("/oauth2/redirect")
+                    .queryParam("error", "token_creation_failed")
+                    .queryParam("message", e.getMessage())
+                    .build().toUriString();
+        }
     }
 }
