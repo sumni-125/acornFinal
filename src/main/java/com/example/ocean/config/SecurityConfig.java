@@ -26,7 +26,10 @@ public class SecurityConfig {
     
     @Bean
     public HttpSessionOAuth2AuthorizationRequestRepository authorizationRequestRepository() {
-        return new HttpSessionOAuth2AuthorizationRequestRepository();
+        HttpSessionOAuth2AuthorizationRequestRepository repository = new HttpSessionOAuth2AuthorizationRequestRepository();
+        // 세션 속성 이름을 명시적으로 설정
+        repository.setSessionAttributeName(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST");
+        return repository;
     }
 
     @Bean

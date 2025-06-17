@@ -47,9 +47,10 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
         
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("error", errorMessage)
+                .queryParam("error", errorMessage.trim())
                 .queryParam("error_type", exception.getClass().getSimpleName())
-                .build().toUriString();
+                .build().encode()
+                .toUriString();
 
         getRedirectStrategy().sendRedirect(request,response,targetUrl);
     }
