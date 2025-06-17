@@ -52,6 +52,7 @@ public class User {
     @Column(name = "position")
     private String position;
 
+    @Builder.Default
     @Column(name = "is_profile_complete")
     private Boolean isProfileComplete = false;
 

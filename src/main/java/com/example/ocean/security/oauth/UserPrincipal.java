@@ -16,6 +16,7 @@ import java.util.Map;
 public class UserPrincipal implements OAuth2User, UserDetails {
     private String id;
     private String email;
+    private String userCode;
     private Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
@@ -23,6 +24,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
                          Collection<? extends  GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
+        this.userCode = id; // userCode를 id와 동일하게 설정
         this.authorities = authorities;
     }
 
