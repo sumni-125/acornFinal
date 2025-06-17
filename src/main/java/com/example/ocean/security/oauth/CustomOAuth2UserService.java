@@ -6,6 +6,7 @@ import com.example.ocean.security.oauth.UserPrincipal;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfo;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfoFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -23,22 +25,43 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        return processOAuth2User(userRequest,oAuth2User);
+        log.info("OAuth2 로그인 시도: {}", userRequest.getClientRegistration().getRegistrationId());
+        
+        try {
+            OAuth2User oAuth2User = super.loadUser(userRequest);
+            log.info("OAuth2 사용자 정보 획득 성공");
+            log.debug("사용자 속성: {}", oAuth2User.getAttributes());
+            
+            return processOAuth2User(userRequest, oAuth2User);
+        } catch (Exception e) {
+            log.error("OAuth2 로그인 실패", e);
+            throw new OAuth2AuthenticationException("OAuth2 로그인 처리 중 오류 발생: " + e.getMessage());
+        }
     }
 
     private OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        log.info("OAuth2 사용자 처리 시작 - Provider: {}", registrationId);
+        
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
-                registrationId,oAuth2User.getAttributes()
+                registrationId, oAuth2User.getAttributes()
         );
+        
+        log.info("OAuth2 사용자 정보 - ID: {}, Name: {}, Email: {}", 
+                oAuth2UserInfo.getId(), oAuth2UserInfo.getName(), oAuth2UserInfo.getEmail());
 
         // 소셜 ID와 제공자로 사용자 조회
         User user = userRepository.findByUserIdAndProvider(oAuth2UserInfo.getId(), registrationId.toUpperCase())
-                .map(existingUser -> updateUser(existingUser, oAuth2UserInfo))
-                .orElse(createUser(oAuth2UserInfo, registrationId));
+                .map(existingUser -> {
+                    log.info("기존 사용자 발견 - userCode: {}", existingUser.getUserCode());
+                    return updateUser(existingUser, oAuth2UserInfo);
+                })
+                .orElseGet(() -> {
+                    log.info("신규 사용자 생성");
+                    return createUser(oAuth2UserInfo, registrationId);
+                });
 
-        return UserPrincipal.create(user,oAuth2User.getAttributes());
+        return UserPrincipal.create(user, oAuth2User.getAttributes());
     }
 
     private User createUser(OAuth2UserInfo oAuth2UserInfo,String provider) {
