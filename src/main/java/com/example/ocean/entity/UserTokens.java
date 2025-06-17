@@ -15,31 +15,37 @@ import java.time.LocalDateTime;
 public class UserTokens {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "user_cd")
+    private String userCd;
 
-    @Column(nullable = false)
-    private String username;
-
-    @Column(nullable = false, unique = true)
-    private String refreshToken;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "user_cd")
     private User user;
 
-    @Column(nullable = false)
-    private LocalDateTime expiryDate;
+    @Column(name = "access_token")
+    private String accessToken;
 
-    @Column(nullable = false)
+    @Column(name = "refresh_token")
+    private String refreshToken;
+
+    @Column(name = "token_expires_at")
+    private LocalDateTime tokenExpiresAt;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiryDate);
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 } 

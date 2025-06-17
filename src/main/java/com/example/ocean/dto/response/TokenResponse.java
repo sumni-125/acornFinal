@@ -1,20 +1,14 @@
 package com.example.ocean.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
+@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class TokenResponse {
     private String accessToken;
     private String refreshToken;
-    
     @Builder.Default
     private String tokenType = "Bearer";
-    
-    private long expiresIn;
+    private Long expiresIn;
 }

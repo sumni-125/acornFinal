@@ -98,6 +98,7 @@
             // URL에서 토큰 파라미터 추출
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
+            const refreshToken = urlParams.get('refreshToken');
             const error = urlParams.get('error');
             const errorType = urlParams.get('error_type');
             const recovery = urlParams.get('recovery');
@@ -106,23 +107,12 @@
             // 디버깅을 위한 콘솔 로그
             console.log('OAuth2 리다이렉트 정보:');
             console.log('현재 URL:', window.location.href);
-            console.log('액세스 토큰:', token ? '있음' : '없음');
+            console.log('토큰:', token ? '있음' : '없음');
+            console.log('리프레시 토큰:', refreshToken ? '있음' : '없음');
             console.log('에러:', error);
             console.log('에러 타입:', errorType);
             console.log('복구 시도:', recovery);
             console.log('상태:', state);
-            
-            // 쿠키 확인
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-                return null;
-            }
-            
-            // 리프레시 토큰 쿠키 확인
-            const refreshTokenCookie = getCookie('refreshToken');
-            console.log('리프레시 토큰 쿠키:', refreshTokenCookie ? '있음' : '없음');
             
             // 세션 상태 확인을 위한 쿠키 검사
             const cookies = document.cookie.split(';').map(cookie => cookie.trim());
@@ -164,26 +154,47 @@
                         window.location.href = '/login';
                     }, 5000);
                 }
-            } else if (token) {
+            } else if (token && refreshToken) {
                 // 액세스 토큰은 로컬 스토리지에 저장 (자주 접근해야 하므로)
                 localStorage.setItem('accessToken', token);
                 
-                // 리프레시 토큰은 서버에서 HttpOnly 쿠키로 이미 설정되었음
-                // 사용자 인증 상태 설정
-                localStorage.setItem('isAuthenticated', 'true');
-                
-                console.log('로그인 성공! 토큰이 저장되었습니다.');
-                console.log('리프레시 토큰은 HttpOnly 쿠키로 저장되어 있습니다.');
-                
-                // 메인 페이지로 리다이렉트
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
+                // 리프레시 토큰은 HttpOnly 쿠키로 저장하기 위해 서버에 요청
+                // 참고: 클라이언트에서 직접 HttpOnly 쿠키를 설정할 수 없으므로
+                // 서버에 요청하여 쿠키를 설정해야 함
+                fetch('/api/auth/set-refresh-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ refreshToken: refreshToken }),
+                    credentials: 'include' // 쿠키를 포함하기 위해 필요
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('리프레시 토큰이 안전하게 쿠키에 저장되었습니다.');
+                    } else {
+                        console.error('리프레시 토큰 쿠키 설정 실패:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('리프레시 토큰 저장 중 오류:', error);
+                })
+                .finally(() => {
+                    // 사용자 인증 상태 설정
+                    localStorage.setItem('isAuthenticated', 'true');
+                    
+                    console.log('로그인 성공! 토큰이 저장되었습니다.');
+                    
+                    // 메인 페이지로 리다이렉트
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                });
             } else {
                 // 토큰이 없는 경우 처리
                 errorContainer.style.display = 'block';
                 errorMessageElement.textContent = '로그인 정보를 가져올 수 없습니다.';
-                console.error('액세스 토큰이 없습니다.');
+                console.error('토큰이 없습니다.');
                 console.error('URL 파라미터:', Object.fromEntries(urlParams.entries()));
                 
                 // 복구 시도 버튼 설정

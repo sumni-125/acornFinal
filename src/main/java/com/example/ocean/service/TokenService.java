@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -31,9 +30,6 @@ public class TokenService {
     
     @Value("${app.jwt.expiration}")
     private int jwtExpirationInMs;
-    
-    @Value("${app.jwt.refresh-expiration}")
-    private int refreshTokenValidityInMs;
 
     @Transactional
     public TokenResponse createTokens(String identifier) {
@@ -45,26 +41,21 @@ public class TokenService {
         String accessToken = jwtTokenProvider.createToken(identifier);
         String refreshToken = jwtTokenProvider.createRefreshToken();
 
-        // 토큰 만료 시간 계산 (초 단위로 변환)
-        LocalDateTime expiryDate = LocalDateTime.now().plusSeconds(refreshTokenValidityInMs / 1000);
+        // 토큰 만료 시간 계산
+        Date expiryDate = jwtTokenProvider.getExpirationDateFromToken(refreshToken);
+        LocalDateTime tokenExpiresAt = expiryDate.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
 
         // 기존 토큰이 있으면 업데이트, 없으면 새로 생성
-        Optional<UserTokens> existingTokens = userTokensRepository.findByUser(user);
-        UserTokens userTokens;
-        
-        if (existingTokens.isPresent()) {
-            userTokens = existingTokens.get();
-            userTokens.setRefreshToken(refreshToken);
-            userTokens.setExpiryDate(expiryDate);
-            userTokens.setUsername(identifier);
-        } else {
-            userTokens = UserTokens.builder()
-                    .user(user)
-                    .refreshToken(refreshToken)
-                    .expiryDate(expiryDate)
-                    .username(identifier)
-                    .build();
-        }
+        UserTokens userTokens = userTokensRepository.findById(user.getUserCode())
+                .orElse(UserTokens.builder()
+                        .user(user)
+                        .build());
+
+        userTokens.setAccessToken(accessToken);
+        userTokens.setRefreshToken(refreshToken);
+        userTokens.setTokenExpiresAt(tokenExpiresAt);
 
         userTokensRepository.save(userTokens);
 
@@ -104,22 +95,25 @@ public class TokenService {
     // 로그아웃 시 토큰 무효화
     @Transactional
     public void logout(String userCode) {
-        User user = userRepository.findByUserCode(userCode)
-                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
-                
-        userTokensRepository.findByUser(user).ifPresent(userTokens -> {
-            userTokensRepository.delete(userTokens);
-        });
+        UserTokens userTokens = userTokensRepository.findById(userCode)
+                .orElseThrow( () -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+            userTokens.setAccessToken(null);
+            userTokens.setRefreshToken(null);
+            userTokens.setTokenExpiresAt(null);
+            userTokensRepository.save(userTokens);
     }
 
     // 만료된 토큰을 스케줄링으로 정리
     @Scheduled(cron = "0 0 0 * * ?") // 매일 자정에 실행
     public void cleanupExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
-        List<UserTokens> expiredTokens = userTokensRepository.findByExpiryDateBefore(now);
+        List<UserTokens> expiredTokens = userTokensRepository.findByTokenExpiresAtBefore(now);
 
         for (UserTokens token : expiredTokens) {
-            userTokensRepository.delete(token);
+            token.setRefreshToken(null);
+            token.setAccessToken(null);
+            userTokensRepository.save(token);
         }
 
         log.info("만료된 토큰 {}개가 정리 되었습니다.", expiredTokens.size());
