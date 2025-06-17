@@ -59,6 +59,9 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
 
+                        // 로그인 페이지 설정 (OAuth2 인증 시작 전에 보여줄 페이지)
+                        .loginPage("/login")
+                        
                         // 모든 처리 완료 후 JWT토큰 생성 , 프론트엔드로 리다이렉트
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         //실패 시 에러 메시지와 함꼐 리다이렉트

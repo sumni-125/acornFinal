@@ -16,11 +16,27 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OAuth2AuthenticationException.class)
     public ModelAndView handleOAuth2Exception(OAuth2AuthenticationException e, HttpServletRequest request) {
-        log.error("OAuth2 인증 오류 발생: {}", e.getMessage(), e);
+        log.error("OAuth2 인증 오류 발생");
+        log.error("요청 URL: {}", request.getRequestURL());
+        log.error("에러 메시지: {}", e.getMessage());
+        
+        if (e.getError() != null) {
+            log.error("OAuth2 에러 코드: {}", e.getError().getErrorCode());
+            log.error("OAuth2 에러 설명: {}", e.getError().getDescription());
+            log.error("OAuth2 에러 URI: {}", e.getError().getUri());
+        }
+        
+        log.error("전체 스택 트레이스:", e);
         
         ModelAndView mav = new ModelAndView();
         mav.setViewName("redirect:/oauth2/redirect");
         mav.addObject("error", e.getMessage());
+        mav.addObject("error_type", "OAuth2AuthenticationException");
+        
+        if (e.getError() != null) {
+            mav.addObject("error_code", e.getError().getErrorCode());
+            mav.addObject("error_description", e.getError().getDescription());
+        }
         
         return mav;
     }
