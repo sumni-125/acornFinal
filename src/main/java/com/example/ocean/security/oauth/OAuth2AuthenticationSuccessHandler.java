@@ -3,8 +3,10 @@ import com.example.ocean.dto.response.TokenResponse;
 import com.example.ocean.security.jwt.JwtTokenProvider;
 import com.example.ocean.service.TokenService;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Slf4j
 @Component
@@ -33,7 +36,26 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                          Authentication authentication) throws IOException, ServletException {
         try {
             log.info("OAuth2 인증 성공 - Principal: {}", authentication.getPrincipal());
-            String targetUrl = determineTargetUrl(request,response,authentication);
+            
+            // 세션 정보 로깅
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                log.debug("세션 ID: {}, 생성 시간: {}, 마지막 접근 시간: {}", 
+                          session.getId(), 
+                          session.getCreationTime(), 
+                          session.getLastAccessedTime());
+            } else {
+                log.warn("세션이 없습니다!");
+            }
+            
+            // 쿠키 정보 로깅
+            if (request.getCookies() != null) {
+                log.debug("요청 쿠키: {}", Arrays.toString(request.getCookies()));
+            } else {
+                log.warn("요청에 쿠키가 없습니다!");
+            }
+            
+            String targetUrl = determineTargetUrl(request, response, authentication);
             log.info("리다이렉트 URL: {}", targetUrl);
 
             if (response.isCommitted()) {
@@ -42,7 +64,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
 
             clearAuthenticationAttributes(request);
-            getRedirectStrategy().sendRedirect(request,response,targetUrl);
+            
+            // JSESSIONID 쿠키 설정 강화
+            Cookie sessionCookie = new Cookie("JSESSIONID", session != null ? session.getId() : "");
+            sessionCookie.setPath("/");
+            sessionCookie.setHttpOnly(true);
+            sessionCookie.setSecure(true);
+            sessionCookie.setAttribute("SameSite", "None");
+            response.addCookie(sessionCookie);
+            
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
             throw new ServletException("OAuth2 인증 성공 처리 중 오류", e);
@@ -78,7 +109,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .queryParam("refreshToken", tokenResponse.getRefreshToken())
                     .build().toUriString();
                     
-            log.info("최종 리다이렉트 URL 생성 완료");
+            log.info("최종 리다이렉트 URL 생성 완료: {}", targetUrl);
             return targetUrl;
         } catch (Exception e) {
             log.error("토큰 생성 중 오류 발생", e);

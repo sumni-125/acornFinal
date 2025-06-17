@@ -5,6 +5,7 @@ import com.example.ocean.security.oauth.OAuth2AuthenticationFailureHandler;
 import com.example.ocean.security.oauth.OAuth2AuthenticationSuccessHandler;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     // 의존성 주입 ( 우리 로직으로 인증 검증 하기 , 성공 시 핸들러 , 실패시 핸들러 )
@@ -26,7 +28,9 @@ public class SecurityConfig {
     
     @Bean
     public HttpSessionOAuth2AuthorizationRequestRepository authorizationRequestRepository() {
-        return new HttpSessionOAuth2AuthorizationRequestRepository();
+        HttpSessionOAuth2AuthorizationRequestRepository repository = new HttpSessionOAuth2AuthorizationRequestRepository();
+        log.debug("OAuth2 인증 요청 저장소 생성됨");
+        return repository;
     }
 
     @Bean
@@ -34,7 +38,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) //CSRF비활성화 JWT가 CSRF를 막아주는 기능을 함
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) //OAuth2 인증을 위해 세션 필요
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS) // 항상 세션 생성
                 )
                 .authorizeHttpRequests(auth -> auth
                         // apu/auth/ :로그인,회원가입은 인증없이 접근 가능 , /oauth2/** : oauth2 callback URL
