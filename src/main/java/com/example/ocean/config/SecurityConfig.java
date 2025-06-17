@@ -62,8 +62,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().migrateSession()
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false)
                 )
                 .securityContext(securityContext -> securityContext
                         .securityContextRepository(securityContextRepository())

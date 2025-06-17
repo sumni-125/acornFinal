@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.UUID;
@@ -29,72 +31,39 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     // app.frontend.url 값이 없으면 http://localhost:8080 로 설정
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
-    
+
     @Override
     public void onAuthenticationFailure(HttpServletRequest request,
                                         HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
         log.error("OAuth2 인증 실패: {}", exception.getMessage(), exception);
-        
-        // 세션 정보 로깅
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            log.debug("세션 ID: {}, 생성 시간: {}, 마지막 접근 시간: {}", 
-                      session.getId(), 
-                      session.getCreationTime(), 
-                      session.getLastAccessedTime());
-        } else {
-            log.warn("세션이 없습니다!");
-        }
-        
-        // 쿠키 정보 로깅
-        if (request.getCookies() != null) {
-            log.debug("요청 쿠키: {}", Arrays.toString(request.getCookies()));
-        } else {
-            log.warn("요청에 쿠키가 없습니다!");
-        }
-        
+
         // 오류 정보 추출
         String errorCode = "unknown_error";
         String errorMessage = exception.getMessage();
-        String errorType = exception.getClass().getSimpleName();
-        boolean isAuthorizationRequestNotFound = false;
-        
+
         if (exception instanceof OAuth2AuthenticationException) {
             OAuth2AuthenticationException oauth2Exception = (OAuth2AuthenticationException) exception;
             OAuth2Error oauth2Error = oauth2Exception.getError();
             errorCode = oauth2Error.getErrorCode();
-            
-            // authorization_request_not_found 오류 처리
-            if ("authorization_request_not_found".equals(errorCode)) {
-                log.warn("인증 요청을 찾을 수 없음 - 세션 문제일 수 있음");
-                isAuthorizationRequestNotFound = true;
-                
-                // 세션 쿠키 설정 확인
-                response.addHeader("Set-Cookie", "JSESSIONID=" + (session != null ? session.getId() : "new") + 
-                                  "; Path=/; HttpOnly; SameSite=None; Secure");
-            }
+            errorMessage = oauth2Error.getDescription() != null ?
+                    oauth2Error.getDescription() : oauth2Error.getErrorCode();
         }
-        
+
+        // URL 인코딩 처리 (공백 제거)
+        String encodedMessage = URLEncoder.encode(errorMessage.trim(), StandardCharsets.UTF_8);
+
         // 리다이렉트 URL 생성
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                 .path("/oauth2/redirect")
                 .queryParam("error", errorCode)
-                .queryParam("message", errorMessage)
-                .queryParam("error_type", errorType)
-                // 자동 복구 시도 파라미터 추가
-                .queryParam("recovery", isAuthorizationRequestNotFound)
-                .build().toUriString();
-        
+                .queryParam("message", encodedMessage)
+                .build()
+                .encode()  // URL 인코딩
+                .toUriString();
+
         log.debug("인증 실패 후 리다이렉트 URL: {}", targetUrl);
-        
-        // 리다이렉트 전에 응답 헤더 설정
-        if (isAuthorizationRequestNotFound) {
-            // SameSite=None 설정을 위한 쿠키 헤더 추가
-            response.setHeader("Set-Cookie", "JSESSIONID=" + (session != null ? session.getId() : "new") + 
-                              "; Path=/; HttpOnly; SameSite=None; Secure");
-        }
-        
+
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
     

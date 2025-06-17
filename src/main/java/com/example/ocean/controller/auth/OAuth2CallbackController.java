@@ -1,11 +1,15 @@
 package com.example.ocean.controller.auth;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Arrays;
 import java.util.Map;
 
 @Slf4j
@@ -21,31 +25,28 @@ public class OAuth2CallbackController {
             @PathVariable String provider,
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
-            @RequestParam(required = false) String error,
-            @RequestParam(name = "error_description", required = false) String errorDescription,
-            HttpServletRequest request) {
-        
+            HttpServletRequest request,
+            HttpServletResponse response) {
+
         log.info("OAuth2 콜백 수신 - Provider: {}", provider);
-        log.info("요청 URL: {}", request.getRequestURL());
-        log.info("쿼리 스트링: {}", request.getQueryString());
-        
-        if (error != null) {
-            log.error("OAuth2 콜백 에러 - Provider: {}", provider);
-            log.error("에러 코드: {}", error);
-            log.error("에러 설명: {}", errorDescription);
-            
-            // 에러 페이지로 리다이렉트
-            return "redirect:/oauth2/redirect?error=" + error + 
-                   "&error_description=" + (errorDescription != null ? errorDescription : "");
+        log.info("세션 ID: {}", request.getSession().getId());
+        log.info("쿠키: {}", Arrays.toString(request.getCookies()));
+
+        // 세션 쿠키가 없으면 생성
+        if (request.getCookies() == null ||
+                Arrays.stream(request.getCookies()).noneMatch(c -> "JSESSIONID".equals(c.getName()))) {
+
+            Cookie sessionCookie = new Cookie("JSESSIONID", request.getSession().getId());
+            sessionCookie.setPath("/");
+            sessionCookie.setHttpOnly(true);
+            sessionCookie.setSecure(true);
+            sessionCookie.setDomain("ocean-app.click");
+            response.addCookie(sessionCookie);
+
+            log.info("세션 쿠키 생성: {}", sessionCookie.getValue());
         }
-        
-        if (code != null) {
-            log.info("인가 코드 수신 성공 - Provider: {}", provider);
-            log.info("State: {}", state);
-            // Spring Security가 이 코드를 사용하여 액세스 토큰을 요청합니다
-        }
-        
-        // Spring Security의 기본 처리 흐름으로 계속 진행
+
+        // Spring Security가 처리하도록 null 반환
         return null;
     }
 }
