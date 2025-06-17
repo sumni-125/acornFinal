@@ -28,7 +28,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) //CSRF비활성화 JWT가 CSRF를 막아주는 기능을 함
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) //서버에 세션 비활성화 jwt토큰 기능 사용시 필수 항목
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) //OAuth2 인증을 위해 세션 필요
                 )
                 .authorizeHttpRequests(auth -> auth
                         // apu/auth/ :로그인,회원가입은 인증없이 접근 가능 , /oauth2/** : oauth2 callback URL
