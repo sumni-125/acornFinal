@@ -29,6 +29,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     //Spring @Value는 프로 퍼티 값을 주입 받을 떄 사용 함.
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
+    
+    @Value("${app.jwt.refresh-expiration}")
+    private int refreshTokenValidityInMs;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -57,7 +60,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 log.warn("요청에 쿠키가 없습니다!");
             }
             
-            String targetUrl = determineTargetUrl(request, response, authentication);
+            // 토큰 생성 및 리다이렉트 URL 생성
+            TokenAndUrlResult result = determineTargetUrlAndCreateTokens(request, response, authentication);
+            String targetUrl = result.getTargetUrl();
+            
             log.info("리다이렉트 URL: {}", targetUrl);
 
             if (response.isCommitted()) {
@@ -70,11 +76,49 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 세션 ID를 쿠키로 설정
             addSessionCookie(request, response, session);
             
+            // 리프레시 토큰을 HttpOnly 쿠키로 설정 (직접 설정)
+            if (result.getRefreshToken() != null) {
+                addRefreshTokenCookie(request, response, result.getRefreshToken());
+            }
+            
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
             throw new ServletException("OAuth2 인증 성공 처리 중 오류", e);
         }
+    }
+    
+    /**
+     * 리프레시 토큰을 HttpOnly 쿠키로 설정하는 메서드
+     */
+    private void addRefreshTokenCookie(HttpServletRequest request, HttpServletResponse response, String refreshToken) {
+        // 리프레시 토큰 쿠키 설정
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true); // JavaScript에서 접근 불가능
+        refreshTokenCookie.setPath("/");      // 전체 애플리케이션에서 접근 가능
+        
+        // HTTPS 환경에서는 Secure 속성 활성화
+        String serverName = request.getServerName();
+        if (serverName != null && !serverName.contains("localhost")) {
+            refreshTokenCookie.setSecure(true);
+        }
+        
+        // 쿠키 만료 시간 설정 (리프레시 토큰과 동일하게)
+        refreshTokenCookie.setMaxAge(refreshTokenValidityInMs / 1000); // 초 단위로 변환
+        
+        // SameSite 속성 설정 (최신 브라우저에서 지원)
+        String sameSiteAttribute = "None";
+        String cookieHeader = String.format("%s=%s; Path=%s; Max-Age=%d; HttpOnly; SameSite=%s%s", 
+                               refreshTokenCookie.getName(), 
+                               refreshTokenCookie.getValue(),
+                               refreshTokenCookie.getPath(),
+                               refreshTokenCookie.getMaxAge(),
+                               sameSiteAttribute,
+                               refreshTokenCookie.getSecure() ? "; Secure" : "");
+        
+        response.setHeader("Set-Cookie", cookieHeader);
+        
+        log.debug("리프레시 토큰 쿠키 설정 완료 - 만료 시간: {} 초", refreshTokenCookie.getMaxAge());
     }
     
     /**
@@ -125,8 +169,29 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         
         log.debug("세션 쿠키 설정 완료 - 세션 ID: {}, 기존 쿠키 있음: {}", sessionId, hasSessionCookie);
     }
+    
+    /**
+     * 토큰 생성 및 리다이렉트 URL을 생성하는 메서드
+     */
+    private static class TokenAndUrlResult {
+        private final String targetUrl;
+        private final String refreshToken;
+        
+        public TokenAndUrlResult(String targetUrl, String refreshToken) {
+            this.targetUrl = targetUrl;
+            this.refreshToken = refreshToken;
+        }
+        
+        public String getTargetUrl() {
+            return targetUrl;
+        }
+        
+        public String getRefreshToken() {
+            return refreshToken;
+        }
+    }
 
-    protected String determineTargetUrl(HttpServletRequest request,
+    protected TokenAndUrlResult determineTargetUrlAndCreateTokens(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) {
         try {
@@ -149,22 +214,24 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             
             log.info("토큰 생성 완료 - AccessToken 길이: {}", tokenResponse.getAccessToken().length());
 
+            // 리프레시 토큰은 쿠키로 설정하고, 액세스 토큰만 URL 파라미터로 전달
             String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                     .path("/")
                     .queryParam("token", tokenResponse.getAccessToken())
-                    .queryParam("refreshToken", tokenResponse.getRefreshToken())
+                    // 리프레시 토큰은 URL에 포함하지 않음
                     .build().toUriString();
                     
             log.info("최종 리다이렉트 URL 생성 완료: {}", targetUrl);
-            return targetUrl;
+            return new TokenAndUrlResult(targetUrl, tokenResponse.getRefreshToken());
         } catch (Exception e) {
             log.error("토큰 생성 중 오류 발생", e);
             // 임시로 에러 페이지로 리다이렉트
-            return UriComponentsBuilder.fromUriString(frontendUrl)
+            String errorUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                     .path("/oauth2/redirect")
                     .queryParam("error", "token_creation_failed")
                     .queryParam("message", e.getMessage())
                     .build().toUriString();
+            return new TokenAndUrlResult(errorUrl, null);
         }
     }
 }
