@@ -7,8 +7,12 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 @Slf4j
 @ControllerAdvice
@@ -42,11 +46,26 @@ public class GlobalExceptionHandler {
     }
     
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGenericException(Exception e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public String handleGenericException(Exception e, HttpServletRequest request, Model model) {
         log.error("일반 오류 발생 - URL: {}, 오류: {}", request.getRequestURL(), e.getMessage(), e);
         
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        // 에러 정보를 모델에 추가
+        model.addAttribute("error", e.getClass().getSimpleName());
+        model.addAttribute("errorMessage", e.getMessage());
+        model.addAttribute("exception", e.toString());
+        
+        // 스택 트레이스를 문자열로 변환
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        model.addAttribute("trace", sw.toString());
+        
+        // OAuth2 관련 에러인 경우 특별 처리
+        if (request.getRequestURI().contains("oauth2") || request.getRequestURI().contains("login")) {
+            return "error/oauth-error";
+        }
+        
+        return "error";
     }
 }
