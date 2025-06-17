@@ -45,6 +45,7 @@ public class SecurityConfig {
                 )
                 // Ex) 구글 소셜 로그인 시 URL : /oauth2/authorize/google , 구글 로그인 페이지로 리다이렉트
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login") // 로그인 페이지 설정
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/oauth2/authorize") // 인증 요청 시작점
                                 .authorizationRequestRepository(authorizationRequestRepository())
