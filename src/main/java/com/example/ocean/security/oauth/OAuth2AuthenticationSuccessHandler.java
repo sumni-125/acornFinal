@@ -29,6 +29,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     //Spring @Value는 프로 퍼티 값을 주입 받을 떄 사용 함.
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
+    
+    @Value("${app.jwt.refresh-expiration}")
+    private int refreshTokenValidityInMs;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -148,11 +151,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
             
             log.info("토큰 생성 완료 - AccessToken 길이: {}", tokenResponse.getAccessToken().length());
+            
+            // 리프레시 토큰을 HttpOnly 쿠키로 설정
+            setRefreshTokenCookie(request, response, tokenResponse.getRefreshToken());
 
             String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                     .path("/")
-                    .queryParam("token", tokenResponse.getAccessToken())
-                    .queryParam("refreshToken", tokenResponse.getRefreshToken())
+                    // 리프레시 토큰은 쿠키로 설정했으므로 URL 파라미터에서 제거
+                    // .queryParam("refreshToken", tokenResponse.getRefreshToken())
                     .build().toUriString();
                     
             log.info("최종 리다이렉트 URL 생성 완료: {}", targetUrl);
@@ -166,5 +172,46 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .queryParam("message", e.getMessage())
                     .build().toUriString();
         }
+    }
+    
+    /**
+     * 리프레시 토큰을 HttpOnly 쿠키로 설정하는 메서드
+     */
+    private void setRefreshTokenCookie(HttpServletRequest request, HttpServletResponse response, String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            log.warn("리프레시 토큰이 null이거나 비어 있어 쿠키를 설정할 수 없습니다.");
+            return;
+        }
+        
+        log.debug("리프레시 토큰 쿠키 설정 시작 - 토큰 길이: {}", refreshToken.length());
+        
+        // 리프레시 토큰 쿠키 설정
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true); // JavaScript에서 접근 불가능
+        refreshTokenCookie.setPath("/");      // 전체 애플리케이션에서 접근 가능
+        
+        // 쿠키 만료 시간 설정 (리프레시 토큰과 동일하게)
+        refreshTokenCookie.setMaxAge(refreshTokenValidityInMs / 1000); // 초 단위로 변환
+        
+        // HTTPS 환경에서는 Secure 속성 활성화
+        String serverName = request.getServerName();
+        if (serverName != null && !serverName.contains("localhost")) {
+            refreshTokenCookie.setSecure(true);
+            log.debug("프로덕션 환경에서 secure 쿠키 설정");
+        }
+        
+        // SameSite 속성 설정 (최신 브라우저에서 지원)
+        String sameSiteAttribute = "None";
+        String cookieHeader = String.format("%s=%s; Path=%s; Max-Age=%d; HttpOnly; SameSite=%s%s", 
+                               refreshTokenCookie.getName(), 
+                               refreshTokenCookie.getValue(),
+                               refreshTokenCookie.getPath(),
+                               refreshTokenCookie.getMaxAge(),
+                               sameSiteAttribute,
+                               refreshTokenCookie.getSecure() ? "; Secure" : "");
+        
+        response.addHeader("Set-Cookie", cookieHeader);
+        
+        log.debug("리프레시 토큰 쿠키 설정 완료");
     }
 }
