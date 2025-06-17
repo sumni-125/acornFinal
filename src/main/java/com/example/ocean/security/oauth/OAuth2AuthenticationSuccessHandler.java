@@ -135,30 +135,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             log.info("토큰 생성 시작");
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            log.info("UserPrincipal - Username: {}, UserCode: {}", userPrincipal.getUsername(), userPrincipal.getUserCode());
-            
-            if (tokenService == null) {
-                log.error("TokenService is null!");
-                throw new IllegalStateException("TokenService is not initialized");
-            }
-            
+
             // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
             TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getUsername());
-            
-            if (tokenResponse == null) {
-                log.error("TokenResponse is null!");
-                throw new IllegalStateException("Failed to create tokens");
-            }
-            
-            log.info("토큰 생성 완료 - AccessToken 길이: {}", tokenResponse.getAccessToken().length());
+
             
             // 리프레시 토큰을 HttpOnly 쿠키로 설정
             setRefreshTokenCookie(request, response, tokenResponse.getRefreshToken());
 
             String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
-                    .path("/")
-                    // 리프레시 토큰은 쿠키로 설정했으므로 URL 파라미터에서 제거
-                    // .queryParam("refreshToken", tokenResponse.getRefreshToken())
+                    .path("/oauth2/redirect")
+                    .queryParam("token",tokenResponse.getAccessToken()) //엑세스 토큰 추가
                     .build().toUriString();
                     
             log.info("최종 리다이렉트 URL 생성 완료: {}", targetUrl);
@@ -173,45 +160,29 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build().toUriString();
         }
     }
-    
-    /**
-     * 리프레시 토큰을 HttpOnly 쿠키로 설정하는 메서드
-     */
+
     private void setRefreshTokenCookie(HttpServletRequest request, HttpServletResponse response, String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             log.warn("리프레시 토큰이 null이거나 비어 있어 쿠키를 설정할 수 없습니다.");
             return;
         }
-        
+
         log.debug("리프레시 토큰 쿠키 설정 시작 - 토큰 길이: {}", refreshToken.length());
-        
-        // 리프레시 토큰 쿠키 설정
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true); // JavaScript에서 접근 불가능
-        refreshTokenCookie.setPath("/");      // 전체 애플리케이션에서 접근 가능
-        
-        // 쿠키 만료 시간 설정 (리프레시 토큰과 동일하게)
-        refreshTokenCookie.setMaxAge(refreshTokenValidityInMs / 1000); // 초 단위로 변환
-        
-        // HTTPS 환경에서는 Secure 속성 활성화
+
+        // 개발 환경과 프로덕션 환경 구분
         String serverName = request.getServerName();
-        if (serverName != null && !serverName.contains("localhost")) {
-            refreshTokenCookie.setSecure(true);
-            log.debug("프로덕션 환경에서 secure 쿠키 설정");
-        }
-        
-        // SameSite 속성 설정 (최신 브라우저에서 지원)
-        String sameSiteAttribute = "None";
-        String cookieHeader = String.format("%s=%s; Path=%s; Max-Age=%d; HttpOnly; SameSite=%s%s", 
-                               refreshTokenCookie.getName(), 
-                               refreshTokenCookie.getValue(),
-                               refreshTokenCookie.getPath(),
-                               refreshTokenCookie.getMaxAge(),
-                               sameSiteAttribute,
-                               refreshTokenCookie.getSecure() ? "; Secure" : "");
-        
+        boolean isProduction = serverName != null && !serverName.contains("localhost");
+
+        // 쿠키 헤더 직접 설정 (SameSite 속성 포함)
+        String cookieHeader = String.format(
+                "refreshToken=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=%s%s",
+                refreshToken,
+                refreshTokenValidityInMs / 1000,
+                isProduction ? "None" : "Lax",  // 로컬에서는 Lax, 프로덕션에서는 None
+                isProduction ? "; Secure" : ""   // 프로덕션에서만 Secure
+        );
+
         response.addHeader("Set-Cookie", cookieHeader);
-        
-        log.debug("리프레시 토큰 쿠키 설정 완료");
+        log.info("리프레시 토큰 쿠키 설정 완료 - 프로덕션: {}", isProduction);
     }
 }

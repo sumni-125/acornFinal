@@ -791,19 +791,19 @@
                 checkAuthStatus();
             }
         }
-        
+
         // 인증 상태 확인 및 UI 업데이트
         function checkAuthStatus() {
             const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
             const accessToken = localStorage.getItem('accessToken');
             const userMenu = document.getElementById('userMenu');
             const loginButton = document.getElementById('loginButton');
-            
+
             if (isAuthenticated && accessToken) {
                 // 로그인 상태
                 userMenu.style.display = 'flex';
                 loginButton.style.display = 'none';
-                
+
                 // 사용자 정보 가져오기
                 fetchUserInfo(accessToken);
             } else {
@@ -812,6 +812,11 @@
                 loginButton.style.display = 'block';
             }
         }
+
+        // 페이지 로드 시 인증 상태만 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+       });
         
         // 사용자 정보 가져오기
         function fetchUserInfo(token) {

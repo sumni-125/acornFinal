@@ -20,7 +20,7 @@ import org.springframework.security.web.context.DelegatingSecurityContextReposit
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -29,7 +29,6 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import java.util.Arrays;
 import java.util.List;
 
-// TODO : 애플리케이션의 인증(Authentication)과  인가(Authorization)를 담당
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -50,34 +49,39 @@ public class SecurityConfig {
     private JwtTokenProvider jwtTokenProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
-        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspector);
+    public SecurityContextRepository securityContextRepository() {
+        return new DelegatingSecurityContextRepository(
+                new HttpSessionSecurityContextRepository(),
+                new RequestAttributeSecurityContextRepository()
+        );
+    }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 세션 관리 설정
                 .sessionManagement(session -> session
-                        // 항상 세션 생성
                         .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
-                        // 세션 고정 보호
                         .sessionFixation().migrateSession()
                 )
-                // 보안 컨텍스트 저장소 설정
                 .securityContext(securityContext -> securityContext
                         .securityContextRepository(securityContextRepository())
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(mvcMatcherBuilder.pattern("/api/auth/**")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/login")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/oauth2/**")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/oauth2-redirect.html")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/error")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/css/**")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/js/**")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/images/**")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/favicon.ico")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern("/oauth2-debug")).permitAll()
+                        // 정적 리소스는 Spring Boot의 기본 경로 사용
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+
+                        // 메인 페이지
+                        .requestMatchers("/", "/index", "/main/**").permitAll()
+
+                        // API 및 인증 관련
+                        .requestMatchers("/api/auth/**", "/login", "/oauth2/**").permitAll()
+                        .requestMatchers("/oauth2-redirect.html", "/error").permitAll()
+
+                        // 디버그 및 모니터링
+                        .requestMatchers("/oauth2-debug", "/actuator/health").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -87,7 +91,6 @@ public class SecurityConfig {
                         )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
-                        // OAuth2 인증 요청 저장소 설정
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/oauth2/authorize")
                         )
@@ -99,23 +102,19 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public SecurityContextRepository securityContextRepository() {
-        return new DelegatingSecurityContextRepository(
-                new HttpSessionSecurityContextRepository(),
-                new RequestAttributeSecurityContextRepository()
-        );
-    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+
+        // allowedOriginPatterns를 사용하여 모든 origin 허용
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
