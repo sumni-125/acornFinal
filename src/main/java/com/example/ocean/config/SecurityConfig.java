@@ -86,7 +86,6 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
-                        .defaultSuccessUrl("/oauth2/redirect", false)
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
@@ -96,7 +95,7 @@ public class SecurityConfig {
                                 .baseUri("/oauth2/authorize")
                         )
                         .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/login/oauth2/callback/*")
+                                .baseUri("/login/oauth2/code/*")  // 이 부분 확인!
                         )
                 );
 
