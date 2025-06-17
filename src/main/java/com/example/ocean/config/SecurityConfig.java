@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
 // TODO : 애플리케이션의 인증(Authentication)과  인가(Authorization)를 담당
@@ -22,6 +23,11 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    
+    @Bean
+    public HttpSessionOAuth2AuthorizationRequestRepository authorizationRequestRepository() {
+        return new HttpSessionOAuth2AuthorizationRequestRepository();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -41,6 +47,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/oauth2/authorize") // 인증 요청 시작점
+                                .authorizationRequestRepository(authorizationRequestRepository())
                         )
                         // 카카오 및 구글 인증 후 리다이렉트 URI
                         .redirectionEndpoint(redirection -> redirection
