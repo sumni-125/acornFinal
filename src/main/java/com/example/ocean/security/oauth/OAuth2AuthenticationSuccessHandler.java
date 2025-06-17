@@ -31,29 +31,42 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request,
                                          HttpServletResponse response,
                                          Authentication authentication) throws IOException, ServletException {
-        String targetUrl = determineTargetUrl(request,response,authentication);
+        try {
+            log.info("OAuth2 인증 성공 - Principal: {}", authentication.getPrincipal());
+            String targetUrl = determineTargetUrl(request,response,authentication);
+            log.info("리다이렉트 URL: {}", targetUrl);
 
-        if (response.isCommitted()) {
-            logger.debug("응답이 커밋 됐습니다." + targetUrl + " 리다이렉트 할 수 없습니다.");
-            return;
+            if (response.isCommitted()) {
+                logger.debug("응답이 커밋 됐습니다." + targetUrl + " 리다이렉트 할 수 없습니다.");
+                return;
+            }
+
+            clearAuthenticationAttributes(request);
+            getRedirectStrategy().sendRedirect(request,response,targetUrl);
+        } catch (Exception e) {
+            log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
+            throw new ServletException("OAuth2 인증 성공 처리 중 오류", e);
         }
-
-        clearAuthenticationAttributes(request);
-        getRedirectStrategy().sendRedirect(request,response,targetUrl);
     }
 
     protected String determineTargetUrl(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) {
+        log.info("토큰 생성 시작");
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        log.info("UserPrincipal - Username: {}, UserCode: {}", userPrincipal.getUsername(), userPrincipal.getUserCode());
         
         // 토큰 서비스를 통해 액세스 토큰과 리프레시 토큰 생성
         TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getUsername());
+        log.info("토큰 생성 완료 - AccessToken 길이: {}", tokenResponse.getAccessToken().length());
 
-        return UriComponentsBuilder.fromUriString(frontendUrl)
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                 .path("/")
                 .queryParam("token", tokenResponse.getAccessToken())
                 .queryParam("refreshToken", tokenResponse.getRefreshToken())
                 .build().toUriString();
+                
+        log.info("최종 리다이렉트 URL 생성 완료");
+        return targetUrl;
     }
 }
