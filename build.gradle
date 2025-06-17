@@ -58,6 +58,9 @@ dependencies {
 
 	// Spring Boot Actuator (health check용)
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	
+	// Spring Session
+	implementation 'org.springframework.session:spring-session-core'
 }
 
 tasks.named('test') {
