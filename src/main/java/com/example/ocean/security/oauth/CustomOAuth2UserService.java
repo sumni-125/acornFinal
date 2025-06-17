@@ -42,11 +42,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User createUser(OAuth2UserInfo oAuth2UserInfo,String provider) {
+        // 이메일이 없는 경우 대체 이메일 생성
+        String email = oAuth2UserInfo.getEmail();
+        if (email == null || email.isEmpty()) {
+            email = oAuth2UserInfo.getId() + "@" + provider.toLowerCase() + ".oauth";
+        }
+        
         User user = User.builder()
                 .userCode(UUID.randomUUID().toString())
                 .userId(oAuth2UserInfo.getId())
                 .userName(oAuth2UserInfo.getName())
-                .email(oAuth2UserInfo.getEmail())
+                .email(email)
                 .userProfileImg(oAuth2UserInfo.getImageUrl())
                 .provider(provider.toUpperCase())
                 .isActive(true)
