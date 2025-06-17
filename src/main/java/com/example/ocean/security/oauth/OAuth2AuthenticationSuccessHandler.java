@@ -45,7 +45,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                           session.getCreationTime(), 
                           session.getLastAccessedTime());
             } else {
-                log.warn("세션이 없습니다!");
+                log.warn("세션이 없습니다! 새 세션을 생성합니다.");
+                session = request.getSession(true);
+                log.debug("새 세션 생성됨 - ID: {}", session.getId());
             }
             
             // 쿠키 정보 로깅
@@ -65,19 +67,63 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             clearAuthenticationAttributes(request);
             
-            // JSESSIONID 쿠키 설정 강화
-            Cookie sessionCookie = new Cookie("JSESSIONID", session != null ? session.getId() : "");
-            sessionCookie.setPath("/");
-            sessionCookie.setHttpOnly(true);
-            sessionCookie.setSecure(true);
-            sessionCookie.setAttribute("SameSite", "None");
-            response.addCookie(sessionCookie);
+            // 세션 ID를 쿠키로 설정
+            addSessionCookie(request, response, session);
             
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
             throw new ServletException("OAuth2 인증 성공 처리 중 오류", e);
         }
+    }
+    
+    /**
+     * 세션 ID를 쿠키로 설정하는 메서드
+     */
+    private void addSessionCookie(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+        if (session == null) {
+            log.warn("세션이 null이므로 세션 쿠키를 설정할 수 없습니다.");
+            return;
+        }
+        
+        String sessionId = session.getId();
+        
+        // 기존 JSESSIONID 쿠키 확인
+        Cookie[] cookies = request.getCookies();
+        boolean hasSessionCookie = false;
+        
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("JSESSIONID".equals(cookie.getName())) {
+                    hasSessionCookie = true;
+                    log.debug("기존 JSESSIONID 쿠키 발견: {}", cookie.getValue());
+                    break;
+                }
+            }
+        }
+        
+        // 세션 쿠키 설정
+        Cookie sessionCookie = new Cookie("JSESSIONID", sessionId);
+        sessionCookie.setPath("/");
+        sessionCookie.setHttpOnly(true);
+        
+        // 프로덕션 환경에서는 secure=true로 설정
+        String serverName = request.getServerName();
+        if (serverName != null && !serverName.contains("localhost")) {
+            sessionCookie.setSecure(true);
+            log.debug("프로덕션 환경에서 secure 쿠키 설정");
+        }
+        
+        // SameSite 속성 설정 (최신 브라우저에서 지원)
+        // 참고: Java 서블릿 API에서는 SameSite 속성을 직접 지원하지 않으므로
+        // 헤더로 설정해야 함
+        response.setHeader("Set-Cookie", String.format("%s=%s; Path=%s; HttpOnly; SameSite=None; %s", 
+                           sessionCookie.getName(), 
+                           sessionCookie.getValue(), 
+                           sessionCookie.getPath(),
+                           sessionCookie.getSecure() ? "Secure" : ""));
+        
+        log.debug("세션 쿠키 설정 완료 - 세션 ID: {}, 기존 쿠키 있음: {}", sessionId, hasSessionCookie);
     }
 
     protected String determineTargetUrl(HttpServletRequest request,

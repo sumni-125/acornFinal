@@ -51,6 +51,34 @@
             font-size: 16px;
             color: rgba(255, 255, 255, 0.8);
         }
+        
+        .error-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .error-message {
+            color: #ff9999;
+            margin-bottom: 15px;
+        }
+        
+        .retry-button {
+            background: #2d5a87;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .retry-button:hover {
+            background: #3d6a97;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +86,11 @@
         <div class="loading-spinner"></div>
         <h1 class="loading-title">로그인 처리 중</h1>
         <p class="loading-message">잠시만 기다려 주세요...</p>
+        
+        <div class="error-container" id="errorContainer">
+            <p class="error-message" id="errorMessage"></p>
+            <button class="retry-button" id="retryButton">다시 시도</button>
+        </div>
     </div>
 
     <script>
@@ -68,6 +101,8 @@
             const refreshToken = urlParams.get('refreshToken');
             const error = urlParams.get('error');
             const errorType = urlParams.get('error_type');
+            const recovery = urlParams.get('recovery');
+            const state = urlParams.get('state');
             
             // 디버깅을 위한 콘솔 로그
             console.log('OAuth2 리다이렉트 정보:');
@@ -76,18 +111,21 @@
             console.log('리프레시 토큰:', refreshToken ? '있음' : '없음');
             console.log('에러:', error);
             console.log('에러 타입:', errorType);
+            console.log('복구 시도:', recovery);
+            console.log('상태:', state);
+            
+            // 세션 상태 확인을 위한 쿠키 검사
+            const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+            console.log('현재 쿠키:', cookies);
+            
+            const errorContainer = document.getElementById('errorContainer');
+            const errorMessageElement = document.getElementById('errorMessage');
+            const retryButton = document.getElementById('retryButton');
             
             if (error) {
                 // 에러가 있는 경우 처리
-                const errorMessage = `
-로그인 중 오류가 발생했습니다.
-
-에러: ${error}
-타입: ${errorType || '알 수 없음'}
-
-자세한 내용은 브라우저 콘솔을 확인하세요.
-                `;
-                alert(errorMessage);
+                errorContainer.style.display = 'block';
+                errorMessageElement.textContent = `로그인 중 오류가 발생했습니다: ${error} (${errorType || '알 수 없음'})`;
                 
                 // 개발자 도구 콘솔에 더 자세한 정보 출력
                 console.error('OAuth2 인증 에러 상세:');
@@ -95,13 +133,28 @@
                 console.error('에러 타입:', errorType);
                 console.error('전체 URL 파라미터:', Object.fromEntries(urlParams.entries()));
                 
-                setTimeout(() => {
+                // 복구 시도 버튼 설정
+                retryButton.addEventListener('click', function() {
+                    // 세션 문제 해결을 위해 로그인 페이지로 이동하기 전에 쿠키 확인
+                    document.cookie = "JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    
+                    // 로그인 페이지로 리다이렉트
                     window.location.href = '/login';
-                }, 2000);
-                return;
-            }
-            
-            if (token && refreshToken) {
+                });
+                
+                // 자동 복구 시도 (recovery 파라미터가 있는 경우)
+                if (recovery === 'true') {
+                    console.log('자동 복구 시도 중...');
+                    // 5초 후 자동으로 다시 시도
+                    setTimeout(() => {
+                        // 세션 문제 해결을 위해 로그인 페이지로 이동하기 전에 쿠키 확인
+                        document.cookie = "JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                        
+                        // 로그인 페이지로 리다이렉트
+                        window.location.href = '/login';
+                    }, 5000);
+                }
+            } else if (token && refreshToken) {
                 // 토큰을 로컬 스토리지에 저장
                 localStorage.setItem('accessToken', token);
                 localStorage.setItem('refreshToken', refreshToken);
@@ -117,13 +170,16 @@
                 }, 1000);
             } else {
                 // 토큰이 없는 경우 처리
+                errorContainer.style.display = 'block';
+                errorMessageElement.textContent = '로그인 정보를 가져올 수 없습니다.';
                 console.error('토큰이 없습니다.');
                 console.error('URL 파라미터:', Object.fromEntries(urlParams.entries()));
                 
-                alert('로그인 정보를 가져올 수 없습니다. 콘솔을 확인하세요.');
-                setTimeout(() => {
+                // 복구 시도 버튼 설정
+                retryButton.addEventListener('click', function() {
+                    // 로그인 페이지로 리다이렉트
                     window.location.href = '/login';
-                }, 2000);
+                });
             }
         });
     </script>

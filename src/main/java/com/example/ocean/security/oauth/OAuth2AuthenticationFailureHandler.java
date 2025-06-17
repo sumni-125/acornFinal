@@ -16,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -53,8 +54,8 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
         
         // 세션에서 저장된 인증 요청 정보 확인
-        if (request.getSession(false) != null) {
-            HttpSession session = request.getSession();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
             log.error("세션 ID: {}", session.getId());
             log.debug("세션 속성들:");
             Enumeration<String> attributeNames = session.getAttributeNames();
@@ -74,9 +75,14 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             errorMessage = "OAuth2 인증 중 오류가 발생했습니다.";
         }
         
+        // 에러 정보에 세션 상태 추가
+        String errorDetail = errorMessage + " (세션 상태: " + (session != null ? "있음" : "없음") + ")";
+        
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("error", errorMessage.trim())
+                .queryParam("error", errorDetail.trim())
                 .queryParam("error_type", exception.getClass().getSimpleName())
+                .queryParam("recovery", "true") // 복구 시도 플래그 추가
+                .queryParam("state", UUID.randomUUID().toString()) // 새로운 상태값 생성
                 .build().encode()
                 .toUriString();
         
@@ -87,13 +93,57 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         log.debug("새 세션 생성됨: {}", newSession.getId());
         
         // JSESSIONID 쿠키 설정 강화
-        Cookie sessionCookie = new Cookie("JSESSIONID", newSession.getId());
-        sessionCookie.setPath("/");
-        sessionCookie.setHttpOnly(true);
-        sessionCookie.setSecure(true);
-        sessionCookie.setAttribute("SameSite", "None");
-        response.addCookie(sessionCookie);
+        addSessionCookie(request, response, newSession);
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
+    
+    /**
+     * 세션 ID를 쿠키로 설정하는 메서드
+     */
+    private void addSessionCookie(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+        if (session == null) {
+            log.warn("세션이 null이므로 세션 쿠키를 설정할 수 없습니다.");
+            return;
+        }
+        
+        String sessionId = session.getId();
+        
+        // 기존 JSESSIONID 쿠키 확인
+        Cookie[] cookies = request.getCookies();
+        boolean hasSessionCookie = false;
+        
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("JSESSIONID".equals(cookie.getName())) {
+                    hasSessionCookie = true;
+                    log.debug("기존 JSESSIONID 쿠키 발견: {}", cookie.getValue());
+                    break;
+                }
+            }
+        }
+        
+        // 세션 쿠키 설정
+        Cookie sessionCookie = new Cookie("JSESSIONID", sessionId);
+        sessionCookie.setPath("/");
+        sessionCookie.setHttpOnly(true);
+        
+        // 프로덕션 환경에서는 secure=true로 설정
+        String serverName = request.getServerName();
+        if (serverName != null && !serverName.contains("localhost")) {
+            sessionCookie.setSecure(true);
+            log.debug("프로덕션 환경에서 secure 쿠키 설정");
+        }
+        
+        // SameSite 속성 설정 (최신 브라우저에서 지원)
+        // 참고: Java 서블릿 API에서는 SameSite 속성을 직접 지원하지 않으므로
+        // 헤더로 설정해야 함
+        response.setHeader("Set-Cookie", String.format("%s=%s; Path=%s; HttpOnly; SameSite=None; %s", 
+                           sessionCookie.getName(), 
+                           sessionCookie.getValue(), 
+                           sessionCookie.getPath(),
+                           sessionCookie.getSecure() ? "Secure" : ""));
+        
+        log.debug("세션 쿠키 설정 완료 - 세션 ID: {}, 기존 쿠키 있음: {}", sessionId, hasSessionCookie);
     }
 }
