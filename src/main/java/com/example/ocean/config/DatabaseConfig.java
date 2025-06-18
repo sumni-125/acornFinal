@@ -37,14 +37,14 @@ import java.util.Map;
 )
 public class DatabaseConfig {
 
-    // DataSource 설정
+    /* DataSource 설정
     @Primary
     @Bean(name = "dataSource")
     @ConfigurationProperties(prefix = "spring.datasource.hikari")
     public DataSource dataSource() {
         return new HikariDataSource();
     }
-
+    */
     // JPA EntityManagerFactory 설정
     @Primary
     @Bean(name = "entityManagerFactory")
