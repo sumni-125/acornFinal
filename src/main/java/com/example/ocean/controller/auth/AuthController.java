@@ -4,6 +4,9 @@ import com.example.ocean.dto.request.TokenRefreshRequest;
 import com.example.ocean.dto.response.MessageResponse;
 import com.example.ocean.dto.response.TokenResponse;
 import com.example.ocean.dto.response.UserInfoResponse;
+import com.example.ocean.entity.User;
+import com.example.ocean.exception.ResourceNotFoundException;
+import com.example.ocean.repository.UserRepository;
 import com.example.ocean.security.oauth.UserPrincipal;
 import com.example.ocean.service.TokenService;
 import jakarta.servlet.http.Cookie;
@@ -26,6 +29,7 @@ import java.util.Map;
 public class AuthController {
 
     private final TokenService tokenService;
+    private final UserRepository userRepository;
     
     @Value("${app.jwt.refresh-expiration}")
     private int refreshTokenValidityInMs;
@@ -40,10 +44,16 @@ public class AuthController {
     // 로그인 성공 후 사용자 정보 조회
     @GetMapping("/me")
     public UserInfoResponse getCurrentUser(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        //userPrincipal 에서 사용자 정보 가져 오기
+        User user = userRepository.findByUserCode(userPrincipal.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없음"));
 
             return UserInfoResponse.builder()
-                    .userCode(userPrincipal.getId())
-                    .email(userPrincipal.getEmail())
+                    .userCode(user.getUserCode())
+                    .email(user.getEmail())
+                    .userName(user.getUserName()) //사용자 이름 추가
+                    .userProfileImg(user.getUserProfileImg()) // 프로필 이미지 추가
+                    .provider(user.getProvider())
                     .build();
     }
 

@@ -182,7 +182,7 @@
             font-weight: 600;
         }
         
-        .user-email {
+        .user-name {
             font-size: 14px;
             max-width: 150px;
             overflow: hidden;
@@ -687,7 +687,7 @@
                     <div class="user-avatar">
                         <span class="user-initial">U</span>
                     </div>
-                    <span class="user-email" id="userEmail">사용자</span>
+                    <span class="user-name" id="userName">사용자</span>
                 </div>
                 <button class="logout-button" id="logoutButton">로그아웃</button>
             </div>
@@ -832,12 +832,19 @@
                 return response.json();
             })
             .then(data => {
-                // 사용자 정보 표시
-                document.getElementById('userEmail').textContent = data.email || '사용자';
+                // 사용자 이름 표시
+                const displayName = data.userName || data.email || '사용자';
+                document.getElementById('userEmail').textContent = displayName;
                 
-                // 이니셜 표시
-                const initial = data.email ? data.email.charAt(0).toUpperCase() : 'U';
+                // 이니셜 표시 (사용자 이름 첫 글자)
+                const initial = displayName.charAt(0).toUpperCase();
                 document.querySelector('.user-initial').textContent = initial;
+
+                //프로필 이미지가 있으면 표시
+                if(data.userProfileImg) {
+                    //프로필 이미지 아바타로 교체
+                    const userAvator = document.querySelector('.user-avatar);
+                    userAvator.innerHTML = `<img src="${data.userProfileImg}" alt="${displayName}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
             })
             .catch(error => {
                 console.error('사용자 정보 가져오기 실패:', error);
