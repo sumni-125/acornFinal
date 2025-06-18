@@ -2,11 +2,10 @@ package com.example.ocean.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_tokens")
+@Table(name = "USER_TOKENS")
 @Getter
 @Setter
 @Builder
@@ -15,37 +14,37 @@ import java.time.LocalDateTime;
 public class UserTokens {
 
     @Id
-    @Column(name = "user_cd")
-    private String userCd;
+    @Column(name = "TOKEN_ID", length = 100)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String tokenId;
 
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "user_cd")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID", nullable = false)
     private User user;
 
-    @Column(name = "access_token")
+    @Column(name = "ACCESS_TOKEN", length = 500)
     private String accessToken;
 
-    @Column(name = "refresh_token")
+    @Column(name = "REFRESH_TOKEN", length = 500)
     private String refreshToken;
 
-    @Column(name = "token_expires_at")
-    private LocalDateTime tokenExpiresAt;
+    @Column(name = "TOKEN_EXPIRES_TIME")
+    private LocalDateTime tokenExpiresTime;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "CREATED_DATE", updatable = false)
+    private LocalDateTime createdDate;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "MODIFY")
+    private LocalDateTime modify;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        modify = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        modify = LocalDateTime.now();
     }
-} 
+}

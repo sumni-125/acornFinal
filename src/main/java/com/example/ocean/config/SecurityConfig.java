@@ -1,5 +1,6 @@
 package com.example.ocean.config;
 
+import com.example.ocean.security.jwt.JwtAuthenticationFilter;
 import com.example.ocean.security.jwt.JwtTokenProvider;
 import com.example.ocean.security.oauth.CustomOAuth2UserService;
 import com.example.ocean.security.oauth.OAuth2AuthenticationFailureHandler;
@@ -16,6 +17,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
@@ -24,7 +26,6 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,6 +49,9 @@ public class SecurityConfig {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;  // JWT 필터 추가
+
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new DelegatingSecurityContextRepository(
@@ -62,7 +66,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // JWT 사용 시 STATELESS로 변경
                         .sessionFixation().migrateSession()
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
@@ -86,6 +90,8 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
+                // JWT 필터를 UsernamePasswordAuthenticationFilter 전에 추가
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
@@ -97,13 +103,12 @@ public class SecurityConfig {
                                 .baseUri("/oauth2/authorize")
                         )
                         .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/login/oauth2/code/*")  // 이 부분 확인!
+                                .baseUri("/login/oauth2/code/*")
                         )
                 );
 
         return http.build();
     }
-
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

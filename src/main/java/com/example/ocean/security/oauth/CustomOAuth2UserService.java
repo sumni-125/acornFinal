@@ -1,7 +1,11 @@
 package com.example.ocean.security.oauth;
 
 import com.example.ocean.entity.User;
+import com.example.ocean.entity.Workspace;
+import com.example.ocean.entity.WorkspaceMember;
 import com.example.ocean.repository.UserRepository;
+import com.example.ocean.repository.WorkspaceRepository;
+import com.example.ocean.repository.WorkspaceMemberRepository;
 import com.example.ocean.security.oauth.UserPrincipal;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfo;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfoFactory;
@@ -14,24 +18,21 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         log.info("OAuth2 로그인 시도: {}", userRequest.getClientRegistration().getRegistrationId());
-        
+
         try {
             OAuth2User oAuth2User = super.loadUser(userRequest);
-            log.info("OAuth2 사용자 정보 획득 성공");
-            log.debug("사용자 속성: {}", oAuth2User.getAttributes());
-            
             return processOAuth2User(userRequest, oAuth2User);
         } catch (Exception e) {
             log.error("OAuth2 로그인 실패", e);
@@ -41,53 +42,63 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        log.info("OAuth2 사용자 처리 시작 - Provider: {}", registrationId);
-        
+        User.Provider provider = User.Provider.valueOf(registrationId.toUpperCase());
+
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
                 registrationId, oAuth2User.getAttributes()
         );
-        
-        log.info("OAuth2 사용자 정보 - ID: {}, Name: {}, Email: {}", 
-                oAuth2UserInfo.getId(), oAuth2UserInfo.getName(), oAuth2UserInfo.getEmail());
 
         // 소셜 ID와 제공자로 사용자 조회
-        User user = userRepository.findByUserIdAndProvider(oAuth2UserInfo.getId(), registrationId.toUpperCase())
-                .map(existingUser -> {
-                    log.info("기존 사용자 발견 - userCode: {}", existingUser.getUserCode());
-                    return updateUser(existingUser, oAuth2UserInfo);
-                })
-                .orElseGet(() -> {
-                    log.info("신규 사용자 생성");
-                    return createUser(oAuth2UserInfo, registrationId);
-                });
+        User user = userRepository.findByUserIdAndProvider(oAuth2UserInfo.getId(), provider)
+                .map(existingUser -> updateUser(existingUser, oAuth2UserInfo))
+                .orElseGet(() -> createUser(oAuth2UserInfo, provider));
 
         return UserPrincipal.create(user, oAuth2User.getAttributes());
     }
 
-    private User createUser(OAuth2UserInfo oAuth2UserInfo,String provider) {
-        // 이메일이 없는 경우 대체 이메일 생성
-        String email = oAuth2UserInfo.getEmail();
-        if (email == null || email.isEmpty()) {
-            email = oAuth2UserInfo.getId() + "@" + provider.toLowerCase() + ".oauth";
-        }
-        
+    private User createUser(OAuth2UserInfo oAuth2UserInfo, User.Provider provider) {
+        // 사용자 생성
         User user = User.builder()
-                .userCode(UUID.randomUUID().toString())
-                .userId(oAuth2UserInfo.getId())
+                .userId(oAuth2UserInfo.getId())  // 소셜 ID가 PK
                 .userName(oAuth2UserInfo.getName())
-                .email(email)
-                .userProfileImg(oAuth2UserInfo.getImageUrl())
-                .provider(provider.toUpperCase())
-                .isActive(true)
+                .userImg(oAuth2UserInfo.getImageUrl())
+                .provider(provider)
+                .activeState("Y")
                 .build();
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // 개인 워크스페이스 자동 생성 (선택사항)
+        createPersonalWorkspace(savedUser, oAuth2UserInfo);
+
+        return savedUser;
+    }
+
+    private void createPersonalWorkspace(User user, OAuth2UserInfo oAuth2UserInfo) {
+        // 개인 워크스페이스 생성
+        Workspace workspace = Workspace.builder()
+                .workspaceNm(user.getUserName() + "의 워크스페이스")
+                .activeState("Y")
+                .build();
+
+        Workspace savedWorkspace = workspaceRepository.save(workspace);
+
+        // 워크스페이스 멤버로 추가
+        WorkspaceMember member = WorkspaceMember.builder()
+                .workspace(savedWorkspace)
+                .user(user)
+                .userNickname(user.getUserName())
+                .userRole("ADMIN")
+                .email(oAuth2UserInfo.getEmail())  // 이메일이 있다면 저장
+                .activeState("Y")
+                .build();
+
+        workspaceMemberRepository.save(member);
     }
 
     private User updateUser(User user, OAuth2UserInfo oAuth2UserInfo) {
         user.setUserName(oAuth2UserInfo.getName());
-        user.setUserProfileImg(oAuth2UserInfo.getImageUrl());
-
+        user.setUserImg(oAuth2UserInfo.getImageUrl());
         return userRepository.save(user);
     }
 }

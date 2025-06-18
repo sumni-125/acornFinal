@@ -4,100 +4,120 @@ import com.example.ocean.dto.request.UserOnboardingRequest;
 import com.example.ocean.dto.request.UserProfileUpdateRequest;
 import com.example.ocean.dto.response.UserProfileResponse;
 import com.example.ocean.entity.User;
+import com.example.ocean.entity.WorkspaceMember;
 import com.example.ocean.exception.ResourceNotFoundException;
 import com.example.ocean.repository.UserRepository;
+import com.example.ocean.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional (readOnly = true)
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
-
-    // User entity를 User_Profile_Response DTO로 변환
-    private UserProfileResponse mapToUserProfileResponse(User user) {
-        return UserProfileResponse.builder()
-                .userCode(user.getUserCode())
+    // User + WorkspaceMember 정보를 합쳐서 UserProfileResponse로 변환
+    private UserProfileResponse mapToUserProfileResponse(User user, WorkspaceMember workspaceMember) {
+        UserProfileResponse.UserProfileResponseBuilder builder = UserProfileResponse.builder()
                 .userId(user.getUserId())
                 .userName(user.getUserName())
-                .nickName(user.getNickname())
-                .email(user.getEmail())
-                .userProfileImg(user.getUserProfileImg())
-                .provider(user.getProvider())
-                .phoneNumber(user.getPhoneNumber())
-                .department(user.getDepartment())
-                .position(user.getPosition())
-                .isProfileComplete(user.getIsProfileComplete())
-                .isActive(user.getIsActive())
-                .lastLoginAt(user.getLastLoginAt())
-                .createdAt(user.getCreatedAt())
-                .build();
+                .userProfileImg(user.getUserImg())
+                .provider(user.getProvider().name())
+                .isActive(user.getActiveState().equals("Y"))
+                .createdAt(user.getCreatedDate());
+
+        // WorkspaceMember 정보가 있으면 추가
+        if (workspaceMember != null) {
+            builder.nickName(workspaceMember.getUserNickname())
+                    .email(workspaceMember.getEmail())
+                    .phoneNumber(workspaceMember.getPhoneNum())
+                    .department(workspaceMember.getDeptCd())
+                    .position(workspaceMember.getPosition())
+                    .workspaceCd(workspaceMember.getWorkspace().getWorkspaceCd())
+                    .workspaceName(workspaceMember.getWorkspace().getWorkspaceNm());
+        }
+
+        return builder.build();
     }
 
-    //사용자 프로필 조회
-    public UserProfileResponse getUserProfile(String userCode) {
-        User user = userRepository.findByUserCode(userCode)
+    // 사용자 프로필 조회
+    public UserProfileResponse getUserProfile(String userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
-        return  mapToUserProfileResponse(user);
+        // 사용자의 첫 번째 활성 워크스페이스 정보 가져오기
+        List<WorkspaceMember> workspaceMembers = workspaceMemberRepository.findFirstWorkspaceInfo(userId);
+        WorkspaceMember primaryWorkspace = workspaceMembers.isEmpty() ? null : workspaceMembers.get(0);
+
+        return mapToUserProfileResponse(user, primaryWorkspace);
     }
 
-    //프로필 수정 메서드
+    // 프로필 수정 (워크스페이스별로 수정)
     @Transactional
-    public UserProfileResponse updateUserProfile(String userCode, UserProfileUpdateRequest request) {
-        User user = userRepository.findByUserCode(userCode)
+    public UserProfileResponse updateUserProfile(String userId, String workspaceCd, UserProfileUpdateRequest request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
-        //프로필 정보 업데이트
+        WorkspaceMember workspaceMember = workspaceMemberRepository
+                .findByUserIdAndWorkspaceCd(userId, workspaceCd)
+                .orElseThrow(() -> new ResourceNotFoundException("워크스페이스 멤버 정보를 찾을 수 없습니다."));
+
+        // WorkspaceMember 정보 업데이트
         if (request.getNickName() != null) {
-            user.setNickname(request.getNickName());
+            workspaceMember.setUserNickname(request.getNickName());
         }
-
-        if (request.getPhonNumer() != null) {
-            user.setPhoneNumber(request.getPhonNumer());
+        if (request.getPhoneNumber() != null) {
+            workspaceMember.setPhoneNum(request.getPhoneNumber());
         }
-
         if (request.getDepartment() != null) {
-            user.setDepartment(request.getDepartment());
+            workspaceMember.setDeptCd(request.getDepartment());
         }
-
         if (request.getPosition() != null) {
-            user.setPosition(request.getPosition());
+            workspaceMember.setPosition(request.getPosition());
+        }
+        if (request.getEmail() != null) {
+            workspaceMember.setEmail(request.getEmail());
         }
 
-        user.setUpdateAt(LocalDateTime.now());
-        User savedUser = userRepository.save(user);
+        WorkspaceMember savedMember = workspaceMemberRepository.save(workspaceMember);
 
-        log.info(" 사용자 프로필 수정 완료 : {} " , userCode);
-        return mapToUserProfileResponse(savedUser);
+        log.info("사용자 프로필 수정 완료 - userId: {}, workspaceCd: {}", userId, workspaceCd);
+        return mapToUserProfileResponse(user, savedMember);
     }
 
-    // 온보딩 완료
+    // 온보딩 완료 (워크스페이스에 추가 정보 입력)
     @Transactional
-    public UserProfileResponse completeOnboarding(String userCode, UserOnboardingRequest request) {
-        User user = userRepository.findByUserCode(userCode)
+    public UserProfileResponse completeOnboarding(String userId, String workspaceCd, UserOnboardingRequest request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
-        //온보딩 정보 설정
-        user.setNickname(request.getNickname());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setDepartment(request.getDepartment());
-        user.setPosition(request.getPositionl());
-        user.setUpdateAt(LocalDateTime.now());
+        WorkspaceMember workspaceMember = workspaceMemberRepository
+                .findByUserIdAndWorkspaceCd(userId, workspaceCd)
+                .orElseThrow(() -> new ResourceNotFoundException("워크스페이스 멤버 정보를 찾을 수 없습니다."));
 
-        User savedUser = userRepository.save(user);
+        // 온보딩 정보 설정
+        workspaceMember.setUserNickname(request.getNickname());
+        workspaceMember.setPhoneNum(request.getPhoneNumber());
+        workspaceMember.setDeptCd(request.getDepartment());
+        workspaceMember.setPosition(request.getPosition());
+        workspaceMember.setEmail(request.getEmail());
 
-        log.info(" 사용자 온보딩 완료 : {} " ,userCode);
-        return mapToUserProfileResponse(savedUser);
+        WorkspaceMember savedMember = workspaceMemberRepository.save(workspaceMember);
+
+        log.info("사용자 온보딩 완료 - userId: {}, workspaceCd: {}", userId, workspaceCd);
+        return mapToUserProfileResponse(user, savedMember);
     }
 
+    // 사용자의 모든 워크스페이스 조회
+    public List<WorkspaceMember> getUserWorkspaces(String userId) {
+        return workspaceMemberRepository.findActiveWorkspacesByUserId(userId);
+    }
 }

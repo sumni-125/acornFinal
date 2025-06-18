@@ -8,8 +8,7 @@ import lombok.Getter;
 
 //프론트엔드에게 응답할 떄 전달하는 데이터
 public class UserInfoResponse {
-    private String userCode;
-    private String email;
+    private String userId;
     private String userName;
     private String userProfileImg;
     private String provider;

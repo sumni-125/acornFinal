@@ -21,7 +21,7 @@ public class JwtTokenProvider {
 
     @Value("${app.jwt.expiration}")
     private int jwtExpirationInMs;
-    
+
     @Value("${app.jwt.refresh-expiration}")
     private int jwtRefreshExpirationInMs;
 
@@ -30,22 +30,23 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String createToken(String email) {
+    // email → userId로 변경
+    public String createToken(String userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(userId)  // userId를 subject로 저장
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
-    
+
     public String createRefreshToken() {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationInMs);
-        
+
         return Jwts.builder()
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(now)
@@ -53,7 +54,7 @@ public class JwtTokenProvider {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
-    
+
     public Date getExpirationDateFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -64,17 +65,30 @@ public class JwtTokenProvider {
     }
 
     public String createToken(Authentication authentication) {
-        String email = authentication.getName();
-        return createToken(email);
+        String userId = authentication.getName();  // userId 사용
+        return createToken(userId);
     }
 
-    public String getEmailFromToken(String token) {
+    // getEmailFromToken → getUserIdFromToken으로 변경
+    public String getUserIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
+    }
+
+    // 기존 메서드명도 지원 (하위 호환성)
+    @Deprecated
+    public String getEmailFromToken(String token) {
+        log.warn("getEmailFromToken() is deprecated. Use getUserIdFromToken() instead.");
+        return getUserIdFromToken(token);
+    }
+
+    // JwtAuthenticationFilter에서 사용하는 메서드 추가
+    public String getUsernameFromToken(String token) {
+        return getUserIdFromToken(token);
     }
 
     public boolean validateToken(String token) {
@@ -85,15 +99,15 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token);
             return true;
         } catch (SecurityException ex) {
-            log.error("잘못된 JWT 서명 입니다.");
-        }catch (MalformedJwtException ex) {
-            log.error("잘못된 JWT 토큰 입니다.");
-        }catch (ExpiredJwtException ex) {
-            log.error("만료된 JWT 토큰 입니다.");
-        }catch (UnsupportedJwtException ex) {
-            log.error("지원되지 않는 토큰 입니다.");
-        }catch (IllegalArgumentException ex) {
-            log.error("JWT 토큰이 비어 있습니다.");
+            log.error("잘못된 JWT 서명입니다.");
+        } catch (MalformedJwtException ex) {
+            log.error("잘못된 JWT 토큰입니다.");
+        } catch (ExpiredJwtException ex) {
+            log.error("만료된 JWT 토큰입니다.");
+        } catch (UnsupportedJwtException ex) {
+            log.error("지원되지 않는 토큰입니다.");
+        } catch (IllegalArgumentException ex) {
+            log.error("JWT 토큰이 비어있습니다.");
         }
         return false;
     }

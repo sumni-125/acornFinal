@@ -14,17 +14,15 @@ import java.util.Map;
 
 @Getter
 public class UserPrincipal implements OAuth2User, UserDetails {
-    private String id;
-    private String email;
-    private String userCode;
+    private String id;  // userId
+    private String username;  // userName
     private Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
-    public UserPrincipal(String id, String email,
-                         Collection<? extends  GrantedAuthority> authorities) {
+    public UserPrincipal(String id, String username,
+                         Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
-        this.email = email;
-        this.userCode = id; // userCode를 id와 동일하게 설정
+        this.username = username;
         this.authorities = authorities;
     }
 
@@ -33,13 +31,13 @@ public class UserPrincipal implements OAuth2User, UserDetails {
                 .singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
         return new UserPrincipal(
-                user.getUserCode(),
-                user.getEmail(),
+                user.getUserId(),
+                user.getUserName(),
                 authorities
         );
     }
 
-    public static UserPrincipal create(User user, Map<String,Object> attributes) {
+    public static UserPrincipal create(User user, Map<String, Object> attributes) {
         UserPrincipal userPrincipal = UserPrincipal.create(user);
         userPrincipal.setAttributes(attributes);
         return userPrincipal;
@@ -49,37 +47,31 @@ public class UserPrincipal implements OAuth2User, UserDetails {
         this.attributes = attributes;
     }
 
-    // UserDetails의 필수 메서드들
     @Override
     public String getPassword() {
         return null;
     }
 
-    // UserDetails의 필수 메서드들
     @Override
     public String getUsername() {
-        return email != null ? email : id; // 이메일이 없으면 ID 반환
+        return username;
     }
 
-    // UserDetails의 필수 메서드들
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    // UserDetails의 필수 메서드들
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
-    // UserDetails의 필수 메서드들
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
-    // UserDetails의 필수 메서드들
     @Override
     public boolean isEnabled() {
         return true;
@@ -99,5 +91,4 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     public String getName() {
         return String.valueOf(id);
     }
-
 }
