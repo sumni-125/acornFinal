@@ -60,10 +60,12 @@ CREATE TABLE `WORKSPACE` (
     INDEX `idx_active` (`ACTIVE_STATE`)
 ) COMMENT = '워크스페이스 정보';
 
--- 워크스페이스 부서 테이블
+-- 워크스페이스 부서 테이블 //워크스페이스 코드만 참조하기)
 CREATE TABLE `WORKSPACE_DEPT` (
     `DEPT_CD` VARCHAR(10) PRIMARY KEY COMMENT '부서 코드',
-    `DEPT_NM` VARCHAR(30) NOT NULL COMMENT '부서명'
+    `DEPT_NM` VARCHAR(30) NOT NULL COMMENT '부서명',
+    `WORKSPACE_CD` VARCHAR(100) NOT NULL COMMENT '워크스페이스 코드',
+    FOREIGN KEY (`WORKSPACE_CD`) REFERENCES `WORKSPACE`(`WORKSPACE_CD`) ON DELETE CASCADE
 ) COMMENT = '워크스페이스 부서 정보';
 
 -- 워크스페이스 멤버 테이블

@@ -45,7 +45,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	// Database
-	runtimeOnly 'com.h2database:h2'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	// Test
