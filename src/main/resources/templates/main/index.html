@@ -412,6 +412,8 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
+            z-index: 2;
         }
 
         .typing-section.hide {
@@ -423,7 +425,8 @@
         .feature-section {
             width: 100%;
             opacity: 0;
-            position: absolute;
+            position: relative;
+            z-index: 2;
             top: 0;
             left: 0;
             right: 0;
@@ -772,6 +775,42 @@
     </div>
 
     <script>
+
+        // 디버깅용
+    window.addEventListener('error', function(e) {
+       console.error('JavaScript 에러:', e.error);
+    });
+
+    // DOM 로드 완료 후 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM 로드 완료');
+
+    // 로컬스토리지 확인
+    console.log('로컬스토리지 상태:', {
+        isAuthenticated: localStorage.getItem('isAuthenticated'),
+        accessToken: localStorage.getItem('accessToken') ? '있음' : '없음'
+    });
+
+    // URL 파라미터 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+        console.log('URL에 토큰 발견, 저장 중...');
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('isAuthenticated', 'true');
+
+        // URL 파라미터 제거
+        window.history.replaceState({}, document.title, '/');
+    }
+
+    // 인증 상태 확인
+    checkAuthStatus();
+
+    // 타이핑 애니메이션은 나중에 시작
+    setTimeout(typeEffect, 500);
+});
+
         // URL에서 토큰 파라미터 확인
         function checkTokenFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -793,65 +832,77 @@
         }
 
         // 인증 상태 확인 및 UI 업데이트
-        function checkAuthStatus() {
-            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-            const accessToken = localStorage.getItem('accessToken');
-            const userMenu = document.getElementById('userMenu');
-            const loginButton = document.getElementById('loginButton');
+function checkAuthStatus() {
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const accessToken = localStorage.getItem('accessToken');
+    const userMenu = document.getElementById('userMenu');
+    const loginButton = document.getElementById('loginButton');
 
-            if (isAuthenticated && accessToken) {
-                // 로그인 상태
-                userMenu.style.display = 'flex';
-                loginButton.style.display = 'none';
+    console.log('인증 상태:', isAuthenticated, '토큰:', accessToken ? '있음' : '없음');
 
-                // 사용자 정보 가져오기
-                fetchUserInfo(accessToken);
-            } else {
-                // 로그아웃 상태
-                userMenu.style.display = 'none';
-                loginButton.style.display = 'block';
-            }
-        }
+    if (isAuthenticated && accessToken) {
+        // 로그인 상태
+        if (userMenu) userMenu.style.display = 'flex';
+        if (loginButton) loginButton.style.display = 'none';
+
+        // 사용자 정보 가져오기
+        fetchUserInfo(accessToken);
+    } else {
+        // 로그아웃 상태
+        if (userMenu) userMenu.style.display = 'none';
+        if (loginButton) loginButton.style.display = 'block';
+    }
+}
 
         // 페이지 로드 시 인증 상태만 확인
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
        });
         
-        // 사용자 정보 가져오기
-        function fetchUserInfo(token) {
-            fetch('/api/auth/me', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('인증 실패');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // 사용자 이름 표시
-                const displayName = data.userName || data.email || '사용자';
-                document.getElementById('userEmail').textContent = displayName;
-                
-                // 이니셜 표시 (사용자 이름 첫 글자)
-                const initial = displayName.charAt(0).toUpperCase();
-                document.querySelector('.user-initial').textContent = initial;
-
-                //프로필 이미지가 있으면 표시
-                if(data.userProfileImg) {
-                    //프로필 이미지 아바타로 교체
-                    const userAvator = document.querySelector('.user-avatar);
-                    userAvator.innerHTML = `<img src="${data.userProfileImg}" alt="${displayName}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-            })
-            .catch(error => {
-                console.error('사용자 정보 가져오기 실패:', error);
-                // 인증 오류 시 로그아웃 처리
-                logout();
-            });
+        // 사용자 정보 가져오기 함수 수정
+function fetchUserInfo(token) {
+    fetch('/api/auth/me', {
+        headers: {
+            'Authorization': 'Bearer ' + token
         }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('인증 실패');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 사용자 이름 표시
+        const displayName = data.userName || data.email || '사용자';
+
+        // ID가 userName인 요소 찾기 (기존: userEmail)
+        const userNameElement = document.getElementById('userName');
+        if (userNameElement) {
+            userNameElement.textContent = displayName;
+        }
+
+        // 이니셜 표시
+        const userInitialElement = document.querySelector('.user-initial');
+        if (userInitialElement) {
+            const initial = displayName.charAt(0).toUpperCase();
+            userInitialElement.textContent = initial;
+        }
+
+        // 프로필 이미지가 있으면 표시
+        if (data.userProfileImg) {
+            const userAvatar = document.querySelector('.user-avatar');
+            if (userAvatar) {
+                userAvatar.innerHTML = `<img src="${data.userProfileImg}" alt="${displayName}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('사용자 정보 가져오기 실패:', error);
+        // 인증 오류 시 로그아웃 처리
+        logout();
+    });
+}
         
         // 로그아웃 처리
         function logout() {
