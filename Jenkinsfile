@@ -49,7 +49,7 @@ pipeline {
                 echo '=== 테스트 실행 ==='
                 sh """
                     cd ${PROJECT_PATH}
-                    ./gradlew test --no-daemon -x test  // 테스트 스킵 추가
+                    ./gradlew test --no-daemon -x test
                 """
             }
         }
