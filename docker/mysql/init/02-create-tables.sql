@@ -9,9 +9,6 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Ocean MVP 데이터베이스 스키마
--- Docker-compose MySQL 초기화 스크립트
-
 CREATE DATABASE IF NOT EXISTS ocean_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ocean_db;
 
@@ -19,307 +16,258 @@ USE ocean_db;
 -- 1. 사용자 관리 도메인
 -- ========================================
 
-CREATE TABLE `users` (
-  `user_cd` VARCHAR(100) PRIMARY KEY COMMENT '사용자 고유 코드',
-  `user_id` VARCHAR(100) UNIQUE NOT NULL COMMENT '소셜 로그인 ID',
-  `user_nm` VARCHAR(100) NOT NULL COMMENT '사용자 실명',
-  `email` VARCHAR(255) COMMENT '이메일 주소',
-  `user_pf_img` VARCHAR(500) COMMENT '프로필 이미지 URL',
-  `provider` VARCHAR(20) NOT NULL COMMENT 'OAuth 제공자 (google, kakao)',
-  `ph_num` VARCHAR(20) COMMENT '휴대폰 번호',
-  `department` VARCHAR(100) COMMENT '부서(소속)',
-  `position` VARCHAR(100) COMMENT '직급',
-  `timezone` VARCHAR(50) DEFAULT 'Asia/Seoul' COMMENT '사용자 시간대',
-  `language_preference` VARCHAR(10) DEFAULT 'ko' COMMENT '언어 설정',
-  `notification_settings` JSON COMMENT '알림 설정 JSON',
-  `is_active` BOOLEAN DEFAULT TRUE COMMENT '계정 활성 상태',
-  `last_login_at` TIMESTAMP NULL COMMENT '마지막 로그인 시간',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '계정 생성일',
-  INDEX `idx_provider_user` (`provider`, `user_id`),
-  INDEX `idx_created` (`created_at`),
-  INDEX `idx_email` (`email`)
-) COMMENT = '사용자 기본 정보 테이블';
+-- 사용자 기본 정보 테이블
+CREATE TABLE `USERS` (
+    `USER_ID` VARCHAR(50) PRIMARY KEY COMMENT '사용자 ID (소셜 로그인 ID)',
+    `PROVIDER` VARCHAR(20) NOT NULL COMMENT 'OAuth 제공자 (google, kakao)',
+    `USER_NM` VARCHAR(50) NOT NULL COMMENT '사용자 이름',
+    `USER_IMG` VARCHAR(255) COMMENT '프로필 이미지 URL',
+    `LANGUAGE_SETTING` VARCHAR(10) DEFAULT 'ko' COMMENT '언어 설정',
+    `ACTIVE_STATE` CHAR(1) DEFAULT 'Y' COMMENT '활성 상태 (Y/N)',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시',
+    INDEX `idx_provider` (`PROVIDER`),
+    INDEX `idx_created` (`CREATED_DATE`)
+) COMMENT = '사용자 기본 정보';
 
-CREATE TABLE `user_tokens` (
-  `user_cd` VARCHAR(100) PRIMARY KEY COMMENT '사용자 코드',
-  `access_token` VARCHAR(500) COMMENT 'OAuth 액세스 토큰',
-  `refresh_token` VARCHAR(500) COMMENT 'OAuth 리프레시 토큰',
-  `token_expires_at` TIMESTAMP NULL COMMENT '토큰 만료 시간',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) COMMENT = 'OAuth 제공자로부터 받은 초기 토큰 저장';
+-- 사용자 토큰 관리 테이블
+CREATE TABLE `USER_TOKENS` (
+    `TOKEN_ID` VARCHAR(100) PRIMARY KEY COMMENT '토큰 ID',
+    `USER_ID` VARCHAR(50) NOT NULL COMMENT '사용자 ID',
+    `ACCESS_TOKEN` VARCHAR(500) COMMENT 'OAuth 액세스 토큰',
+    `REFRESH_TOKEN` VARCHAR(500) COMMENT 'OAuth 리프레시 토큰',
+    `TOKEN_EXPIRES_TIME` TIMESTAMP NULL COMMENT '토큰 만료 시간',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `MODIFY` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`USER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_user_id` (`USER_ID`),
+    INDEX `idx_expires` (`TOKEN_EXPIRES_TIME`)
+) COMMENT = '사용자 인증 토큰 관리';
 
 -- ========================================
 -- 2. 워크스페이스 도메인
 -- ========================================
 
-CREATE TABLE `workspaces` (
-  `workspace_cd` VARCHAR(100) PRIMARY KEY COMMENT '워크스페이스 고유 코드',
-  `workspace_name` VARCHAR(200) NOT NULL COMMENT '워크스페이스 이름',
-  `workspace_img` VARCHAR(500) COMMENT '워크스페이스 대표 이미지',
-  `invite_cd` VARCHAR(50) UNIQUE NOT NULL COMMENT '초대 코드 (사용자 공유용)',
-  `max_members` INT DEFAULT 50 COMMENT '최대 멤버 수',
-  `current_members` INT DEFAULT 0 COMMENT '현재 멤버 수 (트리거로 자동 업데이트)',
-  `storage_limit` BIGINT DEFAULT 10737418240 COMMENT '저장 공간 제한 (기본 10GB)',
-  `storage_used` BIGINT DEFAULT 0 COMMENT '사용된 저장 공간',
-  `subscription_type` ENUM('FREE','BASIC','PREMIUM','ENTERPRISE') DEFAULT 'FREE' COMMENT '구독 플랜',
-  `is_active` BOOLEAN DEFAULT TRUE COMMENT '워크스페이스 활성 상태',
-  `created_by` VARCHAR(100) NOT NULL COMMENT '생성자 (방장)',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `end_date` TIMESTAMP NULL COMMENT '워크스페이스 종료일',
-  INDEX `idx_invite_code` (`invite_cd`),
-  INDEX `idx_created` (`created_at`),
-  INDEX `idx_fk_created_by` (`created_by`)
-) COMMENT = '워크스페이스 기본 정보';
+-- 워크스페이스 테이블
+CREATE TABLE `WORKSPACE` (
+    `WORKSPACE_CD` VARCHAR(100) PRIMARY KEY COMMENT '워크스페이스 코드',
+    `WORKSPACE_NM` VARCHAR(100) NOT NULL COMMENT '워크스페이스 이름',
+    `WORKSPACE_IMG` VARCHAR(255) COMMENT '워크스페이스 이미지',
+    `INVITE_CD` VARCHAR(12) UNIQUE COMMENT '초대 코드',
+    `ACTIVE_STATE` CHAR(1) DEFAULT 'Y' COMMENT '활성 상태',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `END_DATE` TIMESTAMP NULL COMMENT '종료일',
+    INDEX `idx_invite_cd` (`INVITE_CD`),
+    INDEX `idx_active` (`ACTIVE_STATE`)
+) COMMENT = '워크스페이스 정보';
 
-CREATE TABLE `workspace_members` (
-  `workspace_cd` VARCHAR(100) COMMENT '워크스페이스 코드',
-  `user_cd` VARCHAR(100) COMMENT '사용자 코드',
-  `user_nickname` VARCHAR(50) COMMENT '워크스페이스 내 닉네임',
-  `user_role` ENUM('OWNER','MEMBER') DEFAULT 'MEMBER' COMMENT '멤버 권한',
-  `status_message` VARCHAR(200) COMMENT '상태 메시지',
-  `profile_status` ENUM('PENDING','IN_PROGRESS','COMPLETE','NEEDS_UPDATE') DEFAULT 'PENDING' COMMENT '프로필 완성도',
-  `is_active` BOOLEAN DEFAULT TRUE,
-  `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '가입일',
-  `last_activity_at` TIMESTAMP NULL COMMENT '마지막 활동 시간',
-  PRIMARY KEY (`workspace_cd`, `user_cd`),
-  INDEX `idx_user` (`user_cd`),
-  INDEX `idx_role` (`user_role`),
-  INDEX `idx_joined` (`joined_at`),
-  INDEX `idx_user_workspace` (`user_cd`, `workspace_cd`, `is_active`)
-) COMMENT = '워크스페이스 멤버 관리';
+-- 워크스페이스 부서 테이블
+CREATE TABLE `WORKSPACE_DEPT` (
+    `DEPT_CD` VARCHAR(10) PRIMARY KEY COMMENT '부서 코드',
+    `DEPT_NM` VARCHAR(30) NOT NULL COMMENT '부서명'
+) COMMENT = '워크스페이스 부서 정보';
 
-CREATE TABLE `workspace_invitations` (
-  `invite_id` VARCHAR(100) PRIMARY KEY COMMENT '초대 고유 ID',
-  `workspace_cd` VARCHAR(100) NOT NULL,
-  `invite_type` ENUM('EMAIL_INVITE','CODE_REQUEST') NOT NULL COMMENT '초대 유형',
-  `invited_by` VARCHAR(100) COMMENT 'null=코드요청, value=관리자초대',
-  `invited_email` VARCHAR(255) COMMENT '초대받은 이메일',
-  `status` ENUM('PENDING','ACCEPTED','REJECTED','EXPIRED') DEFAULT 'PENDING',
-  `expired_at` TIMESTAMP NULL COMMENT '초대 만료 시간',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `used_at` TIMESTAMP NULL COMMENT '초대 수락 시간',
-  INDEX `idx_status` (`status`),
-  INDEX `idx_expired` (`expired_at`)
+-- 워크스페이스 멤버 테이블
+CREATE TABLE `WORKSPACE_MEMBERS` (
+    `WORKSPACE_CD` VARCHAR(100) NOT NULL COMMENT '워크스페이스 코드',
+    `USER_ID` VARCHAR(50) NOT NULL COMMENT '사용자 ID',
+    `USER_NICKNAME` VARCHAR(50) COMMENT '사용자 닉네임',
+    `USER_ROLE` VARCHAR(10) DEFAULT 'MEMBER' COMMENT '역할 (ADMIN/MEMBER)',
+    `STATUS_MSG` VARCHAR(100) COMMENT '상태 메시지',
+    `DEPT_CD` VARCHAR(10) COMMENT '부서 코드',
+    `POSITION` VARCHAR(30) COMMENT '직급',
+    `EMAIL` VARCHAR(255) COMMENT '이메일',
+    `PHONE_NUM` VARCHAR(20) COMMENT '전화번호',
+    `ACTIVE_STATE` CHAR(1) DEFAULT 'Y' COMMENT '활성 상태',
+    `FAVORITE` CHAR(1) DEFAULT 'N' COMMENT '즐겨찾기 여부',
+    `JOINED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '가입일',
+    `ENTRANCE_DATE` TIMESTAMP NULL COMMENT '입장일',
+    `QUIT_DATE` TIMESTAMP NULL COMMENT '퇴장일',
+    PRIMARY KEY (`WORKSPACE_CD`, `USER_ID`),
+    FOREIGN KEY (`WORKSPACE_CD`) REFERENCES `WORKSPACE`(`WORKSPACE_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`USER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    FOREIGN KEY (`DEPT_CD`) REFERENCES `WORKSPACE_DEPT`(`DEPT_CD`) ON DELETE SET NULL,
+    INDEX `idx_user` (`USER_ID`),
+    INDEX `idx_role` (`USER_ROLE`),
+    INDEX `idx_active` (`ACTIVE_STATE`)
+) COMMENT = '워크스페이스 멤버 정보';
+
+-- 초대 테이블
+CREATE TABLE `INVITATIONS` (
+    `WORKSPACE_CD` VARCHAR(100) NOT NULL COMMENT '워크스페이스 코드',
+    `INVITED_USER_ID` VARCHAR(50) NOT NULL COMMENT '초대받은 사용자 ID',
+    `INVITE_CD` VARCHAR(12) NOT NULL COMMENT '초대 코드',
+    `STATUS` VARCHAR(10) DEFAULT 'PENDING' COMMENT '상태 (PENDING/ACCEPTED/REJECTED)',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`WORKSPACE_CD`, `INVITED_USER_ID`),
+    FOREIGN KEY (`WORKSPACE_CD`) REFERENCES `WORKSPACE`(`WORKSPACE_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`INVITED_USER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_invite_cd` (`INVITE_CD`),
+    INDEX `idx_status` (`STATUS`)
 ) COMMENT = '워크스페이스 초대 관리';
 
 -- ========================================
--- 3. 캘린더 도메인
+-- 3. 일정 관리 도메인
 -- ========================================
 
-CREATE TABLE `calendar_events` (
-  `event_id` VARCHAR(100) PRIMARY KEY,
-  `user_cd` VARCHAR(100) NOT NULL COMMENT '일정 생성자',
-  `workspace_cd` VARCHAR(100) COMMENT 'null=개인일정',
-  `title` VARCHAR(300) NOT NULL COMMENT '일정 제목',
-  `description` TEXT COMMENT '일정 설명',
-  `start_datetime` DATETIME NOT NULL COMMENT '시작 일시',
-  `end_datetime` DATETIME NOT NULL COMMENT '종료 일시',
-  `location_cd` VARCHAR(500) COMMENT '장소 코드 또는 텍스트',
-  `color` ENUM('RED','ORANGE','YELLOW','GREEN','BLUE','GRAY') DEFAULT 'BLUE',
-  `is_all_day` BOOLEAN DEFAULT FALSE COMMENT '종일 일정 여부',
-  `is_private` BOOLEAN DEFAULT FALSE COMMENT '비공개 일정',
-  `status` ENUM('BEFORE','IN_PROGRESS','DONE') NOT NULL COMMENT '일정 진행 상태',
-  `importance` ENUM('LOW','NORMAL','HIGH') DEFAULT 'NORMAL',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX `idx_user_date` (`user_cd`, `start_datetime`),
-  INDEX `idx_workspace_date` (`workspace_cd`, `start_datetime`),
-  INDEX `idx_type_status` (`is_private`, `status`),
-  INDEX `idx_event_datetime` (`start_datetime`, `end_datetime`, `status`),
-  CONSTRAINT `chk_event_time` CHECK (`end_datetime` > `start_datetime`)
-) COMMENT = '캘린더 일정 관리';
+-- 이벤트 테이블
+CREATE TABLE `EVENTS` (
+    `EVENT_CD` VARCHAR(100) PRIMARY KEY COMMENT '이벤트 코드',
+    `WORKSPACE_CD` VARCHAR(100) COMMENT '워크스페이스 코드',
+    `USER_ID` VARCHAR(50) NOT NULL COMMENT '생성자 ID',
+    `TITLE` VARCHAR(90) NOT NULL COMMENT '제목',
+    `DESCRIPTION` TEXT COMMENT '설명',
+    `START_DATETIME` DATETIME NOT NULL COMMENT '시작 일시',
+    `END_DATETIME` DATETIME NOT NULL COMMENT '종료 일시',
+    `COLOR` VARCHAR(10) DEFAULT '#0066CC' COMMENT '색상',
+    `IS_SHARED` CHAR(1) DEFAULT 'N' COMMENT '공유 여부',
+    `PROGRESS_STATUS` VARCHAR(10) DEFAULT 'TODO' COMMENT '진행 상태 (TODO/IN_PROGRESS/DONE)',
+    `PRIORITY` VARCHAR(10) DEFAULT 'NORMAL' COMMENT '우선순위 (LOW/NORMAL/HIGH)',
+    `CREATED_DATE` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`WORKSPACE_CD`) REFERENCES `WORKSPACE`(`WORKSPACE_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`USER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_workspace` (`WORKSPACE_CD`),
+    INDEX `idx_user` (`USER_ID`),
+    INDEX `idx_datetime` (`START_DATETIME`, `END_DATETIME`),
+    INDEX `idx_status` (`PROGRESS_STATUS`)
+) COMMENT = '일정/이벤트 정보';
 
-CREATE TABLE `event_attendees` (
-  `event_id` VARCHAR(100),
-  `user_cd` VARCHAR(100),
-  PRIMARY KEY (`event_id`, `user_cd`)
-) COMMENT = '일정 참석자 관리 (다대다 관계)';
+-- 이벤트 참석자 테이블
+CREATE TABLE `EVENT_ATTENDENCES` (
+    `EVENT_CD` VARCHAR(100) NOT NULL COMMENT '이벤트 코드',
+    `USER_ID` VARCHAR(50) NOT NULL COMMENT '참석자 ID',
+    `USER_NICKNAME` VARCHAR(50) COMMENT '참석자 닉네임',
+    PRIMARY KEY (`EVENT_CD`, `USER_ID`),
+    FOREIGN KEY (`EVENT_CD`) REFERENCES `EVENTS`(`EVENT_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`USER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE
+) COMMENT = '이벤트 참석자 정보';
 
-CREATE TABLE `event_notifications` (
-  `notification_id` VARCHAR(100) PRIMARY KEY,
-  `event_id` VARCHAR(100) NOT NULL,
-  `notify_before_minutes` INT NOT NULL COMMENT '알림 시간 (분 단위)',
-  INDEX `idx_event_notify` (`event_id`)
-) COMMENT = '일정 알림 설정 (10분전, 30분전 등)';
+-- 이벤트 알림 테이블
+CREATE TABLE `EVENT_NOTIFICATIONS` (
+    `NOTIFICATION_CD` VARCHAR(10) PRIMARY KEY COMMENT '알림 코드',
+    `EVENT_CD` VARCHAR(100) NOT NULL COMMENT '이벤트 코드',
+    `NOTIFY_TIME` INT NOT NULL COMMENT '알림 시간 (분 단위)',
+    FOREIGN KEY (`EVENT_CD`) REFERENCES `EVENTS`(`EVENT_CD`) ON DELETE CASCADE,
+    INDEX `idx_event` (`EVENT_CD`)
+) COMMENT = '이벤트 알림 설정';
+
+-- 장소 테이블
+CREATE TABLE `PLACE` (
+    `PLACE_CD` INT AUTO_INCREMENT PRIMARY KEY COMMENT '장소 코드',
+    `EVENT_CD` VARCHAR(100) COMMENT '이벤트 코드',
+    `PLACE_NAME` VARCHAR(255) NOT NULL COMMENT '장소명',
+    `ADDRESS_NAME` VARCHAR(255) NOT NULL COMMENT '주소',
+    `LAT` DOUBLE NOT NULL COMMENT '위도',
+    `LNG` DOUBLE NOT NULL COMMENT '경도',
+    `CREATED_AT` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `CREATED_BY` VARCHAR(50) COMMENT '생성자',
+    `MODIFY` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`EVENT_CD`) REFERENCES `EVENTS`(`EVENT_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`CREATED_BY`) REFERENCES `WORKSPACE_MEMBERS`(`USER_ID`) ON DELETE SET NULL,
+    INDEX `idx_event` (`EVENT_CD`),
+    INDEX `idx_location` (`LAT`, `LNG`)
+) COMMENT = '장소 정보';
 
 -- ========================================
 -- 4. 회의 도메인
 -- ========================================
 
-CREATE TABLE `meeting_rooms` (
-  `room_cd` VARCHAR(100) PRIMARY KEY,
-  `room_name` VARCHAR(200) NOT NULL COMMENT '회의 제목',
-  `description` TEXT COMMENT '회의 설명',
-  `workspace_cd` VARCHAR(100) NOT NULL,
-  `host_user_cd` VARCHAR(100) NOT NULL COMMENT '회의 주최자',
-  `status` ENUM('WAITING','IN_PROGRESS','ENDED') DEFAULT 'WAITING',
-  `max_participants` INT DEFAULT 10 COMMENT '최대 참가자 수',
-  `is_recording_enabled` BOOLEAN DEFAULT FALSE,
-  `recording_storage_path` VARCHAR(500),
-  `meeting_password` VARCHAR(100),
-  `waiting_room_enabled` BOOLEAN DEFAULT FALSE,
-  `scheduled_start_time` TIMESTAMP NULL,
-  `scheduled_end_time` TIMESTAMP NULL,
-  `actual_start_time` TIMESTAMP NULL,
-  `actual_end_time` TIMESTAMP NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX `idx_workspace_status` (`workspace_cd`, `status`),
-  INDEX `idx_fk_host_user` (`host_user_cd`),
-  INDEX `idx_meeting_time` (`created_at`, `status`),
-  CONSTRAINT `chk_max_participants` CHECK (`max_participants` BETWEEN 2 AND 100)
-) COMMENT = '화상회의 룸 관리';
+-- 회의실 테이블
+CREATE TABLE `MEETING_ROOMS` (
+    `ROOM_CD` VARCHAR(100) PRIMARY KEY COMMENT '회의실 코드',
+    `ROOM_NM` VARCHAR(100) NOT NULL COMMENT '회의실 이름',
+    `DESCRIPTION` TEXT COMMENT '회의 설명',
+    `WORKSPACE_CD` VARCHAR(100) NOT NULL COMMENT '워크스페이스 코드',
+    `HOST_ID` VARCHAR(50) NOT NULL COMMENT '호스트 ID',
+    `STATUS` VARCHAR(10) DEFAULT 'WAITING' COMMENT '상태 (WAITING/IN_PROGRESS/ENDED)',
+    `RECORDING_ENABLE` CHAR(1) DEFAULT 'N' COMMENT '녹화 가능 여부',
+    `RECORDING_PATH` VARCHAR(500) COMMENT '녹화 파일 경로',
+    `MEETING_PW` VARCHAR(50) COMMENT '회의 비밀번호',
+    `EXPECTED_START_TIME` TIMESTAMP NULL COMMENT '예정 시작 시간',
+    `EXPECTED_END_TIME` TIMESTAMP NULL COMMENT '예정 종료 시간',
+    `ACTUAL_START_TIME` TIMESTAMP NULL COMMENT '실제 시작 시간',
+    `ACTUAL_END_TIME` TIMESTAMP NULL COMMENT '실제 종료 시간',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `MODIFY` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`WORKSPACE_CD`) REFERENCES `WORKSPACE`(`WORKSPACE_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`HOST_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_workspace` (`WORKSPACE_CD`),
+    INDEX `idx_host` (`HOST_ID`),
+    INDEX `idx_status` (`STATUS`),
+    INDEX `idx_time` (`EXPECTED_START_TIME`)
+) COMMENT = '화상회의실 정보';
 
-CREATE TABLE `meeting_participants` (
-  `room_cd` VARCHAR(100),
-  `user_cd` VARCHAR(100),
-  `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `left_at` TIMESTAMP NULL,
-  `is_active` BOOLEAN DEFAULT TRUE,
-  `role` ENUM('HOST','PARTICIPANT') DEFAULT 'PARTICIPANT',
-  `is_video_on` BOOLEAN DEFAULT TRUE,
-  `is_audio_on` BOOLEAN DEFAULT TRUE,
-  `is_screen_sharing` BOOLEAN DEFAULT FALSE,
-  `connection_quality` ENUM('POOR','FAIR','GOOD','EXCELLENT'),
-  PRIMARY KEY (`room_cd`, `user_cd`),
-  INDEX `idx_active` (`room_cd`, `is_active`)
-) COMMENT = '회의 참가자 상태 관리';
+-- 회의 참가자 테이블
+CREATE TABLE `MEETING_PARTICIPANTS` (
+    `ROOM_CD` VARCHAR(100) NOT NULL COMMENT '회의실 코드',
+    `USER_ID` VARCHAR(50) NOT NULL COMMENT '참가자 ID',
+    `JOINED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '입장 시간',
+    `QUIT_DATE` TIMESTAMP NULL COMMENT '퇴장 시간',
+    `ACTIVE_STATE` CHAR(1) DEFAULT 'Y' COMMENT '활성 상태',
+    `ROLE` VARCHAR(20) DEFAULT 'PARTICIPANT' COMMENT '역할 (HOST/PARTICIPANT)',
+    `VIDEO_STATE` CHAR(1) DEFAULT 'Y' COMMENT '비디오 상태',
+    `AUDIO_STATE` CHAR(1) DEFAULT 'Y' COMMENT '오디오 상태',
+    `SHARING_STATE` CHAR(1) DEFAULT 'N' COMMENT '화면 공유 상태',
+    `CONN_QUALITY` VARCHAR(10) COMMENT '연결 품질',
+    PRIMARY KEY (`ROOM_CD`, `USER_ID`),
+    FOREIGN KEY (`ROOM_CD`) REFERENCES `MEETING_ROOMS`(`ROOM_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`USER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_active` (`ACTIVE_STATE`)
+) COMMENT = '회의 참가자 정보';
 
-CREATE TABLE `meeting_documents` (
-  `document_id` VARCHAR(100) PRIMARY KEY,
-  `room_cd` VARCHAR(100) NOT NULL,
-  `file_name` VARCHAR(300) NOT NULL,
-  `file_type` ENUM('PDF','PPT','PPTX') NOT NULL,
-  `file_path` VARCHAR(1000) NOT NULL,
-  `file_size` BIGINT NOT NULL,
-  `total_pages` INT,
-  `conversion_status` ENUM('PENDING','PROCESSING','COMPLETED','FAILED') DEFAULT 'PENDING',
-  `uploaded_by` VARCHAR(100) NOT NULL,
-  `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `converted_at` TIMESTAMP NULL,
-  `is_active` BOOLEAN DEFAULT TRUE,
-  INDEX `idx_room_active` (`room_cd`, `is_active`),
-  INDEX `idx_conversion` (`conversion_status`)
-) COMMENT = '회의 문서 관리 (PPT, PDF)';
+-- 회의 문서 테이블
+CREATE TABLE `MEETING_DOCUMENTS` (
+    `DOCUMENT_CD` VARCHAR(100) PRIMARY KEY COMMENT '문서 코드',
+    `ROOM_CD` VARCHAR(100) NOT NULL COMMENT '회의실 코드',
+    `FILE_NM` VARCHAR(300) NOT NULL COMMENT '파일명',
+    `FILE_TYPE` VARCHAR(10) NOT NULL COMMENT '파일 타입',
+    `FILE_PATH` VARCHAR(500) NOT NULL COMMENT '파일 경로',
+    `FILE_SIZE` BIGINT NOT NULL COMMENT '파일 크기',
+    `TOTAL_PAGES` INT COMMENT '총 페이지 수',
+    `CONVERSION_STATUS` VARCHAR(15) DEFAULT 'PENDING' COMMENT '변환 상태',
+    `UPLOADED_BY` VARCHAR(50) NOT NULL COMMENT '업로드한 사용자',
+    `UPLOADED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `CONVERTED_DATE` TIMESTAMP NULL COMMENT '변환 완료 시간',
+    `ACTIVE_STATE` CHAR(1) DEFAULT 'Y' COMMENT '활성 상태',
+    FOREIGN KEY (`ROOM_CD`) REFERENCES `MEETING_ROOMS`(`ROOM_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`UPLOADED_BY`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_room` (`ROOM_CD`),
+    INDEX `idx_status` (`CONVERSION_STATUS`)
+) COMMENT = '회의 문서 정보';
 
-CREATE TABLE `document_pages` (
-  `page_id` VARCHAR(100) PRIMARY KEY,
-  `document_id` VARCHAR(100) NOT NULL,
-  `page_number` INT NOT NULL,
-  `image_path` VARCHAR(1000) NOT NULL,
-  `thumbnail_path` VARCHAR(1000),
-  `width` INT,
-  `height` INT,
-  INDEX `idx_document` (`document_id`)
-) COMMENT = 'PPT/PDF를 이미지로 변환한 페이지';
-
-CREATE TABLE `document_annotations` (
-  `annotation_id` VARCHAR(100) PRIMARY KEY,
-  `document_id` VARCHAR(100) NOT NULL,
-  `page_number` INT NOT NULL,
-  `annotation_data` JSON NOT NULL,
-  `annotation_type` ENUM('DRAWING','TEXT','HIGHLIGHT','SHAPE') NOT NULL,
-  `created_by` VARCHAR(100) NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `is_visible` BOOLEAN DEFAULT TRUE,
-  INDEX `idx_doc_page` (`document_id`, `page_number`),
-  INDEX `idx_createdby` (`created_by`)
-) COMMENT = '문서 위에 그리기/주석 기능';
-
-CREATE TABLE `chat_messages` (
-  `message_id` VARCHAR(100) PRIMARY KEY,
-  `room_cd` VARCHAR(100) NOT NULL,
-  `sender_cd` VARCHAR(100) NOT NULL,
-  `message_type` ENUM('TEXT','FILE') DEFAULT 'TEXT' COMMENT '메시지 타입',
-  `message_content` TEXT COMMENT '메시지 내용',
-  `file_path` VARCHAR(1000) COMMENT '파일 공유 시 경로',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '전송 시간',
-  INDEX `idx_room_created` (`room_cd`, `created_at`)
-) COMMENT = '회의 단체 채팅 메시지';
+-- 문서 주석 테이블
+CREATE TABLE `DOCUMENT_ANNOTATIONS` (
+    `ANNOTATION_ID` VARCHAR(100) PRIMARY KEY COMMENT '주석 ID',
+    `DOCUMENT_CD` VARCHAR(100) NOT NULL COMMENT '문서 코드',
+    `PAGE_NUMBER` INT NOT NULL COMMENT '페이지 번호',
+    `ANNOTATION_DATA` JSON NOT NULL COMMENT '주석 데이터',
+    `ANNOTATION_TYPE` VARCHAR(20) NOT NULL COMMENT '주석 타입',
+    `CREATED_BY` VARCHAR(50) NOT NULL COMMENT '생성자',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `IS_VISIBLE` CHAR(1) DEFAULT 'Y' COMMENT '표시 여부',
+    FOREIGN KEY (`DOCUMENT_CD`) REFERENCES `MEETING_DOCUMENTS`(`DOCUMENT_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`CREATED_BY`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_document_page` (`DOCUMENT_CD`, `PAGE_NUMBER`),
+    INDEX `idx_creator` (`CREATED_BY`)
+) COMMENT = '문서 주석 정보';
 
 -- ========================================
--- 5. 외래키 제약조건
+-- 5. 채팅 도메인
 -- ========================================
 
--- 사용자 도메인
-ALTER TABLE `user_tokens` ADD FOREIGN KEY (`user_cd`) REFERENCES `users` (`user_cd`) ON DELETE CASCADE;
-
--- 워크스페이스 도메인
-ALTER TABLE `workspaces` ADD FOREIGN KEY (`created_by`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `workspace_members` ADD FOREIGN KEY (`workspace_cd`) REFERENCES `workspaces` (`workspace_cd`) ON DELETE CASCADE;
-ALTER TABLE `workspace_members` ADD FOREIGN KEY (`user_cd`) REFERENCES `users` (`user_cd`) ON DELETE CASCADE;
-ALTER TABLE `workspace_invitations` ADD FOREIGN KEY (`workspace_cd`) REFERENCES `workspaces` (`workspace_cd`) ON DELETE CASCADE;
-ALTER TABLE `workspace_invitations` ADD FOREIGN KEY (`invited_by`) REFERENCES `users` (`user_cd`);
-
--- 캘린더 도메인
-ALTER TABLE `calendar_events` ADD FOREIGN KEY (`user_cd`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `calendar_events` ADD FOREIGN KEY (`workspace_cd`) REFERENCES `workspaces` (`workspace_cd`);
-ALTER TABLE `event_attendees` ADD FOREIGN KEY (`event_id`) REFERENCES `calendar_events` (`event_id`) ON DELETE CASCADE;
-ALTER TABLE `event_attendees` ADD FOREIGN KEY (`user_cd`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `event_notifications` ADD FOREIGN KEY (`event_id`) REFERENCES `calendar_events` (`event_id`) ON DELETE CASCADE;
-
--- 회의 도메인
-ALTER TABLE `meeting_rooms` ADD FOREIGN KEY (`workspace_cd`) REFERENCES `workspaces` (`workspace_cd`);
-ALTER TABLE `meeting_rooms` ADD FOREIGN KEY (`host_user_cd`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `meeting_participants` ADD FOREIGN KEY (`room_cd`) REFERENCES `meeting_rooms` (`room_cd`) ON DELETE CASCADE;
-ALTER TABLE `meeting_participants` ADD FOREIGN KEY (`user_cd`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `meeting_documents` ADD FOREIGN KEY (`room_cd`) REFERENCES `meeting_rooms` (`room_cd`);
-ALTER TABLE `meeting_documents` ADD FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `document_pages` ADD FOREIGN KEY (`document_id`) REFERENCES `meeting_documents` (`document_id`) ON DELETE CASCADE;
-ALTER TABLE `document_annotations` ADD FOREIGN KEY (`document_id`) REFERENCES `meeting_documents` (`document_id`) ON DELETE CASCADE;
-ALTER TABLE `document_annotations` ADD FOREIGN KEY (`created_by`) REFERENCES `users` (`user_cd`);
-ALTER TABLE `chat_messages` ADD FOREIGN KEY (`room_cd`) REFERENCES `meeting_rooms` (`room_cd`);
-ALTER TABLE `chat_messages` ADD FOREIGN KEY (`sender_cd`) REFERENCES `users` (`user_cd`);
-
--- ========================================
--- 6. 트리거 (워크스페이스 멤버 수 자동 업데이트)
--- ========================================
-
-DELIMITER $$
-
--- 멤버 추가 시
-CREATE TRIGGER update_workspace_member_count_after_insert
-AFTER INSERT ON workspace_members
-FOR EACH ROW
-BEGIN
-    UPDATE workspaces
-    SET current_members = (
-        SELECT COUNT(*) FROM workspace_members
-        WHERE workspace_cd = NEW.workspace_cd AND is_active = TRUE
-    )
-    WHERE workspace_cd = NEW.workspace_cd;
-END$$
-
--- 멤버 상태 변경 시
-CREATE TRIGGER update_workspace_member_count_after_update
-AFTER UPDATE ON workspace_members
-FOR EACH ROW
-BEGIN
-    IF NEW.is_active != OLD.is_active THEN
-        UPDATE workspaces
-        SET current_members = (
-            SELECT COUNT(*) FROM workspace_members
-            WHERE workspace_cd = NEW.workspace_cd AND is_active = TRUE
-        )
-        WHERE workspace_cd = NEW.workspace_cd;
-    END IF;
-END$$
-
--- 멤버 삭제 시
-CREATE TRIGGER update_workspace_member_count_after_delete
-AFTER DELETE ON workspace_members
-FOR EACH ROW
-BEGIN
-    UPDATE workspaces
-    SET current_members = (
-        SELECT COUNT(*) FROM workspace_members
-        WHERE workspace_cd = OLD.workspace_cd AND is_active = TRUE
-    )
-    WHERE workspace_cd = OLD.workspace_cd;
-END$$
-
-DELIMITER ;
+-- 채팅 메시지 테이블
+CREATE TABLE `CHAT_MSG` (
+    `MSG_ID` VARCHAR(100) PRIMARY KEY COMMENT '메시지 ID',
+    `ROOM_CD` VARCHAR(100) NOT NULL COMMENT '회의실 코드',
+    `SENDER_ID` VARCHAR(50) NOT NULL COMMENT '발신자 ID',
+    `MSG_TYPE` VARCHAR(10) DEFAULT 'TEXT' COMMENT '메시지 타입 (TEXT/FILE)',
+    `MSG_CONTENT` TEXT COMMENT '메시지 내용',
+    `FILE_PATH` VARCHAR(500) COMMENT '파일 경로',
+    `CREATED_DATE` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`ROOM_CD`) REFERENCES `MEETING_ROOMS`(`ROOM_CD`) ON DELETE CASCADE,
+    FOREIGN KEY (`SENDER_ID`) REFERENCES `USERS`(`USER_ID`) ON DELETE CASCADE,
+    INDEX `idx_room_date` (`ROOM_CD`, `CREATED_DATE`),
+    INDEX `idx_sender` (`SENDER_ID`)
+) COMMENT = '채팅 메시지 정보';
 
 -- ========================================
 -- ========================================

@@ -25,7 +25,7 @@ start:
 	@$(DOCKER_COMPOSE) up -d
 	@echo "✅ Ocean 서비스 시작 완료!"
 	@echo "📊 phpMyAdmin: http://localhost:8081"
-	@echo "🔧 Jenkins: http://localhost:8080"
+	@echo "🔧 Jenkins: http://localhost:8090"
 
 # 서비스 중지
 .PHONY: stop
@@ -42,9 +42,11 @@ restart: stop start
 .PHONY: reset-db
 reset-db:
 	@echo "🔄 MySQL 데이터만 초기화합니다..."
-	@$(DOCKER_COMPOSE) stop mysql
-	@rm -rf ./docker/mysql/data/*
-	@$(DOCKER_COMPOSE) up -d mysql
+	@$(DOCKER_COMPOSE) rm -f -s ocean-mysql
+	@docker volume rm docker_ocean_mysql_data || true
+	@$(DOCKER_COMPOSE) up -d ocean-mysql
+	@echo "⏳ MySQL 초기화 중... 잠시 기다려주세요..."
+	@sleep 10
 	@echo "✅ DB 초기화 완료. Jenkins 데이터는 보존되었습니다."
 
 # 모든 데이터 초기화 (위험!)
@@ -64,8 +66,7 @@ reset-all:
 backup:
 	@echo "💾 Jenkins 백업 중..."
 	@mkdir -p ./backups
-	@tar -czf ./backups/jenkins_backup_$(shell date +%Y%m%d_%H%M%S).tar.gz \
-		-C ./docker/jenkins jenkins_home
+	@docker run --rm -v docker_jenkins_home:/jenkins_home -v $(shell pwd)/backups:/backup alpine tar czf /backup/jenkins_backup_$(shell date +%Y%m%d_%H%M%S).tar.gz -C / jenkins_home
 	@echo "✅ 백업 완료: ./backups/"
 	@ls -lh ./backups/jenkins_backup_*.tar.gz | tail -1
 
@@ -82,9 +83,9 @@ restore:
 		exit 1; \
 	fi
 	@echo "$(BACKUP_FILE)에서 복원 중..."
-	@$(DOCKER_COMPOSE) stop jenkins
-	@tar -xzf $(BACKUP_FILE) -C ./docker/jenkins
-	@$(DOCKER_COMPOSE) start jenkins
+	@$(DOCKER_COMPOSE) stop ocean-jenkins
+	@docker run --rm -v docker_jenkins_home:/jenkins_home -v $(shell pwd)/$(BACKUP_FILE):/backup/backup.tar.gz alpine sh -c "cd / && tar xzf /backup/backup.tar.gz"
+	@$(DOCKER_COMPOSE) start ocean-jenkins
 	@echo "✅ 복원 완료"
 
 # 컨테이너 상태
@@ -92,7 +93,6 @@ restore:
 status:
 	@echo "📊 Ocean 컨테이너 상태:"
 	@docker ps --filter "name=ocean" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-	@docker ps --filter "name=jenkins" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 # MySQL 접속
 .PHONY: mysql
@@ -117,6 +117,19 @@ update-db:
 logs:
 	@$(DOCKER_COMPOSE) logs -f
 
+# 특정 서비스 로그 보기
+.PHONY: logs-mysql
+logs-mysql:
+	@$(DOCKER_COMPOSE) logs -f ocean-mysql
+
+.PHONY: logs-jenkins
+logs-jenkins:
+	@$(DOCKER_COMPOSE) logs -f ocean-jenkins
+
+.PHONY: logs-phpmyadmin
+logs-phpmyadmin:
+	@$(DOCKER_COMPOSE) logs -f ocean-phpmyadmin
+
 # 기존 reset 명령어 (안전하게 변경)
 .PHONY: reset
 reset:
@@ -130,3 +143,35 @@ reset:
 # fresh는 reset-db와 동일하게 동작
 .PHONY: fresh
 fresh: reset-db
+
+# MySQL 쉘 (root 권한)
+.PHONY: mysql-root
+mysql-root:
+	@echo "🔗 MySQL root로 접속 중..."
+	@docker exec -it ocean-mysql mysql -uroot -proot1234 ocean_db
+
+# 컨테이너 재시작
+.PHONY: restart-mysql
+restart-mysql:
+	@echo "🔄 MySQL 재시작 중..."
+	@$(DOCKER_COMPOSE) restart ocean-mysql
+
+.PHONY: restart-jenkins
+restart-jenkins:
+	@echo "🔄 Jenkins 재시작 중..."
+	@$(DOCKER_COMPOSE) restart ocean-jenkins
+
+# 볼륨 확인
+.PHONY: volumes
+volumes:
+	@echo "📦 Docker 볼륨 목록:"
+	@docker volume ls | grep -E "(ocean|jenkins)"
+
+# 네트워크 확인
+.PHONY: network
+network:
+	@echo "🌐 Docker 네트워크 정보:"
+	@docker network ls | grep ocean
+	@echo ""
+	@echo "네트워크 상세:"
+	@docker network inspect docker_ocean-network || true
