@@ -27,7 +27,7 @@ import java.util.Map;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        basePackages = "com.example.ocean.repository.jpa",  // JPA Repository 패키지
+        basePackages = "com.example.ocean.repository",  // 올바른 경로로 수정!
         entityManagerFactoryRef = "entityManagerFactory",
         transactionManagerRef = "transactionManager"
 )
