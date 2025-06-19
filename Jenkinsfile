@@ -103,23 +103,30 @@ pipeline {
                             docker stop ocean-app || true
                             docker rm ocean-app || true
 
-                            # 새 컨테이너 실행
+                            # 새 컨테이너 실행 (네트워크 및 메모리 제한 추가!)
                             echo "Starting new container..."
                             docker run -d \
                                 --name ocean-app \
+                                --network ubuntu_ocean-network \
                                 -p 8080:8080 \
                                 --restart unless-stopped \
+                                -e JAVA_OPTS="-Xmx256m -Xms128m -XX:+UseG1GC" \
                                 ocean-app:${BUILD_NUMBER}
 
-                            # 헬스체크
-                            sleep 10
-                            curl -f http://localhost:8080 || echo "Health check warning - app may still be starting"
+                            # 헬스체크 (더 긴 대기 시간)
+                            echo "Waiting for application to start..."
+                            sleep 30
+                            curl -f http://localhost:8080/actuator/health || echo "Health check warning - app may still be starting"
 
                             # 임시 파일 삭제
                             rm /tmp/ocean-app-${BUILD_NUMBER}.tar.gz
 
                             # 컨테이너 상태 확인
                             docker ps | grep ocean-app
+
+                            # 로그 마지막 부분 출력
+                            echo "Recent logs:"
+                            docker logs --tail 20 ocean-app
 EOF
                     '''
                 }
