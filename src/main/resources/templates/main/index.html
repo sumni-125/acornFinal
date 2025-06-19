@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ocean WorkSpace</title>
+    <link rel="icon" href="data:," type="image/x-icon">
     <style>
         * {
             margin: 0;
@@ -785,11 +786,35 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM 로드 완료');
 
+        console.log('=== 메인 페이지 로드됨 ===');
+
+        // 토큰 확인
+        const token = localStorage.getItem('accessToken');
+        const isAuth = localStorage.getItem('isAuthenticated');
+
+        console.log('메인 페이지 토큰 상태:', {
+            hasToken: !!token,
+            tokenLength: token ? token.length : 0,
+            isAuthenticated: isAuth
+        });
+
+        if (token && isAuth === 'true') {
+            console.log('✅ 로그인 상태 확인됨');
+            showUserMenu();
+        } else {
+            console.log('❌ 비로그인 상태');
+            showLoginButton();
+        }
+
     // 로컬스토리지 확인
     console.log('로컬스토리지 상태:', {
         isAuthenticated: localStorage.getItem('isAuthenticated'),
         accessToken: localStorage.getItem('accessToken') ? '있음' : '없음'
     });
+
+    // checkTokenFromUrl() 및 checkAuthStatus() 호출 (기존 코드)
+    checkTokenFromUrl();
+    checkAuthStatus();
 
     // URL 파라미터 확인
     const urlParams = new URLSearchParams(window.location.search);
@@ -1417,6 +1442,18 @@ async function fetchWithAuth(url, options = {}) {
                     }, 200);
                 }, 50);
             }, 500);
+        }
+
+        function showUserMenu() {
+            document.getElementById('loginButton').style.display = 'none';
+            document.getElementById('userMenu').style.display = 'flex';
+            console.log('사용자 메뉴 표시됨');
+        }
+
+        function showLoginButton() {
+            document.getElementById('loginButton').style.display = 'block';
+            document.getElementById('userMenu').style.display = 'none';
+            console.log('로그인 버튼 표시됨');
         }
     </script>
 </body>
