@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   # MySQL 데이터베이스
   ocean-mysql:
@@ -13,11 +14,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      # 초기화 스크립트
-      - ./mysql/init:/docker-entrypoint-initdb.d
-      # 커스텀 설정
-      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-      # 데이터 영속성
+      # 데이터 영속성만 유지 (init 스크립트는 필요시 추가)
       - ocean_mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
@@ -28,9 +25,33 @@ services:
       retries: 10
       interval: 10s
 
-  # phpMyAdmin (ARM64 호환 이미지)
+  # Spring Boot 애플리케이션
+  ocean-app:
+    image: ocean-app:latest
+    container_name: ocean-app
+    restart: unless-stopped
+    depends_on:
+      ocean-mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://ocean-mysql:3306/ocean_db
+      SPRING_DATASOURCE_USERNAME: ocean_user
+      SPRING_DATASOURCE_PASSWORD: ocean_pass
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
+    networks:
+      - ocean-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # phpMyAdmin (일반 이미지로 변경)
   ocean-phpmyadmin:
-    image: arm64v8/phpmyadmin:latest
+    image: phpmyadmin:latest
     container_name: ocean-phpmyadmin
     restart: unless-stopped
     depends_on:
@@ -41,37 +62,9 @@ services:
       PMA_PORT: 3306
       PMA_ARBITRARY: 1
       UPLOAD_LIMIT: 300M
-      PMA_CHARSET: utf8mb4
-      PMA_COLLATION: utf8mb4_unicode_ci
-      LANG: C.UTF-8
-      LC_ALL: C.UTF-8
+      TZ: Asia/Seoul
     ports:
       - "8081:80"
-    networks:
-      - ocean-network
-
-  # Jenkins CI/CD (Docker CLI 포함)
-  ocean-jenkins:
-    image: jenkins/jenkins:lts-jdk17
-    #build:
-    #  context: ./jenkins
-    #  dockerfile: Dockerfile
-    # image: jenkins/jenkins:lts-jdk17  # 커스텀 이미지로 대체
-    container_name: ocean-jenkins
-    restart: unless-stopped
-    ports:
-      - "8090:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.gradle:/var/jenkins_home/.gradle
-      - /Users/hyunki/Ocean:/workspace/ocean
-      # - ../jenkins/init-scripts:/var/jenkins_home/init.groovy.d
-    environment:
-      - JENKINS_OPTS=--prefix=/jenkins
-      - TZ=Asia/Seoul
-    user: root
     networks:
       - ocean-network
 
@@ -83,6 +76,4 @@ networks:
 # 볼륨 설정
 volumes:
   ocean_mysql_data:
-    driver: local
-  jenkins_home:
     driver: local
