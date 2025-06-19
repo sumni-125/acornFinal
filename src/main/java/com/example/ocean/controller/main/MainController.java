@@ -12,10 +12,4 @@ public class MainController {
 
         return "main/index";
     }
-
-    @GetMapping("/oauth2/redirect")
-    public String oauth2Redirect() {
-        return "oauth2-redirect";
-    }
-
 }
