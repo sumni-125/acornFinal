@@ -20,6 +20,7 @@ public class OAuth2RedirectController {
      * 
      * @return OAuth2 리다이렉트 페이지
      */
+    /*
     @GetMapping("/redirect")
     public String handleRedirect(@RequestParam Map<String, String> params, HttpServletRequest request) {
         log.info("OAuth2 리다이렉트 처리");
@@ -32,4 +33,5 @@ public class OAuth2RedirectController {
         
         return "oauth2-redirect";
     }
+     */
 } 
