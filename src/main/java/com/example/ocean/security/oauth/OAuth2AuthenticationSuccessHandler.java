@@ -38,32 +38,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) throws IOException, ServletException {
         try {
             log.error("=== OAuth2 인증 성공 핸들러 실행 시작 ===");
-            log.error("Authentication 타입: {}", authentication.getClass().getName());
-            log.error("Principal 타입: {}", authentication.getPrincipal().getClass().getName());
-            log.error("Principal: {}", authentication.getPrincipal());
-
-            // 세션 정보 로깅
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                log.debug("세션 ID: {}, 생성 시간: {}, 마지막 접근 시간: {}",
-                        session.getId(),
-                        session.getCreationTime(),
-                        session.getLastAccessedTime());
-            } else {
-                log.warn("세션이 없습니다! 새 세션을 생성합니다.");
-                session = request.getSession(true);
-                log.debug("새 세션 생성됨 - ID: {}", session.getId());
-            }
-
-            // 쿠키 정보 로깅
-            if (request.getCookies() != null) {
-                log.debug("요청 쿠키: {}", Arrays.toString(request.getCookies()));
-            } else {
-                log.warn("요청에 쿠키가 없습니다!");
-            }
+            log.error("Response isCommitted: {}", response.isCommitted());
 
             String targetUrl = determineTargetUrl(request, response, authentication);
             log.error("=== 최종 리다이렉트 URL: {} ===", targetUrl);
+            log.error("Response isCommitted before redirect: {}", response.isCommitted());
 
             if (response.isCommitted()) {
                 logger.debug("응답이 커밋됐습니다. " + targetUrl + "로 리다이렉트할 수 없습니다.");
@@ -72,10 +51,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             clearAuthenticationAttributes(request);
 
-            // 세션 쿠키 명시적 설정
+            // 세션 쿠키 설정
             setSessionCookie(request, response);
 
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+            // 직접 리다이렉트로 변경
+            response.sendRedirect(targetUrl);
+
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
             throw new ServletException("인증 성공 처리 실패", e);
