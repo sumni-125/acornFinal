@@ -820,12 +820,10 @@
         function checkTokenFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
-            const refreshToken = urlParams.get('refreshToken');
-            
-            if (token && refreshToken) {
+
+            if (token) {
                 // 토큰 저장
                 localStorage.setItem('accessToken', token);
-                localStorage.setItem('refreshToken', refreshToken);
                 localStorage.setItem('isAuthenticated', 'true');
                 
                 // URL 파라미터 제거
