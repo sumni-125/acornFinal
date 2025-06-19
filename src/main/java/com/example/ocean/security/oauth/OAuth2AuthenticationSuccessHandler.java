@@ -37,7 +37,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         try {
-            log.info("OAuth2 인증 성공 - Principal: {}", authentication.getPrincipal());
+            log.error("=== OAuth2 인증 성공 핸들러 실행 시작 ===");
+            log.error("Authentication 타입: {}", authentication.getClass().getName());
+            log.error("Principal 타입: {}", authentication.getPrincipal().getClass().getName());
+            log.error("Principal: {}", authentication.getPrincipal());
 
             // 세션 정보 로깅
             HttpSession session = request.getSession(false);
@@ -60,7 +63,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
 
             String targetUrl = determineTargetUrl(request, response, authentication);
-            log.info("리다이렉트 URL: {}", targetUrl);
+            log.error("=== 최종 리다이렉트 URL: {} ===", targetUrl);
 
             if (response.isCommitted()) {
                 logger.debug("응답이 커밋됐습니다. " + targetUrl + "로 리다이렉트할 수 없습니다.");

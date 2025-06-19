@@ -66,6 +66,56 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
+                        // OAuth2 인증을 위해 IF_REQUIRED로 변경
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().migrateSession()
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        // 정적 리소스
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+
+                        // 메인 페이지
+                        .requestMatchers("/", "/index", "/main/**").permitAll()
+
+                        // API 및 인증 관련
+                        .requestMatchers("/api/auth/**", "/login", "/oauth2/**").permitAll()
+                        .requestMatchers("/oauth2-redirect.html", "/error").permitAll()
+
+                        // 디버그 및 모니터링
+                        .requestMatchers("/oauth2-debug", "/actuator/health").permitAll()
+
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/oauth2/authorize")
+                        )
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/login/oauth2/code/*")
+                        )
+                );
+
+        // JWT 필터 추가
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    /* 주석 처리
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+    }
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // JWT 사용 시 STATELESS로 변경
                         .sessionFixation().migrateSession()
                         .maximumSessions(1)
@@ -109,6 +159,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+    */
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
