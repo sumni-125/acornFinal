@@ -881,11 +881,6 @@ function checkAuthStatus() {
         if (loginButton) loginButton.style.display = 'block';
     }
 }
-
-        // 페이지 로드 시 인증 상태만 확인
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-       });
         
         // 사용자 정보 가져오기 함수 수정
 function fetchUserInfo(token) {
