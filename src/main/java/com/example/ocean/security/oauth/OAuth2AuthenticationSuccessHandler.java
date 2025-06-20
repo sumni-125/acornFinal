@@ -84,18 +84,25 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 리프레시 토큰 쿠키 설정
             addRefreshTokenCookie(response, tokenResponse.getRefreshToken());
 
-            // 액세스 토큰도 임시 쿠키로 설정 (중요!)
+            // 액세스 토큰도 임시 쿠키로 설정
             Cookie tempTokenCookie = new Cookie("tempAccessToken", tokenResponse.getAccessToken());
             tempTokenCookie.setPath("/");
             tempTokenCookie.setMaxAge(60); // 60초만 유효
             tempTokenCookie.setHttpOnly(false); // JavaScript에서 읽을 수 있도록
+
+            // 환경에 따라 Secure 설정
+            String serverName = request.getServerName();
+            if (!serverName.equals("localhost")) {
+                tempTokenCookie.setSecure(true);
+            }
+
             response.addCookie(tempTokenCookie);
             log.info("임시 액세스 토큰 쿠키 설정 완료");
 
-            // URL 프래그먼트(#)를 사용하여 리다이렉트 (브라우저만 읽을 수 있음)
-            String redirectUrl = frontendUrl + "/oauth2/redirect#token=" + tokenResponse.getAccessToken();
-
+            // 메인 페이지로 직접 리다이렉트
+            String redirectUrl = frontendUrl; // 또는 frontendUrl + "/"
             log.info("리다이렉트 URL: {}", redirectUrl);
+
             return redirectUrl;
 
         } catch (Exception e) {

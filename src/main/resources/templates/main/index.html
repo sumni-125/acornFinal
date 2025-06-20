@@ -784,43 +784,60 @@
     </div>
 
     <script>
-
         // 디버깅용
     window.addEventListener('error', function(e) {
        console.error('JavaScript 에러:', e.error);
     });
 
-    // DOM 로드 완료 후 실행
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM 로드 완료');
+    // main/index.html의 DOMContentLoaded 이벤트 시작 부분에 추가
 
-    // 로컬스토리지 확인
-    console.log('로컬스토리지 상태:', {
-        isAuthenticated: localStorage.getItem('isAuthenticated'),
-        accessToken: localStorage.getItem('accessToken') ? '있음' : '없음'
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== 메인 페이지 로드 ===');
 
-    // checkTokenFromUrl() 및 checkAuthStatus() 호출 (기존 코드)
+    // 쿠키에서 tempAccessToken 확인
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    function deleteCookie(name) {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
+    // tempAccessToken 쿠키 확인
+    const tempToken = getCookie('tempAccessToken');
+    if (tempToken) {
+        console.log('임시 토큰 쿠키 발견!');
+
+        try {
+            // localStorage에 저장
+            localStorage.setItem('accessToken', tempToken);
+            localStorage.setItem('isAuthenticated', 'true');
+
+            // 임시 쿠키 삭제
+            deleteCookie('tempAccessToken');
+
+            console.log('✅ 토큰이 localStorage로 이동 완료');
+
+            // UI 업데이트
+            checkAuthStatus();
+
+        } catch (e) {
+            console.error('토큰 저장 실패:', e);
+        }
+    }
+
+    // 기존 checkTokenFromUrl() 및 checkAuthStatus() 호출
     checkTokenFromUrl();
     checkAuthStatus();
 
-    // URL 파라미터 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-
-    if (token) {
-        console.log('URL에 토큰 발견, 저장 중...');
-        localStorage.setItem('accessToken', token);
-        localStorage.setItem('isAuthenticated', 'true');
-
-        // URL 파라미터 제거
-        window.history.replaceState({}, document.title, '/');
-    }
-
-    // 인증 상태 확인
-    checkAuthStatus();
-
-    // 타이핑 애니메이션은 나중에 시작
+    // 타이핑 애니메이션
     setTimeout(typeEffect, 500);
 });
 
