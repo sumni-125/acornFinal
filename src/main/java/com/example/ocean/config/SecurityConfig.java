@@ -107,7 +107,7 @@ public class SecurityConfig {
                                 .authorizationRequestResolver(customAuthorizationRequestResolver())
                         )
                         .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/login/oauth2/code/*")
+                                .baseUri("/login/oauth2/code/")
                         )
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
