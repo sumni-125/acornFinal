@@ -57,6 +57,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User createUser(OAuth2UserInfo oAuth2UserInfo, User.Provider provider) {
+        log.info("=== 새 사용자 생성 시작 ===");
+        log.info("OAuth2 ID: {}", oAuth2UserInfo.getId());
+        log.info("Provider: {}", provider);
+
         // 사용자 생성
         User user = User.builder()
                 .userId(oAuth2UserInfo.getId())  // 소셜 ID가 PK
@@ -67,9 +71,29 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        userRepository.flush(); // 즉시 DB에 반영
+
+        log.info("사용자 저장 완료 - userId: {}, userName: {}",
+                savedUser.getUserId(), savedUser.getUserName());
 
         // 개인 워크스페이스 자동 생성 (선택사항)
         createPersonalWorkspace(savedUser, oAuth2UserInfo);
+
+        // 다시 한번 확인
+        boolean exists = userRepository.existsByUserId(savedUser.getUserId());
+        log.info("사용자 존재 확인: {}", exists);
+
+        return savedUser;
+    }
+
+    private User updateUser(User user, OAuth2UserInfo oAuth2UserInfo) {
+        log.info("기존 사용자 업데이트 - userId: {}", user.getUserId());
+
+        user.setUserName(oAuth2UserInfo.getName());
+        user.setUserImg(oAuth2UserInfo.getImageUrl());
+
+        User savedUser = userRepository.save(user);
+        userRepository.flush(); // 즉시 DB에 반영
 
         return savedUser;
     }
@@ -94,11 +118,5 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .build();
 
         workspaceMemberRepository.save(member);
-    }
-
-    private User updateUser(User user, OAuth2UserInfo oAuth2UserInfo) {
-        user.setUserName(oAuth2UserInfo.getName());
-        user.setUserImg(oAuth2UserInfo.getImageUrl());
-        return userRepository.save(user);
     }
 }

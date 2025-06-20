@@ -33,9 +33,25 @@ public class TokenService {
 
     @Transactional
     public TokenResponse createTokens(String userId) {
+        log.info("=== TokenService.createTokens 시작 ===");
+        log.info("요청된 userId: {}", userId);
+
+        // 모든 사용자 조회 (디버깅용)
+        List<User> allUsers = userRepository.findAll();
+        log.info("DB에 있는 모든 사용자:");
+        for (User u : allUsers) {
+            log.info("- userId: {}, userName: {}, provider: {}",
+                    u.getUserId(), u.getUserName(), u.getProvider());
+        }
+
         // userId로 사용자 찾기
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> {
+                    log.error("사용자를 찾을 수 없습니다. userId: {}", userId);
+                    return new ResourceNotFoundException("사용자를 찾을 수 없습니다. userId: " + userId);
+                });
+
+        log.info("사용자 찾기 성공: {}", user.getUserName());
 
         String accessToken = jwtTokenProvider.createToken(userId);
         String refreshToken = jwtTokenProvider.createRefreshToken();
@@ -46,6 +62,9 @@ public class TokenService {
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
 
+        // 기존 토큰 삭제 (있다면)
+        userTokensRepository.deleteByUserId(userId);
+
         // 새 토큰 저장
         UserTokens userTokens = UserTokens.builder()
                 .user(user)
@@ -55,6 +74,8 @@ public class TokenService {
                 .build();
 
         userTokensRepository.save(userTokens);
+
+        log.info("토큰 생성 완료 - accessToken 길이: {}", accessToken.length());
 
         return TokenResponse.builder()
                 .accessToken(accessToken)

@@ -69,11 +69,51 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             // UserPrincipal 추출
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            log.info("인증된 사용자: {}", userPrincipal.getId());
+            String userId = userPrincipal.getId();
 
-            // JWT 토큰 생성
-            TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getId());
-            log.info("JWT 토큰 생성 완료 - 액세스 토큰 길이: {}", tokenResponse.getAccessToken().length());
+            log.info("=== OAuth2 인증 성공 ===");
+            log.info("UserPrincipal ID: {}", userId);
+            log.info("UserPrincipal Name: {}", userPrincipal.getName());
+            log.info("UserPrincipal Attributes: {}", userPrincipal.getAttributes());
+
+            // DB 트랜잭션이 커밋될 시간을 주기 위해 잠시 대기
+            try {
+                Thread.sleep(500); // 0.5초 대기
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            // JWT 토큰 생성 시도
+            TokenResponse tokenResponse = null;
+            int retryCount = 0;
+            Exception lastException = null;
+
+            // 최대 3번 시도
+            while (retryCount < 3 && tokenResponse == null) {
+                try {
+                    tokenResponse = tokenService.createTokens(userId);
+                    log.info("토큰 생성 성공 (시도 {}번)", retryCount + 1);
+                    break;
+                } catch (Exception e) {
+                    lastException = e;
+                    retryCount++;
+                    log.warn("토큰 생성 실패 (시도 {}번): {}", retryCount, e.getMessage());
+
+                    if (retryCount < 3) {
+                        try {
+                            Thread.sleep(1000); // 1초 대기
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (tokenResponse == null) {
+                log.error("토큰 생성 최종 실패", lastException);
+                throw new RuntimeException("토큰 생성 실패", lastException);
+            }
 
             // 리프레시 토큰을 HttpOnly 쿠키로 설정
             addRefreshTokenCookie(response, tokenResponse.getRefreshToken());
@@ -92,12 +132,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             return redirectUrl;
 
         } catch (Exception e) {
-            log.error("토큰 생성 중 오류 발생", e);
+            log.error("OAuth2 성공 핸들러에서 오류 발생", e);
+
             // 에러 시 로그인 페이지로 리다이렉트
             return UriComponentsBuilder
                     .fromHttpUrl(frontendUrl)
                     .path("/login")
                     .queryParam("error", "token_generation_failed")
+                    .queryParam("message", e.getMessage())
                     .build()
                     .toUriString();
         }
