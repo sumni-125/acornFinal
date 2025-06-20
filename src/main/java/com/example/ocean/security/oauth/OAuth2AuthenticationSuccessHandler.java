@@ -148,15 +148,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true); // HTTPS에서만 전송
+        cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setMaxAge(refreshTokenValidityInMs / 1000); // 초 단위로 변환
-        cookie.setDomain(".ocean-app.click"); // 서브도메인 포함
+        cookie.setMaxAge(refreshTokenValidityInMs / 1000);
+        // cookie.setDomain() 호출하지 않음 - 현재 도메인 자동 사용
         cookie.setAttribute("SameSite", "Lax");
 
         response.addCookie(cookie);
-
-        log.info("리프레시 토큰 쿠키 설정: domain={}, secure={}, httpOnly={}",
-                cookie.getDomain(), cookie.getSecure(), cookie.isHttpOnly());
     }
 }
