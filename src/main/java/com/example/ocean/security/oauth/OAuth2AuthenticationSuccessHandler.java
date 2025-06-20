@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -26,6 +29,7 @@ import java.util.Arrays;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenService tokenService;
+    private final RequestCache requestCache = new HttpSessionRequestCache();
 
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
@@ -37,136 +41,102 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
+
+        // Response가 이미 커밋되었는지 확인
+        if (response.isCommitted()) {
+            log.debug("Response가 이미 커밋되어 리다이렉트할 수 없습니다.");
+            return;
+        }
+
+        // 세션에서 리다이렉트 루프 카운터 확인
+        HttpSession session = request.getSession();
+        Integer redirectCount = (Integer) session.getAttribute("oauth2_redirect_count");
+        if (redirectCount == null) {
+            redirectCount = 0;
+        } else if (redirectCount > 2) {
+            // 무한 리다이렉트 방지
+            log.error("OAuth2 리다이렉트 루프 감지됨");
+            session.removeAttribute("oauth2_redirect_count");
+            response.sendRedirect("/login?error=redirect_loop");
+            return;
+        }
+        session.setAttribute("oauth2_redirect_count", redirectCount + 1);
+
         try {
-            log.error("=== OAuth2 인증 성공 핸들러 실행 시작 ===");
-            log.error("Authentication Principal 타입: {}", authentication.getPrincipal().getClass().getName());
-            log.error("Response isCommitted: {}", response.isCommitted());
-
             String targetUrl = determineTargetUrl(request, response, authentication);
-            log.error("=== 최종 리다이렉트 URL: {} ===", targetUrl);
 
-            if (response.isCommitted()) {
-                logger.debug("응답이 커밋됐습니다. " + targetUrl + "로 리다이렉트할 수 없습니다.");
-                return;
-            }
+            // 리다이렉트 성공 시 카운터 제거
+            session.removeAttribute("oauth2_redirect_count");
 
             clearAuthenticationAttributes(request);
-            setSessionCookie(request, response);
-            response.sendRedirect(targetUrl);
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
 
         } catch (Exception e) {
-            log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
-            throw new ServletException("인증 성공 처리 실패", e);
+            log.error("OAuth2 인증 성공 처리 중 오류", e);
+            session.removeAttribute("oauth2_redirect_count");
+            response.sendRedirect("/login?error=authentication_failed");
         }
     }
 
+    @Override
     protected String determineTargetUrl(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) {
+
+        // 저장된 요청 확인
+        SavedRequest savedRequest = requestCache.getRequest(request, response);
+        String targetUrl = null;
+
+        if (savedRequest != null) {
+            targetUrl = savedRequest.getRedirectUrl();
+            // OAuth2 관련 경로인 경우 무시
+            if (isOAuth2RelatedPath(targetUrl)) {
+                targetUrl = null;
+            }
+        }
+
+        // 기본 URL 설정
+        if (targetUrl == null || targetUrl.isEmpty()) {
+            targetUrl = getDefaultTargetUrl();
+        }
+
         try {
-            log.info("토큰 생성 시작");
-            log.info("Authentication 객체 정보: {}", authentication);
-            log.info("Principal 타입: {}", authentication.getPrincipal().getClass().getName());
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-            String userId = null;
-
-            // Principal 타입에 따라 userId 추출
-            if (authentication.getPrincipal() instanceof UserPrincipal) {
-                UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-                userId = userPrincipal.getId();
-                log.info("UserPrincipal에서 추출한 userId: {}", userId);
-            } else if (authentication.getPrincipal() instanceof DefaultOAuth2User) {
-                // CustomOAuth2UserService에서 UserPrincipal로 변환되지 않은 경우
-                DefaultOAuth2User oauth2User = (DefaultOAuth2User) authentication.getPrincipal();
-
-                // 카카오의 경우 id는 Long 타입으로 제공됨
-                Object idObj = oauth2User.getAttribute("id");
-                if (idObj != null) {
-                    userId = "KAKAO_" + idObj.toString();
-                    log.info("DefaultOAuth2User에서 추출한 userId: {}", userId);
-                }
-
-                log.info("OAuth2User attributes: {}", oauth2User.getAttributes());
-            }
-
-            if (userId == null) {
-                log.error("userId를 추출할 수 없습니다!");
-                throw new RuntimeException("사용자 ID를 찾을 수 없습니다");
-            }
-
-            // 토큰 생성
-            TokenResponse tokenResponse = tokenService.createTokens(userId);
-            log.info("토큰 생성 완료 - AccessToken: {}", tokenResponse.getAccessToken() != null ? "생성됨" : "null");
+            // JWT 토큰 생성
+            TokenResponse tokenResponse = tokenService.createTokens(userPrincipal.getId());
 
             // 리프레시 토큰을 HttpOnly 쿠키로 설정
-            setRefreshTokenCookie(request, response, tokenResponse.getRefreshToken());
+            addRefreshTokenCookie(response, tokenResponse.getRefreshToken());
 
-            String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
-                    .path("/oauth2/redirect")
+            // 액세스 토큰을 URL 파라미터로 전달
+            return UriComponentsBuilder.fromUriString(targetUrl)
                     .queryParam("token", tokenResponse.getAccessToken())
                     .build().toUriString();
 
-            log.info("최종 리다이렉트 URL 생성 완료: {}", targetUrl);
-            return targetUrl;
-
         } catch (Exception e) {
-            log.error("토큰 생성 중 오류 발생: ", e);
-            e.printStackTrace();
-
-            // 에러 페이지로 리다이렉트
-            return UriComponentsBuilder.fromUriString(frontendUrl)
-                    .path("/oauth2/redirect")
-                    .queryParam("error", "token_creation_failed")
-                    .queryParam("message", e.getMessage())
+            log.error("토큰 생성 중 오류", e);
+            return UriComponentsBuilder.fromUriString("/login")
+                    .queryParam("error", "token_generation_failed")
                     .build().toUriString();
         }
     }
 
-    private void setRefreshTokenCookie(HttpServletRequest request, HttpServletResponse response, String refreshToken) {
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            log.warn("리프레시 토큰이 null이거나 비어있어 쿠키를 설정할 수 없습니다.");
-            return;
-        }
+    private boolean isOAuth2RelatedPath(String path) {
+        if (path == null) return false;
 
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(refreshTokenValidityInMs / 1000);
-
-        String serverName = request.getServerName();
-        if (serverName != null && !serverName.contains("localhost")) {
-            cookie.setSecure(true);
-        }
-
-        response.addCookie(cookie);
-        log.debug("리프레시 토큰 쿠키 설정 완료");
+        String[] oauth2Paths = {"/oauth2/", "/login/oauth2/", "/login", "/favicon"};
+        return Arrays.stream(oauth2Paths).anyMatch(path::contains);
     }
 
-    private void setSessionCookie(HttpServletRequest request, HttpServletResponse response) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            log.warn("세션이 없어서 세션 쿠키를 설정할 수 없습니다.");
-            return;
-        }
-
-        String sessionId = session.getId();
-        log.debug("세션 쿠키 설정 시작 - 세션 ID: {}", sessionId);
-
-        boolean hasSessionCookie = false;
-        if (request.getCookies() != null) {
-            hasSessionCookie = Arrays.stream(request.getCookies())
-                    .anyMatch(cookie -> "JSESSIONID".equals(cookie.getName()));
-        }
-
-        String serverName = request.getServerName();
-        boolean isProduction = serverName != null && !serverName.contains("localhost");
-
-        response.addHeader("Set-Cookie",
-                String.format("JSESSIONID=%s; Path=/; HttpOnly; SameSite=%s%s",
-                        sessionId,
-                        isProduction ? "None" : "Lax",
-                        isProduction ? "; Secure" : ""));
-
-        log.debug("세션 쿠키 설정 완료 - 세션 ID: {}, 기존 쿠키 있음: {}", sessionId, hasSessionCookie);
+    private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // HTTPS에서만 전송
+        cookie.setPath("/");
+        cookie.setMaxAge(refreshTokenValidityInMs / 1000); // 초 단위로 변환
+        cookie.setDomain("ocean-app.click");
+        cookie.setAttribute("SameSite", "Lax");
+        response.addCookie(cookie);
     }
 }
