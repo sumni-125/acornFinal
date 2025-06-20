@@ -784,17 +784,7 @@
     </div>
 
     <script>
-        // 디버깅용
-    window.addEventListener('error', function(e) {
-       console.error('JavaScript 에러:', e.error);
-    });
-
-    // main/index.html의 DOMContentLoaded 이벤트 시작 부분에 추가
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== 메인 페이지 로드 ===');
-
-    // 쿠키에서 tempAccessToken 확인
+        // 쿠키에서 tempAccessToken 확인
     function getCookie(name) {
         const nameEQ = name + "=";
         const ca = document.cookie.split(';');
@@ -810,7 +800,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
 
-    // tempAccessToken 쿠키 확인
+    // 디버깅용
+    window.addEventListener('error', function(e) {
+       console.error('JavaScript 에러:', e.error);
+    });
+
+// 하나의 통합된 DOMContentLoaded 이벤트
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== 메인 페이지 로드 ===');
+
+    // 1. tempAccessToken 쿠키 확인 및 처리
     const tempToken = getCookie('tempAccessToken');
     if (tempToken) {
         console.log('임시 토큰 쿠키 발견!');
@@ -825,20 +824,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
             console.log('✅ 토큰이 localStorage로 이동 완료');
 
-            // UI 업데이트
-            checkAuthStatus();
-
         } catch (e) {
             console.error('토큰 저장 실패:', e);
         }
     }
 
-    // 기존 checkTokenFromUrl() 및 checkAuthStatus() 호출
+    // 2. URL 토큰 파라미터 확인
     checkTokenFromUrl();
+
+    // 3. 인증 상태 확인 및 UI 업데이트
     checkAuthStatus();
 
-    // 타이핑 애니메이션
+    // 4. 타이핑 애니메이션
     setTimeout(typeEffect, 500);
+
+    // 5. 로그아웃 버튼 이벤트 리스너
+    const logoutButton = document.getElementById('logoutButton');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+    }
 });
 
         // URL에서 토큰 파라미터 확인
@@ -1023,12 +1027,7 @@ async function fetchWithAuth(url, options = {}) {
         
         // 로그아웃 버튼 이벤트 리스너
         document.getElementById('logoutButton').addEventListener('click', logout);
-        
-        // 페이지 로드 시 인증 상태 확인
-        document.addEventListener('DOMContentLoaded', function() {
-            checkTokenFromUrl();
-            checkAuthStatus();
-        });
+
         
         // 파티클 생성
         const particlesContainer = document.getElementById('particles');
