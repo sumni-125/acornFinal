@@ -61,8 +61,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
     }
 
-    // OAuth2AuthenticationSuccessHandler의 determineTargetUrl 메서드 수정
-
     @Override
     protected String determineTargetUrl(HttpServletRequest request,
                                         HttpServletResponse response,
@@ -99,8 +97,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.addCookie(tempTokenCookie);
             log.info("임시 액세스 토큰 쿠키 설정 완료");
 
-            // oauth2-redirect.html로 리다이렉트하도록 수정
-            String redirectUrl = frontendUrl + "/oauth2-redirect.html";
+            // 메인 페이지로 직접 리다이렉트 (원래대로)
+            String redirectUrl = frontendUrl; // "https://ocean-app.click"
             log.info("리다이렉트 URL: {}", redirectUrl);
 
             return redirectUrl;
