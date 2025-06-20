@@ -30,6 +30,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
+        // OAuth2 관련 경로는 JWT 검증을 건너뛰기
+        String requestUri = request.getRequestURI();
+        if (requestUri.startsWith("/oauth2/") ||
+                requestUri.startsWith("/login/oauth2/") ||
+                requestUri.equals("/login")) {
+            log.debug("OAuth2 경로이므로 JWT 필터를 건너뜁니다: {}", requestUri);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String jwt = getJwtFromRequest(request);
 
@@ -68,16 +79,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
-
-// ========================================
-// SecurityConfig.java에 추가 필요
-// ========================================
-/*
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        // ... 기존 설정 ...
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)  // JWT 필터 추가
-        // ... 나머지 설정 ...
-}
-*/
