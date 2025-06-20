@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 //  엔드포인트를'/api/'로 지정 하지 않는다.
 public class OAuth2Controller {
 
-    
+
     //OAuth2 인증 시작점
     @GetMapping("/authorize/{provider}")
     public String authorize(@PathVariable String provider, HttpServletRequest request) {

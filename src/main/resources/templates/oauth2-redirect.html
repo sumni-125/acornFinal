@@ -9,8 +9,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="shortcut icon" href="/favicon.ico">
-
-    <!-- 모바일 및 기타 플랫폼용 -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <meta name="theme-color" content="#0a1628">
 
@@ -26,7 +24,7 @@
             color: white;
             text-align: center;
         }
-        
+
         .loading-container {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -36,13 +34,13 @@
             max-width: 400px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-        
+
         .loading-title {
             font-size: 24px;
             margin-bottom: 20px;
             font-weight: 600;
         }
-        
+
         .loading-spinner {
             width: 50px;
             height: 50px;
@@ -52,16 +50,16 @@
             animation: spin 1s ease-in-out infinite;
             margin: 0 auto 20px;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .loading-message {
             font-size: 16px;
             color: rgba(255, 255, 255, 0.8);
         }
-        
+
         .error-container {
             margin-top: 20px;
             padding: 15px;
@@ -69,12 +67,12 @@
             border-radius: 10px;
             display: none;
         }
-        
+
         .error-message {
             color: #ff9999;
             margin-bottom: 15px;
         }
-        
+
         .retry-button {
             background: #2d5a87;
             color: white;
@@ -85,83 +83,100 @@
             font-size: 14px;
             transition: background 0.3s;
         }
-        
+
         .retry-button:hover {
             background: #3d6a97;
         }
     </style>
 </head>
 <body>
-    <div class="loading-container">
-        <div class="loading-spinner"></div>
-        <h1 class="loading-title">로그인 처리 중</h1>
-        <p class="loading-message">잠시만 기다려 주세요...</p>
-        
-        <div class="error-container" id="errorContainer">
-            <p class="error-message" id="errorMessage"></p>
-            <button class="retry-button" id="retryButton">다시 시도</button>
-        </div>
+<div class="loading-container">
+    <div class="loading-spinner"></div>
+    <h1 class="loading-title">로그인 처리 중</h1>
+    <p class="loading-message">잠시만 기다려 주세요...</p>
+
+    <div class="error-container" id="errorContainer">
+        <p class="error-message" id="errorMessage"></p>
+        <button class="retry-button" id="retryButton">다시 시도</button>
     </div>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-     console.log('=== OAuth2 리다이렉트 페이지 로드됨 ===');
-     console.log('현재 URL:', window.location.href);
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== OAuth2 리다이렉트 페이지 로드됨 ===');
+        console.log('현재 URL:', window.location.href);
 
-     // URL에서 토큰 파라미터 추출
-     const urlParams = new URLSearchParams(window.location.search);
-     const token = urlParams.get('token');
-     const error = urlParams.get('error');
+        // URL에서 토큰 파라미터 추출
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const error = urlParams.get('error');
 
-     console.log('파라미터 확인:', {
-         token: token ? `있음 (길이: ${token.length})` : '없음',
-         error: error || '없음',
-         전체파라미터: window.location.search
-     });
+        console.log('파라미터 확인:', {
+            token: token ? `있음 (길이: ${token.length})` : '없음',
+            error: error || '없음',
+            전체파라미터: window.location.search
+        });
 
-     if (error) {
-         console.error('OAuth2 에러:', error);
-         document.getElementById('errorContainer').style.display = 'block';
-         document.getElementById('errorMessage').textContent = `로그인 중 오류가 발생했습니다: ${error}`;
-     } else if (token && token.length > 10) {  // 토큰 유효성 확인
-         console.log('✅ 유효한 토큰 발견, 처리 시작...');
+        // 에러 처리
+        if (error) {
+            console.error('OAuth2 에러:', error);
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = `로그인 중 오류가 발생했습니다: ${error}`;
 
-         try {
-             // 기존 데이터 정리
-             localStorage.removeItem('accessToken');
-             localStorage.removeItem('isAuthenticated');
+            // 재시도 버튼 이벤트
+            document.getElementById('retryButton').addEventListener('click', function() {
+                window.location.href = '/login';
+            });
 
-             // 새 토큰 저장
-             localStorage.setItem('accessToken', token);
-             localStorage.setItem('isAuthenticated', 'true');
+        } else if (token && token.length > 10) {  // 토큰 유효성 확인
+            console.log('✅ 유효한 토큰 발견, 처리 시작...');
 
-             console.log('✅ 토큰 저장 완료');
-             console.log('저장된 데이터 확인:', {
-                 token: localStorage.getItem('accessToken') ? '저장됨' : '저장실패',
-                 auth: localStorage.getItem('isAuthenticated')
-             });
+            try {
+                // 기존 데이터 정리
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('isAuthenticated');
 
-             // 성공 메시지 표시
-             document.querySelector('.loading-title').textContent = '로그인 성공!';
-             document.querySelector('.loading-message').textContent = '메인 페이지로 이동합니다...';
+                // 새 토큰 저장
+                localStorage.setItem('accessToken', token);
+                localStorage.setItem('isAuthenticated', 'true');
 
-             // 메인 페이지로 리다이렉트
-             setTimeout(() => {
-                 console.log('메인 페이지로 리다이렉트...');
-                 window.location.href = '/';
-             }, 1500);
+                console.log('✅ 토큰 저장 완료');
+                console.log('저장된 데이터 확인:', {
+                    token: localStorage.getItem('accessToken') ? '저장됨' : '저장실패',
+                    auth: localStorage.getItem('isAuthenticated')
+                });
 
-         } catch (e) {
-             console.error('토큰 저장 중 오류:', e);
-             document.getElementById('errorContainer').style.display = 'block';
-             document.getElementById('errorMessage').textContent = '토큰 저장 중 오류가 발생했습니다.';
-         }
-     } else {
-         console.error('❌ 유효하지 않은 토큰');
-         document.getElementById('errorContainer').style.display = 'block';
-         document.getElementById('errorMessage').textContent = '로그인 정보를 가져올 수 없습니다.';
-     }
- });
-    </script>
+                // 성공 메시지 표시
+                document.querySelector('.loading-title').textContent = '로그인 성공!';
+                document.querySelector('.loading-message').textContent = '메인 페이지로 이동합니다...';
+
+                // 메인 페이지로 리다이렉트
+                setTimeout(() => {
+                    console.log('메인 페이지로 리다이렉트...');
+                    window.location.href = '/';
+                }, 1500);
+
+            } catch (e) {
+                console.error('토큰 저장 중 오류:', e);
+                document.getElementById('errorContainer').style.display = 'block';
+                document.getElementById('errorMessage').textContent = '토큰 저장 중 오류가 발생했습니다.';
+
+                // 재시도 버튼 이벤트
+                document.getElementById('retryButton').addEventListener('click', function() {
+                    window.location.href = '/login';
+                });
+            }
+        } else {
+            console.error('❌ 유효하지 않은 토큰');
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = '로그인 정보를 가져올 수 없습니다.';
+
+            // 재시도 버튼 이벤트
+            document.getElementById('retryButton').addEventListener('click', function() {
+                window.location.href = '/login';
+            });
+        }
+    });
+</script>
 </body>
-</html> 
+</html>
