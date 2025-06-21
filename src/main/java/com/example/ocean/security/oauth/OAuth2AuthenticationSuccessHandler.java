@@ -36,6 +36,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) throws IOException, ServletException {
 
         log.info("=== OAuth2 인증 성공 처리 시작 ===");
+        log.info("클라이언트 IP: {}", request.getRemoteAddr());
+        log.info("User-Agent: {}", request.getHeader("User-Agent"));
 
         // Response가 이미 커밋되었는지 확인
         if (response.isCommitted()) {
@@ -77,7 +79,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             // 토큰 생성
             TokenResponse tokenResponse = tokenService.createTokens(userId);
-            log.info("토큰 생성 완료");
+            log.info("토큰 생성 완료 - 액세스 토큰 길이: {}", tokenResponse.getAccessToken().length());
 
             // 리프레시 토큰 쿠키 설정
             addRefreshTokenCookie(response, tokenResponse.getRefreshToken());
@@ -85,17 +87,26 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 액세스 토큰도 임시 쿠키로 설정
             Cookie tempTokenCookie = new Cookie("tempAccessToken", tokenResponse.getAccessToken());
             tempTokenCookie.setPath("/");
-            tempTokenCookie.setMaxAge(60); // 60초만 유효
+            tempTokenCookie.setMaxAge(300); // 5분으로 연장
             tempTokenCookie.setHttpOnly(false); // JavaScript에서 읽을 수 있도록
-
-            // 환경에 따라 Secure 설정
+            
+            // 보안 설정
             String serverName = request.getServerName();
-            if (!serverName.equals("localhost")) {
+            if (!serverName.equals("localhost") && !serverName.equals("127.0.0.1")) {
                 tempTokenCookie.setSecure(true);
+                // SameSite 속성 설정 - 크로스 도메인 쿠키 허용
+                response.setHeader("Set-Cookie", String.format("%s=%s; Path=%s; Max-Age=%d; HttpOnly=%s; Secure=%s; SameSite=None", 
+                    tempTokenCookie.getName(), 
+                    tempTokenCookie.getValue(), 
+                    tempTokenCookie.getPath(), 
+                    tempTokenCookie.getMaxAge(), 
+                    false, 
+                    true));
+            } else {
+                response.addCookie(tempTokenCookie);
             }
-
-            response.addCookie(tempTokenCookie);
-            log.info("임시 액세스 토큰 쿠키 설정 완료");
+            
+            log.info("임시 액세스 토큰 쿠키 설정 완료 (SameSite=None, Secure=true)");
 
             // 토큰을 URL 파라미터로 전달하도록 수정
             String redirectUrl = UriComponentsBuilder.fromUriString(frontendUrl)
@@ -114,14 +125,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(refreshTokenValidityInMs / 1000);
-        // cookie.setDomain() 호출하지 않음 - 현재 도메인 자동 사용
-        cookie.setAttribute("SameSite", "Lax");
-
-        response.addCookie(cookie);
+        // SameSite=None, Secure=true 설정을 위해 헤더 직접 설정
+        response.setHeader("Set-Cookie", String.format("refreshToken=%s; Path=/; Max-Age=%d; HttpOnly=true; Secure=true; SameSite=None", 
+            refreshToken, 
+            refreshTokenValidityInMs / 1000));
+            
+        log.info("리프레시 토큰 쿠키 설정 완료 (SameSite=None, Secure=true)");
     }
 }

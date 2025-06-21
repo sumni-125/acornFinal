@@ -9,6 +9,7 @@ import com.example.ocean.security.oauth.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -43,6 +44,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityConfig {
+
+    @Value("${app.frontend.url:https://ocean-app.click}")
+    private String frontendUrl;
 
     @Autowired
     private CustomOAuth2UserService customOAuth2UserService;
@@ -93,7 +97,7 @@ public class SecurityConfig {
 
                         // API 및 인증 관련
                         .requestMatchers("/api/auth/**", "/login", "/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/oauth2-redirect.html", "/error").permitAll()
+                        .requestMatchers("/oauth2-redirect.html", "/error", "/error/**").permitAll()
 
                         // 디버그 및 모니터링
                         .requestMatchers("/oauth2-debug", "/debug/session", "/actuator/health").permitAll()
@@ -114,6 +118,10 @@ public class SecurityConfig {
                         )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
+                .securityContext(securityContext -> securityContext
+                        .securityContextRepository(securityContextRepository())
+                        .requireExplicitSave(true)
                 );
 
         // JWT 필터 추가
@@ -154,6 +162,11 @@ public class SecurityConfig {
 
                 // 무한 리다이렉트 방지를 위한 state 검증 강화
                 additionalParameters.put("prompt", "select_account");
+                
+                // 세션 관련 파라미터 추가
+                additionalParameters.put("access_type", "offline");
+                
+                log.debug("OAuth2 인증 요청 파라미터: {}", additionalParameters);
 
                 return OAuth2AuthorizationRequest.from(authorizationRequest)
                         .additionalParameters(additionalParameters)
@@ -168,15 +181,20 @@ public class SecurityConfig {
 
         // 특정 도메인만 허용하도록 수정 (보안 강화)
         configuration.setAllowedOrigins(Arrays.asList(
+                frontendUrl,
                 "https://ocean-app.click",
                 "http://localhost:3000", // 개발용
                 "http://localhost:8080"  // 개발용
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "X-Requested-With", 
+            "Cache-Control", "Accept", "Origin", "X-Auth-Token"
+        ));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "X-Auth-Token"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

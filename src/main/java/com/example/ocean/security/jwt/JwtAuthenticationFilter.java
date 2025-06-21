@@ -5,6 +5,7 @@ import com.example.ocean.repository.UserRepository;
 import com.example.ocean.security.oauth.UserPrincipal;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -42,7 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
+            // 헤더에서 JWT 토큰 가져오기
             String jwt = getJwtFromRequest(request);
+            
+            // 헤더에 토큰이 없으면 쿠키에서 확인
+            if (!StringUtils.hasText(jwt)) {
+                jwt = getJwtFromCookie(request);
+                if (StringUtils.hasText(jwt)) {
+                    log.debug("쿠키에서 JWT 토큰을 찾았습니다.");
+                }
+            }
 
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
                 // JWT에서 userId 추출
@@ -75,6 +87,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        return null;
+    }
+    
+    private String getJwtFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            // 임시 액세스 토큰 쿠키 확인
+            Optional<Cookie> tokenCookie = Arrays.stream(cookies)
+                    .filter(cookie -> "tempAccessToken".equals(cookie.getName()))
+                    .findFirst();
+            
+            if (tokenCookie.isPresent()) {
+                return tokenCookie.get().getValue();
+            }
         }
         return null;
     }

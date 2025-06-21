@@ -29,7 +29,7 @@ import java.util.UUID;
 public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
     
     // app.frontend.url 값이 없으면 http://localhost:8080 로 설정
-    @Value("${app.frontend.url:http://localhost:8080}")
+    @Value("${app.frontend.url:https://ocean-app.click}")
     private String frontendUrl;
 
     @Override
@@ -37,6 +37,24 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                         HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
         log.error("OAuth2 인증 실패: {}", exception.getMessage(), exception);
+        log.info("클라이언트 IP: {}", request.getRemoteAddr());
+        log.info("User-Agent: {}", request.getHeader("User-Agent"));
+
+        // 세션 정보 로깅
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            log.info("세션 ID: {}", session.getId());
+            log.info("세션 생성 시간: {}", session.getCreationTime());
+            log.info("세션 신규 여부: {}", session.isNew());
+        } else {
+            log.warn("세션이 존재하지 않음");
+            // 세션 생성
+            session = request.getSession(true);
+            log.info("새 세션 생성됨: {}", session.getId());
+        }
+
+        // 세션 쿠키 설정
+        addSessionCookie(request, response, session);
 
         // 오류 정보 추출
         String errorCode = "unknown_error";
@@ -48,6 +66,9 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             errorCode = oauth2Error.getErrorCode();
             errorMessage = oauth2Error.getDescription() != null ?
                     oauth2Error.getDescription() : oauth2Error.getErrorCode();
+            
+            log.error("OAuth2 에러 코드: {}", errorCode);
+            log.error("OAuth2 에러 메시지: {}", errorMessage);
         }
 
         // URL 인코딩 처리 (공백 제거)
@@ -63,6 +84,13 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 .toUriString();
 
         log.debug("인증 실패 후 리다이렉트 URL: {}", targetUrl);
+
+        // 디버그 정보를 쿠키로 설정
+        Cookie debugCookie = new Cookie("oauth2_error", errorCode);
+        debugCookie.setPath("/");
+        debugCookie.setMaxAge(300); // 5분
+        debugCookie.setHttpOnly(false);
+        response.addCookie(debugCookie);
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
@@ -96,23 +124,22 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         Cookie sessionCookie = new Cookie("JSESSIONID", sessionId);
         sessionCookie.setPath("/");
         sessionCookie.setHttpOnly(true);
+        sessionCookie.setMaxAge(3600); // 1시간
         
         // 프로덕션 환경에서는 secure=true로 설정
         String serverName = request.getServerName();
-        if (serverName != null && !serverName.contains("localhost")) {
+        if (serverName != null && !serverName.contains("localhost") && !serverName.contains("127.0.0.1")) {
             sessionCookie.setSecure(true);
-            log.debug("프로덕션 환경에서 secure 쿠키 설정");
+            // SameSite=None 설정 (크로스 도메인 쿠키 허용)
+            response.setHeader("Set-Cookie", String.format("%s=%s; Path=%s; Max-Age=%d; HttpOnly=true; Secure=true; SameSite=None", 
+                sessionCookie.getName(), 
+                sessionCookie.getValue(), 
+                sessionCookie.getPath(),
+                sessionCookie.getMaxAge()));
+        } else {
+            response.addCookie(sessionCookie);
         }
         
-        // SameSite 속성 설정 (최신 브라우저에서 지원)
-        // 참고: Java 서블릿 API에서는 SameSite 속성을 직접 지원하지 않으므로
-        // 헤더로 설정해야 함
-        response.setHeader("Set-Cookie", String.format("%s=%s; Path=%s; HttpOnly; SameSite=None; %s", 
-                           sessionCookie.getName(), 
-                           sessionCookie.getValue(), 
-                           sessionCookie.getPath(),
-                           sessionCookie.getSecure() ? "Secure" : ""));
-        
-        log.debug("세션 쿠키 설정 완료 - 세션 ID: {}, 기존 쿠키 있음: {}", sessionId, hasSessionCookie);
+        log.info("세션 쿠키 설정 완료 - 세션 ID: {}, 기존 쿠키 있음: {}", sessionId, hasSessionCookie);
     }
 }
