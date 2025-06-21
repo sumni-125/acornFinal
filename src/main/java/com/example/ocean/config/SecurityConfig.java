@@ -76,8 +76,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
-                        // OAuth2 인증을 위해 IF_REQUIRED로 설정
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        // OAuth2 인증을 위해 ALWAYS로 설정
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                         .sessionFixation().migrateSession()
                         .invalidSessionUrl("/login")
                         .maximumSessions(1)
@@ -96,7 +96,7 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2-redirect.html", "/error").permitAll()
 
                         // 디버그 및 모니터링
-                        .requestMatchers("/oauth2-debug", "/actuator/health").permitAll()
+                        .requestMatchers("/oauth2-debug", "/debug/session", "/actuator/health").permitAll()
 
                         .anyRequest().authenticated()
                 )
@@ -107,7 +107,7 @@ public class SecurityConfig {
                                 .authorizationRequestResolver(customAuthorizationRequestResolver())
                         )
                         .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/login/oauth2/code")
+                                .baseUri("/login/oauth2/code/*")
                         )
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)

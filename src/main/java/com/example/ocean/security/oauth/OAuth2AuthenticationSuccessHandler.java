@@ -97,8 +97,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.addCookie(tempTokenCookie);
             log.info("임시 액세스 토큰 쿠키 설정 완료");
 
-            // 메인 페이지로 직접 리다이렉트 (원래대로)
-            String redirectUrl = frontendUrl; // "https://ocean-app.click"
+            // 토큰을 URL 파라미터로 전달하도록 수정
+            String redirectUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                    .path("/oauth2-redirect.html")
+                    .queryParam("token", tokenResponse.getAccessToken())
+                    .build().toUriString();
+            
             log.info("리다이렉트 URL: {}", redirectUrl);
 
             return redirectUrl;
