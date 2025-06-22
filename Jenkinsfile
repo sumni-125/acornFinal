@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     environment {
-        PROJECT_PATH = '/workspace/ocean'
-        EC2_HOST = '13.209.22.5'
+        EC2_HOST = '54.180.116.99'
         EC2_USER = 'ubuntu'
         DOCKER_IMAGE = 'ocean-app'
         DOCKER_TAG = "${BUILD_NUMBER}"
@@ -89,12 +88,12 @@ pipeline {
                         # 변수 설정
                         IMAGE_FILE="/tmp/ocean-app-${BUILD_NUMBER}.tar.gz"
 
-                        # 이미지 파일 전송
+                        # 이미지 파일 전송 (환경 변수 사용)
                         echo "Transferring ${IMAGE_FILE} to EC2..."
-                        scp -o StrictHostKeyChecking=no ${IMAGE_FILE} ubuntu@13.209.22.5:/tmp/
+                        scp -o StrictHostKeyChecking=no ${IMAGE_FILE} ${EC2_USER}@${EC2_HOST}:/tmp/
 
-                        # EC2에서 배포 실행
-                        ssh -o StrictHostKeyChecking=no ubuntu@13.209.22.5 << EOF
+                        # EC2에서 배포 실행 (환경 변수 사용)
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << EOF
                             # Docker 이미지 로드
                             echo "Loading Docker image..."
                             docker load < /tmp/ocean-app-${BUILD_NUMBER}.tar.gz
@@ -103,7 +102,7 @@ pipeline {
                             docker stop ocean-app || true
                             docker rm ocean-app || true
 
-                            # 새 컨테이너 실행 (네트워크 및 메모리 제한 추가!)
+                            # 새 컨테이너 실행
                             echo "Starting new container..."
                             docker run -d \
                                 --name ocean-app \
@@ -113,7 +112,7 @@ pipeline {
                                 -e JAVA_OPTS="-Xmx256m -Xms128m -XX:+UseG1GC" \
                                 ocean-app:${BUILD_NUMBER}
 
-                            # 헬스체크 (더 긴 대기 시간)
+                            # 헬스체크
                             echo "Waiting for application to start..."
                             sleep 30
                             curl -f http://localhost:8080/actuator/health || echo "Health check warning - app may still be starting"
@@ -124,15 +123,14 @@ pipeline {
                             # 컨테이너 상태 확인
                             docker ps | grep ocean-app
 
-                            # 로그 마지막 부분 출력
+                            # 로그 출력
                             echo "Recent logs:"
                             docker logs --tail 20 ocean-app
-EOF
+        EOF
                     '''
                 }
             }
         }
-    }
 
     post {
         success {
