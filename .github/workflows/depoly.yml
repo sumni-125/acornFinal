@@ -23,26 +23,22 @@ jobs:
           ./gradlew clean bootJar
 
       - name: Deploy to EC2
-          env:
-            EC2_HOST: ${{ secrets.EC2_HOST }}
-            EC2_USER: ${{ secrets.EC2_USER }}
-            EC2_KEY: ${{ secrets.EC2_KEY }}
-          run: |
-            # SSH 키 파일 생성 (개행 문자 처리 추가)
-            echo "$EC2_KEY" | tr -d '\r' > ocean-key.pem
-            chmod 600 ocean-key.pem
-            
-            # 연결 테스트
-            echo "Connecting to $EC2_USER@$EC2_HOST"
-            
-            # JAR 파일 전송
-            scp -o StrictHostKeyChecking=no -i ocean-key.pem build/libs/*.jar ${EC2_USER}@${EC2_HOST}:/home/ubuntu/ocean-app.jar
-            
-            # EC2에서 실행
-            ssh -o StrictHostKeyChecking=no -i ocean-key.pem ${EC2_USER}@${EC2_HOST} << 'EOF'
-              sudo pkill -f ocean-app.jar || true
-              nohup java -jar -Xmx512m /home/ubuntu/ocean-app.jar > /home/ubuntu/app.log 2>&1 &
-              sleep 5
-              echo "✅ 배포 완료!"
-              ps aux | grep ocean-app.jar
-            EOF
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_KEY: ${{ secrets.EC2_KEY }}
+        run: |
+          echo "$EC2_KEY" | tr -d '\r' > ocean-key.pem
+          chmod 600 ocean-key.pem
+          
+          echo "Connecting to $EC2_USER@$EC2_HOST"
+          
+          scp -o StrictHostKeyChecking=no -i ocean-key.pem build/libs/*.jar ${EC2_USER}@${EC2_HOST}:/home/ubuntu/ocean-app.jar
+          
+          ssh -o StrictHostKeyChecking=no -i ocean-key.pem ${EC2_USER}@${EC2_HOST} << 'EOF'
+            sudo pkill -f ocean-app.jar || true
+            nohup java -jar -Xmx512m /home/ubuntu/ocean-app.jar > /home/ubuntu/app.log 2>&1 &
+            sleep 5
+            echo "배포 완료!"
+            ps aux | grep ocean-app.jar
+          EOF
