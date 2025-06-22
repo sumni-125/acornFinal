@@ -15,10 +15,10 @@ pipeline {
                 sh """
                     echo "Current directory: \$(pwd)"
                     echo "Checking project directory..."
-                    ls -la ${PROJECT_PATH}
+                    ls -la
 
-                    # gradlew 확인
-                    if [ -f ${PROJECT_PATH}/gradlew ]; then
+                    # gradlew 확인 (현재 디렉토리에서)
+                    if [ -f ./gradlew ]; then
                         echo "gradlew found!"
                     else
                         echo "ERROR: gradlew not found!"
@@ -32,7 +32,6 @@ pipeline {
             steps {
                 echo '=== 애플리케이션 빌드 ==='
                 sh """
-                    cd ${PROJECT_PATH}
                     pwd
                     ls -la
 
@@ -47,8 +46,7 @@ pipeline {
             steps {
                 echo '=== 테스트 실행 ==='
                 sh """
-                    cd ${PROJECT_PATH}
-                    ./gradlew test --no-daemon -x test
+                    ./gradlew test --no-daemon
                 """
             }
         }
@@ -57,8 +55,6 @@ pipeline {
             steps {
                 echo '=== Docker 이미지 빌드 ==='
                 sh """
-                    cd ${PROJECT_PATH}
-
                     # Docker 확인
                     which docker || echo "Docker not found in PATH"
                     docker --version || echo "Docker command failed"
@@ -88,11 +84,11 @@ pipeline {
                         # 변수 설정
                         IMAGE_FILE="/tmp/ocean-app-${BUILD_NUMBER}.tar.gz"
 
-                        # 이미지 파일 전송 (환경 변수 사용)
+                        # 이미지 파일 전송
                         echo "Transferring ${IMAGE_FILE} to EC2..."
                         scp -o StrictHostKeyChecking=no ${IMAGE_FILE} ${EC2_USER}@${EC2_HOST}:/tmp/
 
-                        # EC2에서 배포 실행 (환경 변수 사용)
+                        # EC2에서 배포 실행
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << EOF
                             # Docker 이미지 로드
                             echo "Loading Docker image..."
@@ -126,11 +122,12 @@ pipeline {
                             # 로그 출력
                             echo "Recent logs:"
                             docker logs --tail 20 ocean-app
-        EOF
+EOF
                     '''
                 }
             }
         }
+    }  // stages 블록 닫기
 
     post {
         success {
@@ -142,8 +139,8 @@ pipeline {
             sh """
                 echo "Debug information:"
                 echo "Working directory: \$(pwd)"
-                echo "Project path contents:"
-                ls -la ${PROJECT_PATH} || true
+                echo "Current directory contents:"
+                ls -la || true
             """
         }
         always {
@@ -151,4 +148,4 @@ pipeline {
             sh "rm -f /tmp/${DOCKER_IMAGE}-${DOCKER_TAG}.tar.gz || true"
         }
     }
-}
+}  // pipeline 블록 닫기
