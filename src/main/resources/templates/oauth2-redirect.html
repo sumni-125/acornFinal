@@ -15,7 +15,7 @@
             align-items: center;
             height: 100vh;
         }
-
+        
         .loading-container {
             text-align: center;
             background: white;
@@ -23,7 +23,7 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
+        
         .loading-spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #2d5a87;
@@ -33,7 +33,7 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -44,7 +44,7 @@
             margin: 10px 0;
             font-size: 24px;
         }
-
+        
         .loading-message {
             color: #666;
             margin: 10px 0;
@@ -90,10 +90,10 @@
     </style>
 </head>
 <body>
-<div class="loading-container">
-    <div class="loading-spinner"></div>
-    <h1 class="loading-title">로그인 처리 중</h1>
-    <p class="loading-message">잠시만 기다려 주세요...</p>
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <h1 class="loading-title">로그인 처리 중</h1>
+        <p class="loading-message">잠시만 기다려 주세요...</p>
 
     <div class="error-container" id="errorContainer">
         <p class="error-message" id="errorMessage"></p>
@@ -101,9 +101,9 @@
     </div>
     
     <div class="debug-info" id="debugInfo"></div>
-</div>
+    </div>
 
-<script>
+    <script>
     // 디버그 로그 함수
     function debugLog(message, obj = null) {
         console.log(message, obj || '');
@@ -178,9 +178,9 @@
             debugLog('⚠️ 로컬스토리지 접근 실패!');
             document.getElementById('errorContainer').style.display = 'block';
             document.getElementById('errorMessage').textContent = `로컬스토리지 접근 오류: ${storageTest.error || '알 수 없는 오류'}`;
-            return;
-        }
-
+                return;
+            }
+            
         // 1. URL 파라미터 확인
         const urlParams = new URLSearchParams(window.location.search);
         let token = urlParams.get('token');
@@ -250,7 +250,7 @@
                 // 성공 메시지 표시
                 document.querySelector('.loading-title').textContent = '로그인 성공!';
                 document.querySelector('.loading-message').textContent = '메인 페이지로 이동합니다...';
-
+                
                 // 메인 페이지로 리다이렉트
                 setTimeout(() => {
                     debugLog('메인 페이지로 리다이렉트...');
@@ -274,8 +274,8 @@
             document.getElementById('retryButton').addEventListener('click', function() {
                 window.location.href = '/login';
             });
-        }
-    });
+            }
+        });
 
     // 디버그 함수
     window.checkTokenSources = function() {
@@ -290,6 +290,6 @@
         debugLog('=== 토큰 소스 확인 ===', sources);
         return sources;
     };
-</script>
+    </script>
 </body>
-</html>
+</html> 

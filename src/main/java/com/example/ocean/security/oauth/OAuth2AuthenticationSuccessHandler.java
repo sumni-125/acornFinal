@@ -32,18 +32,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                         HttpServletResponse response,
+                                         Authentication authentication) throws IOException, ServletException {
 
         log.info("=== OAuth2 인증 성공 처리 시작 ===");
         log.info("클라이언트 IP: {}", request.getRemoteAddr());
         log.info("User-Agent: {}", request.getHeader("User-Agent"));
 
         // Response가 이미 커밋되었는지 확인
-        if (response.isCommitted()) {
+            if (response.isCommitted()) {
             log.warn("Response가 이미 커밋되어 리다이렉트할 수 없습니다.");
-            return;
-        }
+                return;
+            }
 
         try {
             // 토큰 생성 및 리다이렉트 URL 구성
@@ -113,7 +113,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .path("/oauth2-redirect.html")
                     .queryParam("token", tokenResponse.getAccessToken())
                     .build().toUriString();
-            
+                    
             log.info("리다이렉트 URL: {}", redirectUrl);
 
             return redirectUrl;
@@ -131,5 +131,5 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             refreshTokenValidityInMs / 1000));
             
         log.info("리프레시 토큰 쿠키 설정 완료 (SameSite=None, Secure=true)");
+        }
     }
-}

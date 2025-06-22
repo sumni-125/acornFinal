@@ -31,7 +31,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     // app.frontend.url 값이 없으면 http://localhost:8080 로 설정
     @Value("${app.frontend.url:https://ocean-app.click}")
     private String frontendUrl;
-
+    
     @Override
     public void onAuthenticationFailure(HttpServletRequest request,
                                         HttpServletResponse response,
@@ -39,7 +39,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         log.error("OAuth2 인증 실패: {}", exception.getMessage(), exception);
         log.info("클라이언트 IP: {}", request.getRemoteAddr());
         log.info("User-Agent: {}", request.getHeader("User-Agent"));
-
+        
         // 세션 정보 로깅
         HttpSession session = request.getSession(false);
         if (session != null) {
@@ -52,7 +52,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             session = request.getSession(true);
             log.info("새 세션 생성됨: {}", session.getId());
         }
-
+        
         // 세션 쿠키 설정
         addSessionCookie(request, response, session);
 
