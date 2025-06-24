@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.ocean.repository.CalendarEventRepository">
+
+    <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.PersonalCalendarResponse">
+        SELECT
+            event_cd AS eventCd,
+            title,
+            start_datetime AS startDatetime,
+            end_datetime AS endDatetime,
+            color
+        FROM `EVENTS`
+        WHERE user_id = #{userID}
+        AND is_shared = '0'
+        ORDER BY priority
+    </select>
+
+    <insert id="insertPersonalEvent" parameterType="com.example.ocean.dto.response.Event">
+        INSERT INTO `EVENTS` (
+            event_cd, user_id, workspace_cd, title, description,
+            start_datetime, end_datetime, color,
+            is_shared, progress_status, priority, created_date
+        ) VALUES (
+            #{eventCd}, #{userId}, #{workspaceCd}, #{title}, #{description},
+            #{startDatetime}, #{endDatetime}, #{color},
+            #{isShared}, #{progressStatus}, #{priority}, #{createdDate}
+        )
+
+    </insert>
+
+    <insert id="insertFile" parameterType="com.example.ocean.dto.response.FileEntity">
+        INSERT INTO `FILE` (
+            file_id, event_cd, file_nm, file_type, file_path, file_size,
+            uploaded_by, uploaded_date, active_state
+        ) VALUES (
+            #{fileId}, #{eventCd}, #{fileNm}, #{fileType}, #{filePath}, #{fileSize},
+            #{uploadedBy}, NOW(), '1'
+        )
+    </insert>
+
+    <select id="selectPersonalEvent" parameterType="String" resultType="Event">
+        SELECT
+            event_cd AS eventCd,
+            user_id AS userId,
+            workspace_cd AS workspaceCd,
+            title,
+            description,
+            start_datetime AS startDatetime,
+            end_datetime AS endDatetime,
+            color,
+            is_shared AS isShared,
+            progress_status AS progressStatus,
+            priority AS priority,
+            created_date AS createdDate
+        FROM `EVENTS`
+        WHERE event_cd = #{eventCd}
+    </select>
+
+    <select id="selectFileEvent" parameterType="String" resultType="FileEntity">
+        SELECT
+                FILE_ID AS fileId,
+                EVENT_CD AS eventCd,
+                FILE_NM AS fileNm,
+                FILE_TYPE AS fileType,
+                FILE_PATH AS filePath,
+                FILE_SIZE AS fileSize,
+                UPLOADED_BY AS uploadedBy,
+                UPLOADED_DATE AS uploadedDate,
+                ACTIVE_STATE AS activeState
+        FROM   `FILE`
+        WHERE   event_cd = #{eventCd}
+    </select>
+
+    <select id="selectFileByFileId" parameterType="String" resultType="FileEntity">
+        SELECT
+        FILE_ID AS fileId,
+        EVENT_CD AS eventCd,
+        FILE_NM AS fileNm,
+        FILE_TYPE AS fileType,
+        FILE_PATH AS filePath,
+        FILE_SIZE AS fileSize,
+        UPLOADED_BY AS uploadedBy,
+        UPLOADED_DATE AS uploadedDate,
+        ACTIVE_STATE AS activeState
+        FROM   `FILE`
+        WHERE   FILE_ID = #{fileId}
+    </select>
+
+    <update id="updatePersonalEvent" parameterType="PersonalEventUpdateRequest">
+        UPDATE `EVENTS`
+        <set>
+            <if test="title         != null">   title           = #{title},</if>
+            <if test="description   != null">   description     = #{description},</if>
+            <if test="startDatetime != null">   start_datetime  = #{startDatetime},</if>
+            <if test="endDatetime   != null">   end_datetime    = #{endDatetime},</if>
+            <if test="color         != null">   color           = #{color},</if>
+            <if test="isPrivate     != null">   is_shared       = #{isShared},</if>
+            <if test="status        != null">   progress_status = #{progressStatus},</if>
+            <if test="importance    != null">   priority        = #{priority},</if>
+        </set>
+        WHERE event_cd = #{eventCd}
+        AND user_id  = #{userId}
+    </update>
+
+    <delete id="deletePersonalEvent" parameterType="String">
+        DELETE
+        FROM `EVENTS`
+        WHERE event_cd = #{eventCd}
+    </delete>
+</mapper>

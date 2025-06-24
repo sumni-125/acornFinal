@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>캘린더</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet'/>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    <style>
+        *{
+            padding:0;
+            margin:0;
+        }
+        #createEventModal {
+          display: none;
+          position: fixed;
+          top: 20%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: white;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 10px;
+          z-index: 9999;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+    <!-- 사용자 일정목록 불러오기 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const calendarEl = document.getElementById('calendar');//캘린더 div 지정
+
+          const calendar = new FullCalendar.Calendar(calendarEl, {  //풀캘린더 api
+            initialView: 'dayGridMonth',
+            locale: 'ko',
+
+            //날짜 클릭시 : 일정 추가하는 함수
+            dateClick: function(info) {
+              document.getElementById('eventForm').reset();
+              document.getElementById('start').value = info.dateStr + 'T09:00';
+              document.getElementById('end').value = info.dateStr + 'T18:00';
+              document.getElementById('createEventModal').style.display = 'block';
+            },
+
+            // 개인일정 리스트 풀캘린더에 뿌?려주는?
+            events: function(fetchInfo, successCallback, failureCallback) {
+              const userId = 'USR001';
+              fetch(`/api/calendar/personal?userId=${userId}`)
+                .then(response => {
+                  if (!response.ok) throw new Error("불러오기 실패!");
+                  return response.json();
+                })
+                .then(data => {
+                  const events = data.map(item => ({
+                    id: item.eventCd,
+                    title: item.title,
+                    start: item.startDatetime,
+                    end: item.endDatetime,
+                    color: item.color
+                  }));
+                  successCallback(events);
+                })
+                .catch(err => {
+                  console.error(err);
+                  failureCallback(err);
+                });
+            },
+
+            // 일정 클릭 이벤트 : 일정 상세 모달창
+            eventClick: function(info) {
+              const eventCd = info.event.id;
+
+              fetch(`/api/calendar/personal/events/${eventCd}`)
+                .then(res => {
+                  if (!res.ok) throw new Error("상세정보 조회 실패");
+                  return res.json();
+                })
+                .then(data => {
+                  document.getElementById('detailTitle').innerText = data.title || '';
+                  document.getElementById('detailDescription').innerText = data.description || '';
+                  document.getElementById('detailStart').innerText = data.startDatetime || '';
+                  document.getElementById('detailEnd').innerText = data.endDatetime || '';
+                  document.getElementById('detailPriority').innerText = data.priority || '';
+                  document.getElementById('detailStatus').innerText = data.progressStatus || '';
+                  document.getElementById('detailShared').innerText = data.isShared === '1' ? '예' : '아니오';
+
+                  if (data.fileList && data.fileList.length > 0) {
+                      const fileItems = data.fileList.map(file => `
+                        <li>
+                          ${file.fileNm}
+                          <button onclick="downloadFromS3('/api/calendar/personal/events/${eventCd}/download?fileId=${file.fileId}', '${file.fileNm}')">다운로드</button>
+                        </li>
+                      `).join('');
+                      document.getElementById('detailFiles').innerHTML = fileItems;
+                  } else {
+                      document.getElementById('detailFiles').innerText = '없음';
+                  }
+
+                  document.getElementById('eventDetailModal').style.display = 'block';
+                })
+                .catch(err => {
+                  console.error(err);
+                  alert("일정 정보를 불러오는 데 실패했습니다.");
+                });
+            }
+          });
+          calendar.render();
+        });
+
+        //일정 상세 모달창 닫는 함수
+        function closeDetailModal() {
+          document.getElementById('eventDetailModal').style.display = 'none';
+        }
+    </script>
+    <!-- 일정 추가 -->
+    <script>
+        //일정 추가 모달창 닫는 함수
+        function closeCreateEventModal() {
+          document.getElementById('createEventModal').style.display = 'none';
+        }
+
+        function saveEvent() {
+          const form = document.getElementById("eventForm");
+          const formData = new FormData();
+
+          //userId랑 workspaceCd는 임시로 지정해놨어요
+          const requestBody = {
+            userId: "USR001",
+            workspaceCd: "WS001",
+            title: form.title.value,
+            description: form.description.value,
+            startDatetime: form.start.value,
+            endDatetime: form.end.value,
+            color: form.color.value,
+            isShared: form.isShared.checked ? '1' : '0',
+            progressStatus: form.progressStatus.value,
+            priority: form.priority.value,
+            notification: form.notification.value
+          };
+
+          formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
+
+          const files = form.fileUpload.files;
+          for (let i = 0; i < files.length; i++) {
+            formData.append("files", files[i]);
+          }
+
+          fetch('/api/calendar/personal', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('등록 실패');
+            return res.text();
+          })
+          .then(data => {
+            alert("일정 등록 성공!");
+            location.reload();
+          })
+          .catch(err => {
+            console.error(err);
+            alert("서버 오류 발생");
+          });
+
+          closeCreateEventModal();
+        }
+    </script>
+    <!--파일다운로드 -->
+    <script>
+
+        // 다운로드 매핑 주소 (fileUrl)                                              // 파일이름 (fileName)
+        //'/api/calendar/personal/events/${eventCd}/download?fileId=${file.fileId}', '${file.fileNm}
+
+        function downloadFromS3(fileUrl, fileName) {
+          fetch(fileUrl)
+            .then(response => {
+              if (!response.ok) throw new Error("다운로드 실패");
+              return response.blob();
+            })
+            .then(blob => {
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              a.click();
+              window.URL.revokeObjectURL(url);
+            })
+            .catch(err => {
+              console.error(err);
+              alert("파일 다운로드 중 오류가 발생했습니다.");
+            });
+        }
+    </script>
+</head>
+<body>
+<h2>캘린더페이지입니다^^</h2>
+<div id='calendar'></div>
+
+<!-- 일정 추가 모달 -->
+<div id="createEventModal">
+    <h3>새 일정 추가</h3>
+    <form id="eventForm" onsubmit="event.preventDefault(); saveEvent();">
+        <label for="title">제목*</label><br/>
+        <input type="text" id="title" name="title" required><br/><br/>
+
+        <label for="color">색상</label><br/>
+        <select id="color" name="color">
+            <option value="RED">빨강</option>
+            <option value="ORANGE">주황</option>
+            <option value="YELLOW">노랑</option>
+            <option value="GREEN">초록</option>
+            <option value="BLUE" selected>파랑</option>
+            <option value="GRAY">회색</option>
+        </select><br/><br/>
+
+        <label for="start">시작 일시*</label><br/>
+        <input type="datetime-local" id="start" name="start" required><br/><br/>
+
+        <label for="end">종료 일시*</label><br/>
+        <input type="datetime-local" id="end" name="end" required><br/><br/>
+
+        <label for="description">설명</label><br/>
+        <textarea id="description" name="description" rows="3" cols="30"></textarea><br/><br/>
+
+        <label>파일 첨부:</label>
+        <input type="file" id="fileUpload" name="files" multiple><br/><br/>
+
+        <label for="priority">중요도</label><br/>
+        <select id="priority" name="priority">
+            <option value="LOW">낮음</option>
+            <option value="NORMAL" selected>보통</option>
+            <option value="HIGH">높음</option>
+        </select><br/><br/>
+
+        <label for="notification">알림</label><br/>
+        <select id="notification" name="notification">
+            <option value="BEFORE_DAY_9AM">전날 오전 9시</option>
+            <option value="DAY_9AM">당일 오전 9시</option>
+            <option value="BEFORE_1HOUR">1시간 전</option>
+        </select><br/>
+
+        <label for="progressStatus">진행 상태</label><br/>
+        <select id="progressStatus" name="progressStatus">
+            <option value="BEFORE" selected>시작 전</option>
+            <option value="ING">진행 중</option>
+            <option value="DONE">완료</option>
+        </select><br/><br/>
+
+        <label>
+            <input type="checkbox" id="isShared" name="isShared">
+            다른 사람과 공유
+        </label><br/><br/>
+
+        <button type="submit">저장</button>
+        <button type="button" onclick="closeCreateEventModal()">취소</button>
+    </form>
+
+</div>
+
+<!-- 일정 상세 모달 -->
+<div id="eventDetailModal"
+     style="display:none; position:fixed; top:25%; left:50%; transform:translateX(-50%); background:white; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
+    <h3>일정 상세</h3>
+    <p><strong>제목:</strong> <span id="detailTitle"></span></p>
+    <p><strong>설명:</strong> <span id="detailDescription"></span></p>
+    <p><strong>시작:</strong> <span id="detailStart"></span></p>
+    <p><strong>종료:</strong> <span id="detailEnd"></span></p>
+    <p><strong>중요도:</strong> <span id="detailPriority"></span></p>
+    <p><strong>진행 상태:</strong> <span id="detailStatus"></span></p>
+    <p><strong>공유 여부:</strong> <span id="detailShared"></span></p>
+    <p><strong>파일:</strong></p>
+    <ul id="detailFiles"></ul>
+    <button onclick="closeDetailModal()">닫기</button>
+</div>
+
+
+</body>
+</html>
