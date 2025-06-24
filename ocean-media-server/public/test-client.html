@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ocean Media Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+<h1>Socket.io Test</h1>
+<button onclick="connect()">Connect & Join</button>
+<div id="status"></div>
+
+<script>
+    let socket;
+
+    function connect() {
+      socket = io('http://localhost:3001');
+
+      socket.on('connect', () => {
+        console.log('Connected!');
+        document.getElementById('status').innerHTML = 'Connected!';
+
+        // 룸 참가
+        socket.emit('join-room', {
+          roomId: 'test-room-1',
+          workspaceId: 'workspace-123',
+          peerId: 'test-peer-' + Date.now(),
+          displayName: 'Test User'
+        });
+      });
+
+      socket.on('room-joined', (data) => {
+        console.log('Room joined:', data);
+        document.getElementById('status').innerHTML += '<br>Room joined!';
+      });
+
+      socket.on('new-peer', (data) => {
+        console.log('New peer:', data);
+      });
+    }
+</script>
+</body>
+</html>
