@@ -5,6 +5,8 @@ const mediasoup = require('mediasoup');
 const cors = require('cors');
 const roomManager = require('./RoomManager');
 const socketHandler = require('./socketHandler');
+const fs = require('fs');
+const https = require('https');
 
 const app = express();
 app.use(cors());
@@ -12,11 +14,25 @@ app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
 
-const server = http.createServer(app);
+//const server = http.createServer(app);
+// HTTPS 서버 생성
+const server = https.createServer({
+  key: fs.readFileSync('./certs/key.pem'),
+  cert: fs.readFileSync('./certs/cert.pem')
+}, app);
+
+//const io = new Server(server, {
+  //cors: {
+    //origin: ["https://localhost:3001","https://172.30.1.49:3001", "*"],
+    //credentials: true
+  //}
+//});
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:8080",
-    credentials: true
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST"]
   }
 });
 
