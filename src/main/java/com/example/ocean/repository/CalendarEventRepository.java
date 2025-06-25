@@ -17,6 +17,8 @@ public interface CalendarEventRepository {
     Event selectPersonalEvent(@Param("eventCd")String eventCd);
     List<FileEntity> selectFileEvent(@Param("eventCd")String eventCd);
     FileEntity selectFileByFileId(@Param("fileId")String fileId);
+    int updateFileActive(@Param("eventCd")String eventCd, @Param("fileId")String fileId);
     int updatePersonalEvent(PersonalEventUpdateRequest event);
-
+    int deletePersonalEvent(@Param("eventCd")String eventCd);
+    void deleteFileByEventCd(@Param("eventCd")String eventCd);
 }

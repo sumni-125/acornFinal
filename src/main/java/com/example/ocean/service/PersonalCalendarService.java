@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -55,6 +56,13 @@ public class PersonalCalendarService {
 
         int result = calendarEventRepository.insertPersonalEvent(event);
 
+        insertFile(files, eventCd, request.getUserId());
+
+        return result;
+    }
+
+    public boolean insertFile(MultipartFile[] files, String eventCd, String userId) {
+        int cnt=0;
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
@@ -66,21 +74,25 @@ public class PersonalCalendarService {
                         .fileType(file.getContentType())
                         .filePath(filePath)
                         .fileSize(file.getSize())
-                        .uploadedBy(request.getUserId())
+                        .uploadedBy(userId)
                         .build();
 
-                calendarEventRepository.insertFile(fileEntity);
+                int insert = calendarEventRepository.insertFile(fileEntity);
+                cnt+=insert;
             }
         }
+        if (files == null || files.length == 0) return true;
 
-        return result;
+        return cnt==files.length;
     }
+
     public PersonalEventDetailResponse getPersonalEventDetail(String eventCd){
-        List<FileEntity> fileList = calendarEventRepository.selectFileEvent(eventCd);
+
         Event event = calendarEventRepository.selectPersonalEvent(eventCd);
         PersonalEventDetailResponse response = new PersonalEventDetailResponse();
         if (event != null) {
             response.setEventCd(event.getEventCd());
+            response.setUserId(event.getUserId());
             response.setTitle(event.getTitle());
             response.setDescription(event.getDescription());
             response.setStartDatetime(event.getStartDatetime());
@@ -90,6 +102,13 @@ public class PersonalCalendarService {
             response.setProgressStatus(event.getProgressStatus());
             response.setPriority(event.getPriority());
         }
+        response.setFileList(selectFileEvent(eventCd));
+
+        return response;
+    }
+
+    public List<PersonalEventDetailResponse.FileInfo> selectFileEvent(String eventCd){
+        List<FileEntity> fileList = calendarEventRepository.selectFileEvent(eventCd);
         if (fileList != null) {
             List<PersonalEventDetailResponse.FileInfo> fileInfos = fileList.stream().map(file -> {
                 PersonalEventDetailResponse.FileInfo fileInfo = new PersonalEventDetailResponse.FileInfo();
@@ -97,15 +116,11 @@ public class PersonalCalendarService {
                 fileInfo.setFileId(file.getFileId());
                 return fileInfo;
             }).collect(Collectors.toList());
-            response.setFileList(fileInfos);
+
+            return fileInfos;
+        }else{
+            return Collections.emptyList();
         }
-
-        return response;
-    }
-
-    public List<FileEntity> selectFileEvent(String eventCd){
-        List<FileEntity> fileList = calendarEventRepository.selectFileEvent(eventCd);
-        return calendarEventRepository.selectFileEvent(eventCd);
     }
 
     public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
@@ -119,6 +134,14 @@ public class PersonalCalendarService {
                         "attachment; filename=\"" + URLEncoder.encode(file.getFileNm(), "UTF-8") + "\"")
                 .body(bytes);
     }
+    public boolean updateFileActive(String eventCd, List<String> deletedFileIds){
+        int cnt=0;
+        for (String fileId : deletedFileIds) {
+            int updated = calendarEventRepository.updateFileActive(eventCd, fileId);
+            cnt+=updated;
+        }
+        return cnt == deletedFileIds.size();
+    }
     private String extractKeyFromUrl(String url) {
         URI uri = URI.create(url);
         return uri.getPath().substring(1); // 앞에 '/' 제거
@@ -126,6 +149,12 @@ public class PersonalCalendarService {
 
     public int updatePersonalEvent(PersonalEventUpdateRequest event){
         return calendarEventRepository.updatePersonalEvent(event);
+    }
+
+    public int deletePersonalEvent(String eventCd){
+        //파일먼저삭제하고? 이벤트 삭제하기
+        calendarEventRepository.deleteFileByEventCd(eventCd);
+        return calendarEventRepository.deletePersonalEvent(eventCd);
     }
 
 }

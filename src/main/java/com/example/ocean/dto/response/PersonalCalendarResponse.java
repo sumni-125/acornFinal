@@ -11,5 +11,5 @@ public class PersonalCalendarResponse {
     private LocalDateTime   startDatetime;
     private LocalDateTime   endDatetime;
     private String          color;
-
+    private String          priority;
 }

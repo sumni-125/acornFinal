@@ -6,6 +6,7 @@ import com.example.ocean.dto.response.PersonalCalendarResponse;
 import com.example.ocean.dto.response.PersonalEventDetailResponse;
 import com.example.ocean.service.PersonalCalendarService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +39,7 @@ public class PersonalCalendarAPIController {
             @RequestPart(value = "files", required = false) MultipartFile[] files
 
     ) {
+        createEventRequest.setWorkspaceCd("WS001");
         System.out.println(createEventRequest);
         int result = personalCalendarService.createPersonalEvent(createEventRequest, files);
 
@@ -49,24 +51,44 @@ public class PersonalCalendarAPIController {
     @GetMapping("/events/{eventCd}")
     public ResponseEntity<PersonalEventDetailResponse> getEventDetail(@PathVariable String eventCd) {
         PersonalEventDetailResponse result = personalCalendarService.getPersonalEventDetail(eventCd);
-
         if (result == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(result);
     }
-    @GetMapping("/events/{eventCd}/download")
+    @GetMapping("/events/{eventCd}/files")
     public ResponseEntity<byte[]> downloadFile(@RequestParam("fileId") String fileId) throws IOException {
         return personalCalendarService.downloadFile(fileId);
     }
 
+    @DeleteMapping("/events/{eventCd}")
+    public ResponseEntity<?> deleteFile(
+            @PathVariable String eventCd
+    ) {
+        personalCalendarService.deletePersonalEvent(eventCd);
+        return null;
+    }
+
     @PutMapping("/events/{eventCd}")
-    public ResponseEntity<String> updateEventDetail(@RequestBody PersonalEventUpdateRequest event) {
-        int result = personalCalendarService.updatePersonalEvent(event);
-
-        return result == 1
-                ? ResponseEntity.ok("일정 수정 성공")
-                : ResponseEntity.badRequest().body("일정 수정 실패");
-
+    public ResponseEntity<String> updateEventDetail(
+            @PathVariable String eventCd,
+            @RequestPart("request") PersonalEventUpdateRequest request,
+            @RequestPart(required = false) List<MultipartFile> files,
+            @RequestPart(required = false) List<String> deletedFileIds
+    ) {
+        System.out.println(request);
+        int result = personalCalendarService.updatePersonalEvent(request);
+        boolean deleted = personalCalendarService.updateFileActive(eventCd, deletedFileIds);
+        MultipartFile[] fileArray = files != null ? files.toArray(new MultipartFile[0]) : new MultipartFile[0];
+        boolean insertFile = personalCalendarService.insertFile(fileArray, eventCd, request.getUserId());
+        if (result == 1 && deleted && insertFile) {
+            return ResponseEntity.ok("일정 수정 성공");
+        } else if (result == 1 && (!deleted || !insertFile)) {
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body("일정은 수정되었지만 일부 파일 처리 실패");
+        } else if (result != 1 && (deleted || insertFile)) {
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body("파일은 처리되었지만 일정 수정 실패");
+        } else {
+            return ResponseEntity.badRequest().body("일정 수정 실패");
+        }
     }
 }
