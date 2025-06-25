@@ -374,7 +374,7 @@ module.exports = (io, worker, router) => {
   });
 };
 
-// WebRTC Transport 생성 함수
+// WebRTC Transport 생성 함수 에이콘 아카데미 IP : 172.30.1.49
 async function createWebRtcTransport(router) {
   const transport = await router.createWebRtcTransport({
     listenIps: [
@@ -382,7 +382,7 @@ async function createWebRtcTransport(router) {
         //ip: process.env.MEDIASOUP_LISTEN_IP || '127.0.0.1',
         //announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '127.0.0.1'
         ip: '0.0.0.0',
-        announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '172.30.1.49'
+        announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '192.168.40.6'
       }
     ],
     enableUdp: true,
