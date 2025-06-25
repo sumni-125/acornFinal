@@ -345,6 +345,32 @@ module.exports = (io, worker, router) => {
         callback({ error: error.message });
       }
     });
+
+    // 채팅 메시지 처리
+    socket.on('chat-message', async (data) => {
+      try {
+        const { roomId, message, timestamp } = data;
+        const peer = peers.get(socket.id);
+        
+        if (!peer) {
+          console.error('Chat message error: Peer not found');
+          return;
+        }
+        
+        // 모든 참가자에게 메시지 전달 (발신자 포함)
+        io.to(roomId).emit('chat-message', {
+          peerId: peer.id,
+          displayName: peer.displayName,
+          message,
+          timestamp
+        });
+        
+        console.log(`Chat message from ${peer.displayName} in room ${roomId}: ${message}`);
+        
+      } catch (error) {
+        console.error('Chat message error:', error);
+      }
+    });
   });
 };
 

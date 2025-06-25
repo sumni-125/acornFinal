@@ -261,6 +261,8 @@
             flex-direction: column;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
             transition: margin-right 0.3s ease;
+            height: 100%;  /* 전체 높이를 사용하도록 설정 */
+            position: relative; /* 상대적 위치 지정 */
         }
 
         .chat-panel.hidden {
@@ -274,15 +276,21 @@
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: absolute; /* 헤더를 고정 위치로 설정 */
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
 
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            padding: 80px 20px 100px 20px; /* 상단 패딩 증가, 하단 패딩 증가 */
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 15px;
+            height: 100%; /* 전체 높이 사용 */
         }
 
         .chat-message {
@@ -318,6 +326,12 @@
         .chat-input-container {
             padding: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            position: absolute; /* 입력창을 고정 위치로 설정 */
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #252525; /* 배경색 추가 */
+            z-index: 10;
         }
 
         .chat-input {
@@ -446,6 +460,35 @@
                 top: 60px;
                 bottom: 80px;
                 z-index: 90;
+                height: auto; /* height 속성 덮어쓰기 */
+            }
+
+            .chat-panel.hidden {
+                margin-right: -100%;
+                display: none;
+            }
+
+            .chat-header {
+                position: relative; /* 모바일에서는 상대적 위치로 변경 */
+                top: auto;
+                left: auto;
+                right: auto;
+            }
+
+            .chat-messages {
+                padding: 20px; /* 모바일에서는 패딩 축소 */
+                height: calc(100% - 140px); /* 헤더(60px)와 입력창(80px) 제외한 높이 */
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 80px;
+            }
+
+            .chat-input-container {
+                position: absolute;
+                height: 80px;
+                padding: 10px 15px;
             }
 
             .video-grid {
@@ -737,10 +780,14 @@
                 }
             });
 
-            // TODO: 채팅 메시지 - 서버 구현 필요
-            // socket.on('chat-message', ({ peerId, displayName, message, timestamp }) => {
-            //     addChatMessage(displayName, message, timestamp);
-            // });
+            // 채팅 메시지 수신
+            socket.on('chat-message', ({ peerId: senderPeerId, displayName, message, timestamp }) => {
+                // 자신이 보낸 메시지는 이미 로컬에서 표시했으므로 무시
+                console.log('메시지 수신:', senderPeerId, '내 ID:', peerId);
+                if (senderPeerId !== peerId) {
+                    addChatMessage(displayName, message, timestamp);
+                }
+            });
 
             // TODO: 녹화 상태 변경 - 서버 구현 필요
             // socket.on('recording-status', ({ isRecording: recording }) => {
@@ -1278,14 +1325,12 @@
             // 로컬 메시지 추가
             addChatMessage('나', message, timestamp);
 
-            // TODO: 서버에 채팅 기능 구현 필요
-            // socket.emit('chat-message', {
-            //     roomId,
-            //     message,
-            //     timestamp
-            // });
-
-            showToast('채팅 기능은 준비 중입니다');
+            // 서버에 채팅 메시지 전송
+            socket.emit('chat-message', {
+                roomId,
+                message,
+                timestamp
+            });
         }
 
         // 채팅 메시지 추가
@@ -1308,6 +1353,21 @@
 
             chatMessages.appendChild(messageEl);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // 채팅 패널이 숨겨져 있으면 알림 표시
+            if (document.getElementById('chatPanel').classList.contains('hidden')) {
+                const chatBtn = document.getElementById('chatBtn');
+                chatBtn.classList.add('active');
+                // 알림 효과 추가 (깜빡임)
+                chatBtn.animate([
+                    { opacity: 1 },
+                    { opacity: 0.5 },
+                    { opacity: 1 }
+                ], {
+                    duration: 1000,
+                    iterations: 3
+                });
+            }
         }
 
         // HTML 이스케이프
