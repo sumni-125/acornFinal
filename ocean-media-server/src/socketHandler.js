@@ -3,6 +3,17 @@ const Peer = require('./Peer');
 
 const peers = new Map();
 
+// 파일 크기를 읽기 쉬운 형태로 변환
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 module.exports = (io, worker, router) => {
   io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
@@ -369,6 +380,77 @@ module.exports = (io, worker, router) => {
         
       } catch (error) {
         console.error('Chat message error:', error);
+      }
+    });
+
+    // 파일 업로드 알림 처리
+    socket.on('file-uploaded', async (data) => {
+      try {
+        const { roomId, fileInfo } = data;
+        const peer = peers.get(socket.id);
+
+        if (!peer) {
+          console.error('File upload notification error: Peer not found');
+          return;
+        }
+
+        console.log('파일 업로드 이벤트 수신:', data); // 디버깅용 로그 추가
+
+        // 파일 정보에 업로더 정보 추가
+        const fileMessage = {
+          ...fileInfo,
+          uploadedBy: peer.displayName,
+          peerId: peer.id,
+          type: 'file' // 메시지 타입 구분
+        };
+
+        // 모든 참가자에게 파일 업로드 알림
+        io.to(roomId).emit('file-shared', fileMessage);
+
+        console.log(`File shared by ${peer.displayName} in room ${roomId}: ${fileInfo.originalName}`);
+
+      } catch (error) {
+        console.error('File upload notification error:', error);
+      }
+    });
+
+    // 파일 목록 요청 처리 (선택사항)
+    socket.on('get-room-files', async (data, callback) => {
+      try {
+        const { roomId } = data;
+        const fs = require('fs').promises;
+        const path = require('path');
+
+        const roomPath = path.join(__dirname, '../uploads/rooms', roomId);
+
+        // 디렉토리가 없으면 빈 배열 반환
+        try {
+          await fs.access(roomPath);
+          const files = await fs.readdir(roomPath);
+
+          // 파일 정보 수집
+          const fileInfos = await Promise.all(
+            files.map(async (filename) => {
+              const filePath = path.join(roomPath, filename);
+              const stats = await fs.stat(filePath);
+              return {
+                filename,
+                size: stats.size,
+                uploadedAt: stats.mtime
+              };
+            })
+          );
+
+          callback({ files: fileInfos });
+
+        } catch (err) {
+          // 디렉토리가 없는 경우
+          callback({ files: [] });
+        }
+
+      } catch (error) {
+        console.error('Get room files error:', error);
+        callback({ error: error.message });
       }
     });
   });

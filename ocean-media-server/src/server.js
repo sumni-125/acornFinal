@@ -7,6 +7,8 @@ const roomManager = require('./RoomManager');
 const socketHandler = require('./socketHandler');
 const fs = require('fs');
 const https = require('https');
+const upload = require('./uploadConfig');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -101,6 +103,56 @@ app.post('/api/rooms',async(req,res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// 파일 업로드 API
+app.post('/api/rooms/:roomId/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: '파일이 업로드되지 않았습니다.' });
+    }
+
+    const fileInfo = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      uploadedAt: new Date(),
+      roomId: req.params.roomId,
+      uploadedBy: req.body.peerId || 'unknown'
+    };
+
+    console.log('파일 업로드 완료:', fileInfo);
+
+    res.json({
+      success: true,
+      file: fileInfo
+    });
+
+  } catch (error) {
+    console.error('파일 업로드 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 파일 다운로드 API
+app.get('/api/rooms/:roomId/files/:filename', (req, res) => {
+  try {
+    const { roomId, filename } = req.params;
+    const filePath = path.join(__dirname, 'uploads/rooms', roomId, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
+    }
+
+    res.download(filePath);
+  } catch (error) {
+    console.error('파일 다운로드 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 정적 파일 제공 (업로드된 파일 미리보기용)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // 룸 조회 API
 app.get('/api/rooms/:roomId', (req, res) => {
