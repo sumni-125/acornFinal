@@ -177,11 +177,12 @@ app.get('/api/workspaces/:workspaceId/rooms', (req, res) => {
   res.json(rooms.map(room => room.toJson()));
 });
 
-//서버 테스트
+//서버 테스트 192.168.0.16
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', async () => {
   await init();
   console.log(`mediasoup 서버가 https://0.0.0.0:${PORT} 에서 실행 중`);
   console.log(`에이콘 아카데미 접속 주소: https://172.30.1.49:${PORT}`);
   console.log(`투썸 플레이스 홍대 접속 주소: https://192.168.40.6:${PORT}`);
+  console.log(`집 접속 주소: https://:192.168.0.16${PORT}`);
 });

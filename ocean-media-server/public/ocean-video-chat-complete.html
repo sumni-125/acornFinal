@@ -261,134 +261,134 @@
             flex-direction: column;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
             transition: margin-right 0.3s ease;
-            height: 100%;  /* 전체 높이를 사용하도록 설정 */
-            position: relative; /* 상대적 위치 지정 */
+            height: 100%;
+            position: relative;
         }
 
         /* 파일 업로드 관련 스타일 */
-.file-upload-area {
-    display: flex;
-    gap: 10px;
-    padding: 10px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
+        .file-upload-area {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-.file-input-wrapper {
-    position: relative;
-    overflow: hidden;
-}
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
 
-.file-input {
-    display: none;
-}
+        .file-input {
+            display: none;
+        }
 
-.file-upload-btn {
-    padding: 8px 16px;
-    background: #3a3a3a;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+        .file-upload-btn {
+            padding: 8px 16px;
+            background: #3a3a3a;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-.file-upload-btn:hover {
-    background: #4a4a4a;
-}
+        .file-upload-btn:hover {
+            background: #4a4a4a;
+        }
 
-.file-upload-btn svg {
-    width: 18px;
-    height: 18px;
-}
+        .file-upload-btn svg {
+            width: 18px;
+            height: 18px;
+        }
 
-/* 파일 메시지 스타일 */
-.file-message {
-    background: rgba(74, 158, 255, 0.1);
-    border: 1px solid rgba(74, 158, 255, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 5px;
-}
+        /* 파일 메시지 스타일 */
+        .file-message {
+            background: rgba(74, 158, 255, 0.1);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 5px;
+        }
 
-.file-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-.file-icon {
-    width: 40px;
-    height: 40px;
-    background: #3a3a3a;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #3a3a3a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.file-details {
-    flex: 1;
-}
+        .file-details {
+            flex: 1;
+        }
 
-.file-name {
-    font-weight: 600;
-    color: #4a9eff;
-    margin-bottom: 4px;
-    word-break: break-all;
-}
+        .file-name {
+            font-weight: 600;
+            color: #4a9eff;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
 
-.file-size {
-    font-size: 12px;
-    color: #888;
-}
+        .file-size {
+            font-size: 12px;
+            color: #888;
+        }
 
-.file-download-btn {
-    padding: 6px 12px;
-    background: #4a9eff;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    cursor: pointer;
-    font-size: 12px;
-    transition: background 0.2s ease;
-}
+        .file-download-btn {
+            padding: 6px 12px;
+            background: #4a9eff;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
 
-.file-download-btn:hover {
-    background: #3a8eef;
-}
+        .file-download-btn:hover {
+            background: #3a8eef;
+        }
 
-/* 업로드 진행률 */
-.upload-progress {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(40, 40, 40, 0.95);
-    padding: 20px;
-    border-radius: 8px;
-    min-width: 300px;
-    backdrop-filter: blur(10px);
-    z-index: 1000;
-}
+        /* 업로드 진행률 */
+        .upload-progress {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(40, 40, 40, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
 
-.progress-bar {
-    width: 100%;
-    height: 4px;
-    background: #3a3a3a;
-    border-radius: 2px;
-    margin-top: 10px;
-    overflow: hidden;
-}
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #3a3a3a;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
 
-.progress-fill {
-    height: 100%;
-    background: #4a9eff;
-    transition: width 0.3s ease;
-}
+        .progress-fill {
+            height: 100%;
+            background: #4a9eff;
+            transition: width 0.3s ease;
+        }
 
         .chat-panel.hidden {
             margin-right: -320px;
@@ -401,7 +401,7 @@
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: absolute; /* 헤더를 고정 위치로 설정 */
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
@@ -410,12 +410,12 @@
 
         .chat-messages {
             flex: 1;
-            padding: 80px 20px 100px 20px; /* 상단 패딩 증가, 하단 패딩 증가 */
+            padding: 80px 20px 100px 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            height: 100%; /* 전체 높이 사용 */
+            height: 100%;
         }
 
         .chat-message {
@@ -451,11 +451,11 @@
         .chat-input-container {
             padding: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            position: absolute; /* 입력창을 고정 위치로 설정 */
+            position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #252525; /* 배경색 추가 */
+            background: #252525;
             z-index: 10;
         }
 
@@ -585,7 +585,7 @@
                 top: 60px;
                 bottom: 80px;
                 z-index: 90;
-                height: auto; /* height 속성 덮어쓰기 */
+                height: auto;
             }
 
             .chat-panel.hidden {
@@ -594,15 +594,15 @@
             }
 
             .chat-header {
-                position: relative; /* 모바일에서는 상대적 위치로 변경 */
+                position: relative;
                 top: auto;
                 left: auto;
                 right: auto;
             }
 
             .chat-messages {
-                padding: 20px; /* 모바일에서는 패딩 축소 */
-                height: calc(100% - 140px); /* 헤더(60px)와 입력창(80px) 제외한 높이 */
+                padding: 20px;
+                height: calc(100% - 140px);
                 position: absolute;
                 top: 60px;
                 left: 0;
@@ -730,43 +730,43 @@
     </style>
 </head>
 <body>
-    <div class="video-chat-container">
-        <!-- 헤더 -->
-        <div class="header">
-            <div class="meeting-info">
-                <h1 class="room-name" id="roomName">개발 스프린트 회의</h1>
-                <div class="participants-count">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <span id="participantCount">0</span>
-                </div>
-                <div class="recording-indicator" id="recordingIndicator">
-                    <div class="recording-dot"></div>
-                    <span>녹화 중</span>
-                </div>
-            </div>
-            <button class="control-btn" onclick="leaveRoom()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
+<div class="video-chat-container">
+    <!-- 헤더 -->
+    <div class="header">
+        <div class="meeting-info">
+            <h1 class="room-name" id="roomName">개발 스프린트 회의</h1>
+            <div class="participants-count">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-            </button>
+                <span id="participantCount">0</span>
+            </div>
+            <div class="recording-indicator" id="recordingIndicator">
+                <div class="recording-dot"></div>
+                <span>녹화 중</span>
+            </div>
         </div>
+        <button class="control-btn" onclick="leaveRoom()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </button>
+    </div>
 
-        <!-- 비디오 그리드 -->
-        <div class="video-grid grid-layout" id="videoGrid">
-            <!-- 로컬 비디오 -->
-            <div class="video-container" id="localVideoContainer">
-                <video id="localVideo" autoplay muted playsinline></video>
-                <div class="video-placeholder" id="localPlaceholder">나</div>
-                <div class="video-info">
-                    <span id="localName">나</span>
-                    <span class="mic-status" id="localMicStatus">
+    <!-- 비디오 그리드 -->
+    <div class="video-grid grid-layout" id="videoGrid">
+        <!-- 로컬 비디오 -->
+        <div class="video-container" id="localVideoContainer">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <div class="video-placeholder" id="localPlaceholder">나</div>
+            <div class="video-info">
+                <span id="localName">나</span>
+                <span class="mic-status" id="localMicStatus">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                             <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -774,120 +774,120 @@
                             <line x1="8" y1="23" x2="16" y2="23"></line>
                         </svg>
                     </span>
-                </div>
             </div>
-            <!-- 원격 비디오들이 여기에 추가됨 -->
         </div>
+        <!-- 원격 비디오들이 여기에 추가됨 -->
+    </div>
 
-        <!-- 화면 공유 컨테이너 -->
-        <div class="screen-share-container" id="screenShareContainer">
-            <video id="screenShareVideo" autoplay></video>
-            <div class="participants-overlay" id="participantsOverlay"></div>
+    <!-- 화면 공유 컨테이너 -->
+    <div class="screen-share-container" id="screenShareContainer">
+        <video id="screenShareVideo" autoplay></video>
+        <div class="participants-overlay" id="participantsOverlay"></div>
+    </div>
+
+    <!-- 컨트롤 바 -->
+    <div class="controls-bar">
+        <button class="control-btn" id="micBtn" onclick="toggleMic()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+        </button>
+
+        <button class="control-btn" id="videoBtn" onclick="toggleVideo()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+        </button>
+
+        <div class="control-divider"></div>
+
+        <button class="control-btn" id="shareBtn" onclick="toggleScreenShare()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </button>
+
+        <button class="control-btn" id="recordBtn" onclick="toggleRecording()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </button>
+
+        <button class="control-btn" id="layoutBtn" onclick="toggleLayoutSelector()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+        </button>
+
+        <button class="control-btn" id="chatBtn" onclick="toggleChat()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>
+
+        <div class="control-divider"></div>
+
+        <button class="control-btn danger" onclick="leaveRoom()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- 채팅 패널 -->
+    <div class="chat-panel hidden" id="chatPanel">
+        <div class="chat-header">
+            <h2>채팅</h2>
+            <button class="control-btn" onclick="toggleChat()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
-
-        <!-- 컨트롤 바 -->
-        <div class="controls-bar">
-            <button class="control-btn" id="micBtn" onclick="toggleMic()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-            </button>
-
-            <button class="control-btn" id="videoBtn" onclick="toggleVideo()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                </svg>
-            </button>
-
-            <div class="control-divider"></div>
-
-            <button class="control-btn" id="shareBtn" onclick="toggleScreenShare()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-            </button>
-
-            <button class="control-btn" id="recordBtn" onclick="toggleRecording()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-            </button>
-
-            <button class="control-btn" id="layoutBtn" onclick="toggleLayoutSelector()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-            </button>
-
-            <button class="control-btn" id="chatBtn" onclick="toggleChat()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-            </button>
-
-            <div class="control-divider"></div>
-
-            <button class="control-btn danger" onclick="leaveRoom()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-            </button>
-        </div>
-
-        <!-- 채팅 패널 -->
-        <div class="chat-panel hidden" id="chatPanel">
-            <div class="chat-header">
-                <h2>채팅</h2>
-                <button class="control-btn" onclick="toggleChat()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <!-- 타이핑 표시기 추가 -->
-                <div id="typingIndicator" class="typing-indicator">
-                    <div class="typing-avatars" id="typingAvatars"></div>
-                    <div class="typing-text" id="typingText"></div>
-                    <span class="typing-dots">
+        <div class="chat-messages" id="chatMessages">
+            <!-- 타이핑 표시기 추가 -->
+            <div id="typingIndicator" class="typing-indicator">
+                <div class="typing-avatars" id="typingAvatars"></div>
+                <div class="typing-text" id="typingText"></div>
+                <span class="typing-dots">
                         <span></span>
                         <span></span>
                         <span></span>
                     </span>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <div class="file-upload-area">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" onchange="handleFileSelect(event)">
+                    <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        </svg>
+                        파일 첨부
+                    </button>
                 </div>
             </div>
-            <div class="chat-input-container">
-                <div class="file-upload-area">
-                    <div class="file-input-wrapper">
-                        <input type="file" id="fileInput" class="file-input" onchange="handleFileSelect(event)">
-                        <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                            </svg>
-                            파일 첨부
-                        </button>
-                    </div>
-                </div>
-                <textarea
-                        class="chat-input"
-                        placeholder="메시지를 입력하세요..."
-                        rows="2"
-                        onkeydown="handleChatInput(event)"
-                        oninput="handleTyping(event)"
-                        oncompositionend="handleCompositionEnd(event)"
-                        id="chatInputField"
-                ></textarea>
-            </div>
+            <textarea
+                    class="chat-input"
+                    placeholder="메시지를 입력하세요..."
+                    rows="2"
+                    onkeydown="handleChatInput(event)"
+                    oninput="handleTyping(event)"
+                    oncompositionend="handleCompositionEnd(event)"
+                    id="chatInputField"
+            ></textarea>
+        </div>
 
         <!-- 레이아웃 선택자 -->
         <div class="layout-selector" id="layoutSelector">
@@ -899,19 +899,19 @@
             </button>
         </div>
 
-            <!-- 토스트 알림 -->
-            <div class="toast" id="toast"></div>
+        <!-- 토스트 알림 -->
+        <div class="toast" id="toast"></div>
 
-            <!-- 업로드 진행률 -->
-            <div class="upload-progress" id="uploadProgress" style="display: none;">
-                <div>파일 업로드 중...</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                </div>
-                <div id="uploadStatus" style="margin-top: 8px; font-size: 14px; color: #888;">0%</div>
+        <!-- 업로드 진행률 -->
+        <div class="upload-progress" id="uploadProgress" style="display: none;">
+            <div>파일 업로드 중...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
             </div>
-        </div> <!-- video-chat-container 닫는 태그 -->
-
+            <div id="uploadStatus" style="margin-top: 8px; font-size: 14px; color: #888;">0%</div>
+        </div>
+    </div> <!-- video-chat-container 닫는 태그 -->
+</div>
 
     <script>
         // ===== UI 상태 관리 =====
@@ -924,6 +924,9 @@
         // ===== 타이핑 관련 변수 추가 =====
         let typingUsers = new Map(); // 타이핑 중인 사용자들 관리
         let typingDisplayTimeout;
+        let isTyping = false;
+        let typingTimeout;
+        const TYPING_TIMER_LENGTH = 1000; // 1초로 단축
 
         // ===== MediaSoup 관련 변수 =====
         let socket;
@@ -944,6 +947,9 @@
         const workspaceId = new URLSearchParams(window.location.search).get('workspace') || 'default-workspace';
         const peerId = 'peer-' + Math.random().toString(36).substr(2, 9);
         const displayName = localStorage.getItem('userName') || '참가자';
+
+        // ===== 한글 입력 관련 변수 추가 =====
+        window.enterPressedDuringComposition = false;
 
         // ===== 초기화 =====
         async function init() {
@@ -972,12 +978,12 @@
             }
         }
 
-        // ===== Socket.IO 연결 =====  192.168.40.6:3001
+        // ===== Socket.IO 연결 =====  ==== 집 와이파이 : 192.168.0.16 에이콘 아카데미 : 172.30.1.49:3001
         async function connectSocket() {
             return new Promise((resolve, reject) => {
                 const serverUrl = window.location.hostname === 'localhost'
                     ? 'https://localhost:3001'
-                    : 'https://172.30.1.49:3001';
+                    : 'https://192.168.0.16:3001';
 
                 socket = io(serverUrl, {
                     transports: ['websocket'],
@@ -1026,10 +1032,10 @@
             // 화면 공유 상태 업데이트
             socket.on('screen-share-update', async ({ peerId, isSharing, producerId }) => {
                 console.log('화면 공유 상태 업데이트:', peerId, isSharing);
-                
+
                 const remoteVideo = document.getElementById(`video-${peerId}`);
                 const placeholder = document.querySelector(`#container-${peerId} .video-placeholder`);
-                
+
                 if (isSharing) {
                     // 화면 공유 시작 - 해당 producerId를 소비
                     await consumeMedia(producerId, peerId, 'video', true);
@@ -1075,22 +1081,10 @@
             // 타이핑 상태 수신
             socket.on('typing', ({ peerId: typingPeerId, displayName, isTyping }) => {
                 console.log('타이핑 상태 수신:', typingPeerId, displayName, isTyping);
-                
+
                 // 타이핑 상태 표시 업데이트
                 updateTypingIndicator(typingPeerId, displayName, isTyping);
             });
-
-            // TODO: 녹화 상태 변경 - 서버 구현 필요
-            // socket.on('recording-status', ({ isRecording: recording }) => {
-            //     const recordingIndicator = document.getElementById('recordingIndicator');
-            //     if (recording) {
-            //         recordingIndicator.classList.add('active');
-            //         showToast('녹화가 시작되었습니다');
-            //     } else {
-            //         recordingIndicator.classList.remove('active');
-            //         showToast('녹화가 종료되었습니다');
-            //     }
-            // });
         }
 
         // ===== 미디어 권한 요청 =====
@@ -1335,13 +1329,13 @@
                                     remoteVideo.srcObject.removeTrack(track);
                                 });
                             }
-                            
+
                             // 새 비디오 트랙 추가
                             if (remoteVideo.srcObject) {
                                 const audioTracks = remoteVideo.srcObject.getAudioTracks();
                                 audioTracks.forEach(track => stream.addTrack(track));
                             }
-                            
+
                             remoteVideo.srcObject = stream;
                             const placeholder = document.querySelector(`#container-${peerId} .video-placeholder`);
                             if (placeholder) placeholder.style.display = 'none';
@@ -1370,29 +1364,29 @@
         // 화면 공유 종료 후 원래 비디오로 복원
         async function restoreVideoAfterScreenShare(peerId) {
             console.log('원래 비디오로 복원 시도:', peerId);
-            
+
             // 화면 공유 consumer 찾기
             const screenConsumer = Array.from(consumers.values()).find(
-                consumer => consumer.appData && 
-                consumer.appData.peerId === peerId && 
-                consumer.appData.isScreenShare && 
+                consumer => consumer.appData &&
+                consumer.appData.peerId === peerId &&
+                consumer.appData.isScreenShare &&
                 consumer.kind === 'video'
             );
-            
+
             if (screenConsumer) {
                 // 화면 공유 consumer 닫기
                 screenConsumer.close();
                 consumers.delete(screenConsumer.id);
                 console.log('화면 공유 consumer 닫힘');
             }
-            
+
             // 서버에 해당 피어의 비디오 producer 요청
             socket.emit('get-producer-by-peer', { peerId, kind: 'video' }, async (response) => {
                 if (response.error) {
                     console.error('원래 비디오 찾기 실패:', response.error);
                     return;
                 }
-                
+
                 if (response.producerId) {
                     // 찾은 producer로 새로운 consumer 생성
                     await consumeMedia(response.producerId, peerId, 'video', false);
@@ -1406,22 +1400,22 @@
                             const tracks = remoteVideo.srcObject.getTracks();
                             tracks.forEach(track => track.stop());
                         }
-                        
+
                         // 오디오만 유지하는 새 스트림 생성
                         const newStream = new MediaStream();
-                        
+
                         // 기존 오디오 트랙이 있으면 추가
                         const audioConsumer = Array.from(consumers.values()).find(
-                            consumer => consumer.appData && 
-                            consumer.appData.peerId === peerId && 
+                            consumer => consumer.appData &&
+                            consumer.appData.peerId === peerId &&
                             consumer.kind === 'audio'
                         );
-                        
+
                         if (audioConsumer) {
                             newStream.addTrack(audioConsumer.track);
                             remoteVideo.srcObject = newStream;
                         }
-                        
+
                         // 플레이스홀더 표시
                         const placeholder = document.querySelector(`#container-${peerId} .video-placeholder`);
                         if (placeholder) placeholder.style.display = 'flex';
@@ -1511,7 +1505,7 @@
                     showToast('화면 공유 시작');
 
                     // 서버에 화면 공유 상태 알림
-                    socket.emit('screen-share-status', { 
+                    socket.emit('screen-share-status', {
                         roomId,
                         peerId,
                         isSharing: true,
@@ -1537,10 +1531,10 @@
                 showToast('화면 공유 종료');
 
                 // 서버에 화면 공유 종료 알림
-                socket.emit('screen-share-status', { 
+                socket.emit('screen-share-status', {
                     roomId,
                     peerId,
-                    isSharing: false 
+                    isSharing: false
                 });
             }
         }
@@ -1559,24 +1553,27 @@
             }
         }
 
-        // 채팅 토글
+        // 채팅 토글 (수정됨)
         function toggleChat() {
             const chatPanel = document.getElementById('chatPanel');
             const chatBtn = document.getElementById('chatBtn');
-            
+
             chatPanel.classList.toggle('hidden');
             chatBtn.classList.toggle('active');
-            
+
             // 채팅 패널이 표시되면 알림 표시 제거 및 스크롤 아래로
             if (!chatPanel.classList.contains('hidden')) {
                 chatBtn.classList.remove('active');
-                
+
                 // 스크롤을 맨 아래로 이동
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-                
+
                 // 채팅 입력 필드에 포커스
                 document.getElementById('chatInputField').focus();
+            } else {
+                // 채팅 패널을 닫을 때 타이핑 중지
+                stopTyping();
             }
         }
 
@@ -1610,7 +1607,7 @@
         function handleChatInput(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                
+
                 const input = event.target;
 
                 // 한글 입력 중인지 확인 (composing 상태 체크)
@@ -1621,28 +1618,24 @@
                 }
 
                 const message = input.value.trim();
-                
+
                 if (message) {
                     // 메시지 전송
                     const timestamp = new Date();
-                    
+
                     // 로컬에서 먼저 메시지 표시
                     addChatMessage(displayName, message, timestamp);
-                    
+
                     // 서버로 메시지 전송
                     socket.emit('chat-message', {
                         roomId,
                         message,
                         timestamp
                     });
-                    
+
                     // 타이핑 상태 중지
-                    clearTimeout(typingTimeout);
-                    socket.emit('typing', {
-                        roomId: roomId,
-                        isTyping: false
-                    });
-                    
+                    stopTyping();
+
                     // 입력 필드 초기화
                     input.value = '';
                 }
@@ -1674,11 +1667,7 @@
                     });
 
                     // 타이핑 상태 중지
-                    clearTimeout(typingTimeout);
-                    socket.emit('typing', {
-                        roomId: roomId,
-                        isTyping: false
-                    });
+                    stopTyping();
 
                     // 입력 필드 초기화
                     input.value = '';
@@ -1686,8 +1675,44 @@
             }
         }
 
-// 전역 변수 추가
-window.enterPressedDuringComposition = false;
+        // 타이핑 이벤트 처리 (개선됨)
+        function handleTyping(event) {
+            if (!socket || !socket.connected) return;
+
+            // 빈 입력일 때는 타이핑 중지
+            if (event.target.value.trim() === '') {
+                if (isTyping) {
+                    stopTyping();
+                }
+                return;
+            }
+
+            // 타이핑 시작
+            if (!isTyping) {
+                isTyping = true;
+                socket.emit('typing', {
+                    roomId: roomId,
+                    isTyping: true
+                });
+            }
+
+            // 타이머 재설정
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(stopTyping, TYPING_TIMER_LENGTH);
+        }
+
+        // 타이핑 중지
+        function stopTyping() {
+            if (!isTyping) return;
+
+            isTyping = false;
+            socket.emit('typing', {
+                roomId: roomId,
+                isTyping: false
+            });
+
+            clearTimeout(typingTimeout);
+        }
 
         // 채팅 메시지 추가
         function addChatMessage(author, message, timestamp) {
@@ -1709,7 +1734,7 @@ window.enterPressedDuringComposition = false;
 
             chatMessages.appendChild(messageEl);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            
+
             // 채팅 패널이 숨겨져 있으면 알림 표시
             if (document.getElementById('chatPanel').classList.contains('hidden')) {
                 const chatBtn = document.getElementById('chatBtn');
@@ -1757,7 +1782,7 @@ window.enterPressedDuringComposition = false;
 
             chatMessages.appendChild(messageEl);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            
+
             // 채팅 패널이 숨겨져 있으면 알림 표시
             if (document.getElementById('chatPanel').classList.contains('hidden')) {
                 const chatBtn = document.getElementById('chatBtn');
@@ -1797,145 +1822,144 @@ window.enterPressedDuringComposition = false;
             }, 3000);
         }
 
-       // ===== 파일 업로드 관련 함수들 =====
+        // ===== 파일 업로드 관련 함수들 =====
+        // 파일 크기 포맷팅
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
 
-// 파일 크기 포맷팅
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+        // 파일 확장자에 따른 아이콘 가져오기
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                pdf: '📄',
+                doc: '📝', docx: '📝',
+                xls: '📊', xlsx: '📊',
+                png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️',
+                zip: '📦', rar: '📦',
+                txt: '📃',
+                default: '📎'
+            };
+            return icons[ext] || icons.default;
+        }
 
-// 파일 확장자에 따른 아이콘 가져오기
-function getFileIcon(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    const icons = {
-        pdf: '📄',
-        doc: '📝', docx: '📝',
-        xls: '📊', xlsx: '📊',
-        png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️',
-        zip: '📦', rar: '📦',
-        txt: '📃',
-        default: '📎'
-    };
-    return icons[ext] || icons.default;
-}
+        // 파일 선택 처리
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-// 파일 선택 처리
-async function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // 파일 크기 확인 (10MB 제한)
-    if (file.size > 10 * 1024 * 1024) {
-        showToast('파일 크기는 10MB를 초과할 수 없습니다');
-        event.target.value = '';
-        return;
-    }
-
-    // 파일 업로드
-    await uploadFile(file);
-
-    // 입력 초기화
-    event.target.value = '';
-}
-
-// 파일 업로드
-async function uploadFile(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('peerId', peerId);
-
-    // 진행률 표시
-    const progressDiv = document.getElementById('uploadProgress');
-    const progressFill = document.getElementById('progressFill');
-    const uploadStatus = document.getElementById('uploadStatus');
-
-    progressDiv.style.display = 'block';
-
-    try {
-        const xhr = new XMLHttpRequest();
-
-        // 업로드 진행률 이벤트
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percentComplete = (e.loaded / e.total) * 100;
-                progressFill.style.width = percentComplete + '%';
-                uploadStatus.textContent = Math.round(percentComplete) + '%';
+            // 파일 크기 확인 (10MB 제한)
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('파일 크기는 10MB를 초과할 수 없습니다');
+                event.target.value = '';
+                return;
             }
-        });
 
-        // 업로드 완료 이벤트
-        xhr.addEventListener('load', function() {
-            if (xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
+            // 파일 업로드
+            await uploadFile(file);
 
-                if (response.success) {
-                    // 로컬에서 파일 메시지 표시
-                    const fileInfo = {
-                        ...response.file,
-                        uploadedBy: displayName,
-                        peerId: peerId
-                    };
-                    
-                    // 로컬에서 먼저 파일 메시지 표시
-                    addFileMessage(displayName, fileInfo, new Date());
-                    
-                    // Socket.IO로 파일 공유 알림 (다른 사용자들에게 전달)
-                    socket.emit('file-uploaded', {
-                        roomId: roomId,
-                        fileInfo: response.file
-                    });
+            // 입력 초기화
+            event.target.value = '';
+        }
 
-                    showToast('파일 업로드 완료');
-                } else {
-                    showToast('파일 업로드 실패: ' + response.error);
-                }
-            } else {
+        // 파일 업로드
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('peerId', peerId);
+
+            // 진행률 표시
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            const uploadStatus = document.getElementById('uploadStatus');
+
+            progressDiv.style.display = 'block';
+
+            try {
+                const xhr = new XMLHttpRequest();
+
+                // 업로드 진행률 이벤트
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressFill.style.width = percentComplete + '%';
+                        uploadStatus.textContent = Math.round(percentComplete) + '%';
+                    }
+                });
+
+                // 업로드 완료 이벤트
+                xhr.addEventListener('load', function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+
+                        if (response.success) {
+                            // 로컬에서 파일 메시지 표시
+                            const fileInfo = {
+                                ...response.file,
+                                uploadedBy: displayName,
+                                peerId: peerId
+                            };
+
+                            // 로컬에서 먼저 파일 메시지 표시
+                            addFileMessage(displayName, fileInfo, new Date());
+
+                            // Socket.IO로 파일 공유 알림 (다른 사용자들에게 전달)
+                            socket.emit('file-uploaded', {
+                                roomId: roomId,
+                                fileInfo: response.file
+                            });
+
+                            showToast('파일 업로드 완료');
+                        } else {
+                            showToast('파일 업로드 실패: ' + response.error);
+                        }
+                    } else {
+                        showToast('파일 업로드 실패');
+                    }
+
+                    // 진행률 숨기기
+                    setTimeout(() => {
+                        progressDiv.style.display = 'none';
+                        progressFill.style.width = '0%';
+                        uploadStatus.textContent = '0%';
+                    }, 1000);
+                });
+
+                // 에러 이벤트
+                xhr.addEventListener('error', function() {
+                    showToast('파일 업로드 중 오류가 발생했습니다');
+                    progressDiv.style.display = 'none';
+                });
+
+                // 요청 전송
+                const serverUrl = window.location.protocol + '//' + window.location.hostname + ':3001';
+                xhr.open('POST', `${serverUrl}/api/rooms/${roomId}/upload`);
+                xhr.send(formData);
+
+            } catch (error) {
+                console.error('파일 업로드 오류:', error);
                 showToast('파일 업로드 실패');
-            }
-
-            // 진행률 숨기기
-            setTimeout(() => {
                 progressDiv.style.display = 'none';
-                progressFill.style.width = '0%';
-                uploadStatus.textContent = '0%';
-            }, 1000);
-        });
+            }
+        }
 
-        // 에러 이벤트
-        xhr.addEventListener('error', function() {
-            showToast('파일 업로드 중 오류가 발생했습니다');
-            progressDiv.style.display = 'none';
-        });
+        // 파일 다운로드
+        function downloadFile(filename, originalName) {
+            const serverUrl = window.location.protocol + '//' + window.location.hostname + ':3001';
+            const downloadUrl = `${serverUrl}/api/rooms/${roomId}/files/${filename}`;
 
-        // 요청 전송
-        const serverUrl = window.location.protocol + '//' + window.location.hostname + ':3001';
-        xhr.open('POST', `${serverUrl}/api/rooms/${roomId}/upload`);
-        xhr.send(formData);
-
-    } catch (error) {
-        console.error('파일 업로드 오류:', error);
-        showToast('파일 업로드 실패');
-        progressDiv.style.display = 'none';
-    }
-}
-
-// 파일 다운로드
-function downloadFile(filename, originalName) {
-    const serverUrl = window.location.protocol + '//' + window.location.hostname + ':3001';
-    const downloadUrl = `${serverUrl}/api/rooms/${roomId}/files/${filename}`;
-
-    // 다운로드 링크 생성
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = originalName || filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
+            // 다운로드 링크 생성
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = originalName || filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
 
         // 원격 비디오 추가
         function addRemoteVideo(peerId, displayName) {
@@ -1961,7 +1985,7 @@ function downloadFile(filename, originalName) {
             `;
 
             videoGrid.appendChild(container);
-            
+
             // 더블클릭 시 전체화면 이벤트 추가
             container.addEventListener('dblclick', function() {
                 toggleFullscreen(this);
@@ -2034,6 +2058,12 @@ function downloadFile(filename, originalName) {
                 document.getElementById('roomName').textContent = roomNameFromURL;
             }
 
+            // 채팅 입력 필드 이벤트 리스너 추가
+            const chatInput = document.getElementById('chatInputField');
+
+            // 포커스 아웃 시 타이핑 중지
+            chatInput.addEventListener('blur', stopTyping);
+
             init();
             updateParticipantCount();
 
@@ -2049,7 +2079,7 @@ function downloadFile(filename, originalName) {
                 !document.mozFullScreenElement && // Firefox
                 !document.webkitFullscreenElement && // Chrome, Safari, Opera
                 !document.msFullscreenElement) {  // IE/Edge
-                
+
                 // 전체화면 진입
                 if (element.requestFullscreen) {
                     element.requestFullscreen();
@@ -2081,49 +2111,96 @@ function downloadFile(filename, originalName) {
             }
         });
 
-        // 타이핑 관련 변수
-        let typingTimeout;
-        const TYPING_TIMER_LENGTH = 3000; // 3초 동안 타이핑이 없으면 타이핑 중지로 간주
-
-        // 타이핑 이벤트 처리
-        function handleTyping(event) {
-            if (!socket || !socket.connected) return;
-            
-            // 타이핑 중 상태 전송
-            socket.emit('typing', {
-                roomId: roomId,
-                isTyping: true
-            });
-            
-            // 타이머 초기화
-            clearTimeout(typingTimeout);
-            
-            // 일정 시간 후 타이핑 중지 상태 전송
-            typingTimeout = setTimeout(() => {
-                socket.emit('typing', {
-                    roomId: roomId,
-                    isTyping: false
+        // 타이핑 표시기 업데이트 (완전히 새로 작성)
+        function updateTypingIndicator(typingPeerId, displayName, isTyping) {
+            if (isTyping) {
+                // 타이핑 시작
+                typingUsers.set(typingPeerId, {
+                    displayName: displayName,
+                    timestamp: Date.now()
                 });
-            }, TYPING_TIMER_LENGTH);
+            } else {
+                // 타이핑 종료
+                typingUsers.delete(typingPeerId);
+            }
+
+            // UI 업데이트
+            renderTypingIndicator();
         }
 
-        // 타이핑 표시기 업데이트
-        function updateTypingIndicator(typingPeerId, displayName, isTyping) {
+        // 타이핑 표시기 렌더링
+        function renderTypingIndicator() {
             const typingIndicator = document.getElementById('typingIndicator');
+            const typingAvatars = document.getElementById('typingAvatars');
             const typingText = document.getElementById('typingText');
             const chatMessages = document.getElementById('chatMessages');
-            
-            // 타이핑 중인 사용자가 있으면 표시
-            if (isTyping) {
-                typingText.textContent = `${displayName}님이 입력 중`;
-                typingIndicator.style.display = 'flex';
-                // 스크롤을 아래로 이동
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            } else {
-                // 해당 사용자의 타이핑이 중지되면 표시기 숨김
-                typingIndicator.style.display = 'none';
+
+            // 타이핑 중인 사용자가 없으면 숨김
+            if (typingUsers.size === 0) {
+                typingIndicator.classList.remove('show');
+                setTimeout(() => {
+                    if (typingUsers.size === 0) {
+                        typingIndicator.style.display = 'none';
+                    }
+                }, 300);
+                return;
             }
+
+            // 타이핑 중인 사용자들 정보 가져오기
+            const typingUsersList = Array.from(typingUsers.values());
+
+            // 아바타 렌더링
+            typingAvatars.innerHTML = '';
+            const maxAvatars = 3;
+            const avatarsToShow = typingUsersList.slice(0, maxAvatars);
+
+            avatarsToShow.forEach(user => {
+                const avatar = document.createElement('div');
+                avatar.className = 'typing-avatar';
+                avatar.textContent = user.displayName.charAt(0).toUpperCase();
+                avatar.title = user.displayName;
+                typingAvatars.appendChild(avatar);
+            });
+
+            // 텍스트 업데이트
+            if (typingUsers.size === 1) {
+                typingText.textContent = `${typingUsersList[0].displayName}님이 입력 중`;
+                typingIndicator.classList.remove('multiple');
+            } else if (typingUsers.size === 2) {
+                typingText.textContent = `${typingUsersList[0].displayName}님과 ${typingUsersList[1].displayName}님이 입력 중`;
+                typingIndicator.classList.add('multiple');
+            } else {
+                const othersCount = typingUsers.size - 2;
+                typingText.textContent = `${typingUsersList[0].displayName}님 외 ${typingUsers.size - 1}명이 입력 중`;
+                typingIndicator.classList.add('multiple');
+            }
+
+            // 표시
+            typingIndicator.style.display = 'flex';
+            setTimeout(() => {
+                typingIndicator.classList.add('show');
+            }, 10);
+
+            // 스크롤 아래로
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+
+        // 타이핑 타임아웃 체크 (오래된 타이핑 상태 제거)
+        function checkTypingTimeouts() {
+            const now = Date.now();
+            const timeout = 5000; // 5초
+
+            typingUsers.forEach((user, peerId) => {
+                if (now - user.timestamp > timeout) {
+                    typingUsers.delete(peerId);
+                }
+            });
+
+            renderTypingIndicator();
+        }
+
+        // 주기적으로 타임아웃 체크
+        setInterval(checkTypingTimeouts, 1000);
     </script>
 </body>
 </html>
