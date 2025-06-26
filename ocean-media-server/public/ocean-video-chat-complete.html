@@ -629,6 +629,37 @@
                 height: 40px;
             }
         }
+
+        /* 타이핑 인디케이터 스타일 */
+        .typing-indicator {
+            padding: 8px 12px;
+            margin: 8px 0;
+            color: #888;
+            font-style: italic;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            animation: typingDots 1.4s infinite;
+            animation-fill-mode: both;
+            margin-left: 2px;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingDots {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
     </style>
 </head>
 <body>
@@ -756,7 +787,13 @@
                     </svg>
                 </button>
             </div>
-            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- 타이핑 표시기 추가 -->
+                <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                    <span id="typingText"></span>
+                    <span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+            </div>
             <div class="chat-input-container">
                 <div class="file-upload-area">
                     <div class="file-input-wrapper">
@@ -774,6 +811,8 @@
                         placeholder="메시지를 입력하세요..."
                         rows="2"
                         onkeydown="handleChatInput(event)"
+                        oninput="handleTyping(event)"
+                        id="chatInputField"
                 ></textarea>
             </div>
 
@@ -856,12 +895,12 @@
             }
         }
 
-        // ===== Socket.IO 연결 ===== 172.30.1.49:3001
+        // ===== Socket.IO 연결 =====  192.168.40.6:3001
         async function connectSocket() {
             return new Promise((resolve, reject) => {
                 const serverUrl = window.location.hostname === 'localhost'
                     ? 'https://localhost:3001'
-                    : 'https://192.168.40.6:3001';
+                    : 'https://172.30.1.49:3001';
 
                 socket = io(serverUrl, {
                     transports: ['websocket'],
@@ -954,6 +993,14 @@
 
                 // 알림 표시
                 showToast(`${fileMessage.uploadedBy}님이 파일을 공유했습니다`);
+            });
+
+            // 타이핑 상태 수신
+            socket.on('typing', ({ peerId: typingPeerId, displayName, isTyping }) => {
+                console.log('타이핑 상태 수신:', typingPeerId, displayName, isTyping);
+                
+                // 타이핑 상태 표시 업데이트
+                updateTypingIndicator(typingPeerId, displayName, isTyping);
             });
 
             // TODO: 녹화 상태 변경 - 서버 구현 필요
@@ -1439,9 +1486,21 @@
         function toggleChat() {
             const chatPanel = document.getElementById('chatPanel');
             const chatBtn = document.getElementById('chatBtn');
-
+            
             chatPanel.classList.toggle('hidden');
             chatBtn.classList.toggle('active');
+            
+            // 채팅 패널이 표시되면 알림 표시 제거 및 스크롤 아래로
+            if (!chatPanel.classList.contains('hidden')) {
+                chatBtn.classList.remove('active');
+                
+                // 스크롤을 맨 아래로 이동
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // 채팅 입력 필드에 포커스
+                document.getElementById('chatInputField').focus();
+            }
         }
 
         // 레이아웃 선택자 토글
@@ -1474,30 +1533,35 @@
         function handleChatInput(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
+                
                 const input = event.target;
                 const message = input.value.trim();
-
+                
                 if (message) {
-                    sendChatMessage(message);
+                    // 메시지 전송
+                    const timestamp = new Date();
+                    
+                    // 로컬에서 먼저 메시지 표시
+                    addChatMessage(displayName, message, timestamp);
+                    
+                    // 서버로 메시지 전송
+                    socket.emit('chat-message', {
+                        roomId,
+                        message,
+                        timestamp
+                    });
+                    
+                    // 타이핑 상태 중지
+                    clearTimeout(typingTimeout);
+                    socket.emit('typing', {
+                        roomId: roomId,
+                        isTyping: false
+                    });
+                    
+                    // 입력 필드 초기화
                     input.value = '';
                 }
             }
-        }
-
-        // 채팅 메시지 전송
-        function sendChatMessage(message) {
-            const now = new Date();
-            const timestamp = now.toISOString();
-
-            // 로컬 메시지 추가
-            addChatMessage('나', message, timestamp);
-
-            // 서버에 채팅 메시지 전송
-            socket.emit('chat-message', {
-                roomId,
-                message,
-                timestamp
-            });
         }
 
         // 채팅 메시지 추가
@@ -1891,6 +1955,50 @@ function downloadFile(filename, originalName) {
                 socket.disconnect();
             }
         });
+
+        // 타이핑 관련 변수
+        let typingTimeout;
+        const TYPING_TIMER_LENGTH = 3000; // 3초 동안 타이핑이 없으면 타이핑 중지로 간주
+
+        // 타이핑 이벤트 처리
+        function handleTyping(event) {
+            if (!socket || !socket.connected) return;
+            
+            // 타이핑 중 상태 전송
+            socket.emit('typing', {
+                roomId: roomId,
+                isTyping: true
+            });
+            
+            // 타이머 초기화
+            clearTimeout(typingTimeout);
+            
+            // 일정 시간 후 타이핑 중지 상태 전송
+            typingTimeout = setTimeout(() => {
+                socket.emit('typing', {
+                    roomId: roomId,
+                    isTyping: false
+                });
+            }, TYPING_TIMER_LENGTH);
+        }
+
+        // 타이핑 표시기 업데이트
+        function updateTypingIndicator(typingPeerId, displayName, isTyping) {
+            const typingIndicator = document.getElementById('typingIndicator');
+            const typingText = document.getElementById('typingText');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 타이핑 중인 사용자가 있으면 표시
+            if (isTyping) {
+                typingText.textContent = `${displayName}님이 입력 중`;
+                typingIndicator.style.display = 'flex';
+                // 스크롤을 아래로 이동
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else {
+                // 해당 사용자의 타이핑이 중지되면 표시기 숨김
+                typingIndicator.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

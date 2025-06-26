@@ -357,6 +357,31 @@ module.exports = (io, worker, router) => {
       }
     });
 
+    // 타이핑 상태 처리
+    socket.on('typing', async (data) => {
+      try {
+        const { roomId, isTyping } = data;
+        const peer = peers.get(socket.id);
+        
+        if (!peer) {
+          console.error('Typing status error: Peer not found');
+          return;
+        }
+        
+        // 본인을 제외한 모든 참가자에게 타이핑 상태 전달
+        socket.to(roomId).emit('typing', {
+          peerId: peer.id,
+          displayName: peer.displayName,
+          isTyping
+        });
+        
+        console.log(`Typing status from ${peer.displayName} in room ${roomId}: ${isTyping ? 'typing' : 'stopped typing'}`);
+        
+      } catch (error) {
+        console.error('Typing status error:', error);
+      }
+    });
+
     // 채팅 메시지 처리
     socket.on('chat-message', async (data) => {
       try {
@@ -456,7 +481,7 @@ module.exports = (io, worker, router) => {
   });
 };
 
-// WebRTC Transport 생성 함수 에이콘 아카데미 IP : 172.30.1.49
+// WebRTC Transport 생성 함수 에이콘 아카데미 IP :  투썸플레이스 신촌점 : 192.168.40.6
 async function createWebRtcTransport(router) {
   const transport = await router.createWebRtcTransport({
     listenIps: [
@@ -464,7 +489,7 @@ async function createWebRtcTransport(router) {
         //ip: process.env.MEDIASOUP_LISTEN_IP || '127.0.0.1',
         //announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '127.0.0.1'
         ip: '0.0.0.0',
-        announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '192.168.40.6'
+        announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '172.30.1.49'
       }
     ],
     enableUdp: true,
