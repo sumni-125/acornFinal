@@ -3,93 +3,55 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.ocean.repository.CalendarEventRepository">
+<mapper namespace="com.example.calendarSample.repository.CalendarEventRepository">
 
-    <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.PersonalCalendarResponse">
+    <select id="selectPersonalCalendar" parameterType="String" resultType="PersonalCalendarResponse">
         SELECT
-        event_cd AS eventCd,
-        title,
-        start_datetime AS startDatetime,
-        end_datetime AS endDatetime,
-        color
+            event_cd AS eventCd,
+            title,
+            start_datetime AS startDatetime,
+            end_datetime AS endDatetime,
+            color
         FROM `EVENTS`
         WHERE user_id = #{userID}
         AND is_shared = '0'
         ORDER BY priority
     </select>
 
-    <insert id="insertPersonalEvent" parameterType="com.example.ocean.dto.response.Event">
+    <insert id="insertPersonalEvent" parameterType="Event">
         INSERT INTO `EVENTS` (
-        event_cd, user_id, workspace_cd, title, description,
-        start_datetime, end_datetime, color,
-        is_shared, progress_status, priority, created_date
+            event_cd, user_id, workspace_cd, title, description,
+            start_datetime, end_datetime, color,
+            is_shared, progress_status, priority, created_date
         ) VALUES (
-        #{eventCd}, #{userId}, #{workspaceCd}, #{title}, #{description},
-        #{startDatetime}, #{endDatetime}, #{color},
-        #{isShared}, #{progressStatus}, #{priority}, #{createdDate}
+            #{eventCd}, #{userId}, #{workspaceCd}, #{title}, #{description},
+            #{startDatetime}, #{endDatetime}, #{color},
+            #{isShared}, #{progressStatus}, #{priority}, #{createdDate}
         )
 
     </insert>
 
-    <insert id="insertFile" parameterType="com.example.ocean.dto.response.FileEntity">
-        INSERT INTO `FILE` (
-        file_id, event_cd, file_nm, file_type, file_path, file_size,
-        uploaded_by, uploaded_date, active_state
-        ) VALUES (
-        #{fileId}, #{eventCd}, #{fileNm}, #{fileType}, #{filePath}, #{fileSize},
-        #{uploadedBy}, NOW(), '1'
-        )
-    </insert>
+
 
     <select id="selectPersonalEvent" parameterType="String" resultType="Event">
         SELECT
-        event_cd AS eventCd,
-        user_id AS userId,
-        workspace_cd AS workspaceCd,
-        title,
-        description,
-        start_datetime AS startDatetime,
-        end_datetime AS endDatetime,
-        color,
-        is_shared AS isShared,
-        progress_status AS progressStatus,
-        priority AS priority,
-        created_date AS createdDate
+            event_cd AS eventCd,
+            user_id AS userId,
+            workspace_cd AS workspaceCd,
+            title,
+            description,
+            start_datetime AS startDatetime,
+            end_datetime AS endDatetime,
+            color,
+            is_shared AS isShared,
+            progress_status AS progressStatus,
+            priority AS priority,
+            created_date AS createdDate
         FROM `EVENTS`
         WHERE event_cd = #{eventCd}
     </select>
 
-    <select id="selectFileEvent" parameterType="String" resultType="FileEntity">
-        SELECT
-        FILE_ID AS fileId,
-        EVENT_CD AS eventCd,
-        FILE_NM AS fileNm,
-        FILE_TYPE AS fileType,
-        FILE_PATH AS filePath,
-        FILE_SIZE AS fileSize,
-        UPLOADED_BY AS uploadedBy,
-        UPLOADED_DATE AS uploadedDate,
-        ACTIVE_STATE AS activeState
-        FROM   `FILE`
-        WHERE   event_cd = #{eventCd}
-        AND     ACTIVE_STATE = '1'
-    </select>
 
-    <select id="selectFileByFileId" parameterType="String" resultType="FileEntity">
-        SELECT
-        FILE_ID AS fileId,
-        EVENT_CD AS eventCd,
-        FILE_NM AS fileNm,
-        FILE_TYPE AS fileType,
-        FILE_PATH AS filePath,
-        FILE_SIZE AS fileSize,
-        UPLOADED_BY AS uploadedBy,
-        UPLOADED_DATE AS uploadedDate,
-        ACTIVE_STATE AS activeState
-        FROM   `FILE`
-        WHERE   FILE_ID = #{fileId}
-        AND     ACTIVE_STATE = '1'
-    </select>
 
     <update id="updatePersonalEvent" parameterType="PersonalEventUpdateRequest">
         UPDATE `EVENTS`
@@ -106,20 +68,11 @@
         WHERE event_cd = #{eventCd}
         AND user_id  = #{userId}
     </update>
-    <update id="updateByEventCdAndFileId" parameterType="String">
-        UPDATE `FILE`
-        SET ACTIVE_STATE = '0'
-        WHERE event_cd = #{eventCd}
-        AND   FILE_ID = #{fileId}
-    </update>
+
     <delete id="deletePersonalEvent" parameterType="String">
         DELETE
         FROM `EVENTS`
         WHERE event_cd = #{eventCd}
     </delete>
-    <delete id="deleteFileByEventCd" parameterType="String">
-        DELETE
-        FROM `FILE`
-        WHERE event_cd = #{eventCd}
-    </delete>
+
 </mapper>

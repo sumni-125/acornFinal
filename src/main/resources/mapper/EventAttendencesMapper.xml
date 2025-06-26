@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.calendarSample.repository.EventAttendencesRepository">
+
+    <insert id="insertAttendences" parameterType="EventAttendences">
+        INSERT INTO `EVENT_ATTENDENCES` (
+            event_cd, user_id, user_nickname
+        ) VALUES (
+            #{eventCd}, #{userId}, #{userNickname}
+        )
+    </insert>
+
+    <select id="selectAttendencesByEventCd" parameterType="String" resultType="EventAttendences">
+        SELECT
+        event_cd AS eventCd,
+        user_id  AS userId,
+        user_nickname AS userNickName
+        FROM `EVENT_ATTENDENCES`
+        WHERE event_cd = #{eventCd}
+    </select>
+
+    <delete id="deleteAttendencesByEventCdUserId" parameterType="String">
+        DELETE
+        FROM `EVENT_ATTENDENCES`
+        WHERE event_cd = #{eventCd}
+        AND user_id = #{userId}
+    </delete>
+
+    <delete id="deleteAttendencesByEventCd" parameterType="String">
+        DELETE
+        FROM `EVENT_ATTENDENCES`
+        WHERE event_cd = #{eventCd}
+    </delete>
+</mapper>

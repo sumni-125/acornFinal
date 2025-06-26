@@ -18,4 +18,5 @@ public class Event {
     private String progressStatus;      // PROGRESS_STATUS (BEFORE / ING / DONE)
     private String priority;            // PRIORITY (LOW / NORMAL / HIGH)
     private LocalDateTime createdDate;  // CREATED_DATE
+    private LocalDateTime completeDateTime;
 }

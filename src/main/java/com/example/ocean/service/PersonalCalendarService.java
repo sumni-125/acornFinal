@@ -1,18 +1,21 @@
 package com.example.ocean.service;
 
 import com.example.ocean.dto.request.CreateEventRequest;
+import com.example.ocean.dto.request.EventAttendences;
 import com.example.ocean.dto.request.PersonalEventUpdateRequest;
 import com.example.ocean.dto.response.PersonalCalendarResponse;
 import com.example.ocean.dto.response.PersonalEventDetailResponse;
 import com.example.ocean.dto.response.Event;
-import com.example.ocean.dto.response.FileEntity;
 import com.example.ocean.repository.CalendarEventRepository;
+import com.example.ocean.repository.EventAttendencesRepository;
+import com.example.ocean.repository.FileRepository;
 import com.example.ocean.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -29,10 +32,14 @@ import java.util.stream.Collectors;
 public class PersonalCalendarService {
 
     private final CalendarEventRepository calendarEventRepository;
+    private final FileRepository fileRepository;
+    private final EventAttendencesRepository eventAttendencesRepository;
     private final S3Uploader s3Uploader;
 
     public List<PersonalCalendarResponse> selectPersonalCalendar(String userId){ return calendarEventRepository.selectPersonalCalendar(userId);}
 
+    // 일정 crud
+    @Transactional
     public int createPersonalEvent(CreateEventRequest request, MultipartFile[] files){
 
         Event event = new Event();
@@ -53,6 +60,17 @@ public class PersonalCalendarService {
         event.setCreatedDate(LocalDateTime.now());
 
         System.out.println(event);
+        List<String> attendList = request.getParticipantIds();
+        for(String attendUserId : attendList){
+            EventAttendences attendence = new EventAttendences();
+            String userNickname = eventAttendencesRepository.selectUserNicknameByUserId(attendUserId, request.getWorkspaceCd());
+
+            attendence.setEventCd(eventCd);
+            attendence.setUserId(attendUserId);
+            attendence.setUserNickname(userNickname);
+            insertAttendences(attendence);
+        }
+
 
         int result = calendarEventRepository.insertPersonalEvent(event);
 
@@ -61,30 +79,7 @@ public class PersonalCalendarService {
         return result;
     }
 
-    public boolean insertFile(MultipartFile[] files, String eventCd, String userId) {
-        int cnt=0;
-        if (files != null && files.length > 0) {
-            for (MultipartFile file : files) {
-                String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
 
-                FileEntity fileEntity = FileEntity.builder()
-                        .fileId(UUID.randomUUID().toString())
-                        .eventCd(eventCd)
-                        .fileNm(file.getOriginalFilename())
-                        .fileType(file.getContentType())
-                        .filePath(filePath)
-                        .fileSize(file.getSize())
-                        .uploadedBy(userId)
-                        .build();
-
-                int insert = calendarEventRepository.insertFile(fileEntity);
-                cnt+=insert;
-            }
-        }
-        if (files == null || files.length == 0) return true;
-
-        return cnt==files.length;
-    }
 
     public PersonalEventDetailResponse getPersonalEventDetail(String eventCd){
 
@@ -102,13 +97,59 @@ public class PersonalCalendarService {
             response.setProgressStatus(event.getProgressStatus());
             response.setPriority(event.getPriority());
         }
+
+        response.setParticipantIds(selectAttendenceIdByEventCd(eventCd));
         response.setFileList(selectFileEvent(eventCd));
 
         return response;
     }
 
+    @Transactional
+    public int updatePersonalEvent(PersonalEventUpdateRequest event){
+        if(event.getProgressStatus().equals("DONE")){
+            event.setEndDatetime(LocalDateTime.now());
+        }else{
+            event.setEndDatetime(null);
+        }
+
+        return calendarEventRepository.updatePersonalEvent(event);
+    }
+
+    @Transactional
+    public int deletePersonalEvent(String eventCd){
+        //파일 참석자 먼저 삭제하고 이벤트 삭제하기
+        fileRepository.deleteFileByEventCd(eventCd);
+        eventAttendencesRepository.deleteAttendencesByEventCd(eventCd);
+        return calendarEventRepository.deletePersonalEvent(eventCd);
+    }
+    // 파일 crud
+    public boolean insertFile(MultipartFile[] files, String eventCd, String userId) {
+        int cnt=0;
+        if (files != null && files.length > 0) {
+            for (MultipartFile file : files) {
+                String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
+
+                CreateEventRequest.FileEntity fileEntity = CreateEventRequest.FileEntity.builder()
+                        .fileId(UUID.randomUUID().toString())
+                        .eventCd(eventCd)
+                        .fileNm(file.getOriginalFilename())
+                        .fileType(file.getContentType())
+                        .filePath(filePath)
+                        .fileSize(file.getSize())
+                        .uploadedBy(userId)
+                        .build();
+
+                int insert = fileRepository.insertFile(fileEntity);
+                cnt+=insert;
+            }
+        }
+        if (files == null || files.length == 0) return true;
+
+        return cnt==files.length;
+    }
+
     public List<PersonalEventDetailResponse.FileInfo> selectFileEvent(String eventCd){
-        List<FileEntity> fileList = calendarEventRepository.selectFileEvent(eventCd);
+        List<CreateEventRequest.FileEntity> fileList = fileRepository.selectFileByEventCd(eventCd);
         if (fileList != null) {
             List<PersonalEventDetailResponse.FileInfo> fileInfos = fileList.stream().map(file -> {
                 PersonalEventDetailResponse.FileInfo fileInfo = new PersonalEventDetailResponse.FileInfo();
@@ -124,8 +165,8 @@ public class PersonalCalendarService {
     }
 
     public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
-        FileEntity file = calendarEventRepository.selectFileByFileId(fileId);
-        String key = extractKeyFromUrl(file.getFilePath()); // 👈 핵심!
+        CreateEventRequest.FileEntity file = fileRepository.selectFileByFileId(fileId);
+        String key = extractKeyFromUrl(file.getFilePath());
         byte[] bytes = s3Uploader.download(key);
 
         return ResponseEntity.ok()
@@ -134,27 +175,47 @@ public class PersonalCalendarService {
                         "attachment; filename=\"" + URLEncoder.encode(file.getFileNm(), "UTF-8") + "\"")
                 .body(bytes);
     }
+
+    @Transactional
     public boolean updateFileActive(String eventCd, List<String> deletedFileIds){
         int cnt=0;
         for (String fileId : deletedFileIds) {
-            int updated = calendarEventRepository.updateFileActive(eventCd, fileId);
+            int updated = fileRepository.updateFileActive(eventCd, fileId);
             cnt+=updated;
         }
         return cnt == deletedFileIds.size();
     }
+
     private String extractKeyFromUrl(String url) {
         URI uri = URI.create(url);
         return uri.getPath().substring(1); // 앞에 '/' 제거
     }
 
-    public int updatePersonalEvent(PersonalEventUpdateRequest event){
-        return calendarEventRepository.updatePersonalEvent(event);
+
+
+
+    // 참가자 테이블 crud
+
+    public int insertAttendences(EventAttendences attendences){
+        return eventAttendencesRepository.insertAttendences(attendences);
     }
 
-    public int deletePersonalEvent(String eventCd){
-        //파일먼저삭제하고? 이벤트 삭제하기
-        calendarEventRepository.deleteFileByEventCd(eventCd);
-        return calendarEventRepository.deletePersonalEvent(eventCd);
+    public List<EventAttendences> selectAttendenceIdByEventCd(String eventId){
+        return eventAttendencesRepository.selectAttendencesByEventCd(eventId);
+    }
+
+    @Transactional
+    public boolean deleteAttendencesByEventCdUserId(String eventCd, List<String> deletedUserIds){
+        int cnt=0;
+        for (String userId : deletedUserIds) {
+            int deleted = eventAttendencesRepository.deleteAttendencesByEventCdUserId(eventCd, userId);
+            cnt+=deleted;
+        }
+        return cnt == deletedUserIds.size();
+    }
+
+    public void deleteAttendencesByEventCd(String eventCd){
+        eventAttendencesRepository.deleteAttendencesByEventCd(eventCd);
     }
 
 }

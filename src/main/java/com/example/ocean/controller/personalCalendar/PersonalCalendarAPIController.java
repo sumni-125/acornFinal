@@ -1,6 +1,7 @@
 package com.example.ocean.controller.personalCalendar;
 
 import com.example.ocean.dto.request.CreateEventRequest;
+import com.example.ocean.dto.request.EventAttendences;
 import com.example.ocean.dto.request.PersonalEventUpdateRequest;
 import com.example.ocean.dto.response.PersonalCalendarResponse;
 import com.example.ocean.dto.response.PersonalEventDetailResponse;
@@ -74,18 +75,30 @@ public class PersonalCalendarAPIController {
             @PathVariable String eventCd,
             @RequestPart("request") PersonalEventUpdateRequest request,
             @RequestPart(required = false) List<MultipartFile> files,
-            @RequestPart(required = false) List<String> deletedFileIds
+            @RequestPart(required = false) List<String> deletedFileIds,
+            @RequestPart(required = false) List<EventAttendences> attendences,
+            @RequestPart(required = false) List<String> deletedAttendences
     ) {
-        System.out.println(request);
+        //System.out.println(request);
+
         int result = personalCalendarService.updatePersonalEvent(request);
-        boolean deleted = personalCalendarService.updateFileActive(eventCd, deletedFileIds);
-        MultipartFile[] fileArray = files != null ? files.toArray(new MultipartFile[0]) : new MultipartFile[0];
+        boolean deletedF = personalCalendarService.updateFileActive(eventCd, deletedFileIds);
+        boolean deletedA = personalCalendarService.deleteAttendencesByEventCdUserId(eventCd, deletedAttendences);
+        for(EventAttendences a : attendences){
+            personalCalendarService.insertAttendences(a);
+        }
+
+        MultipartFile[] fileArray = files != null
+                ? files.toArray(new MultipartFile[0])
+                : new MultipartFile[0];
+
         boolean insertFile = personalCalendarService.insertFile(fileArray, eventCd, request.getUserId());
-        if (result == 1 && deleted && insertFile) {
+
+        if (result == 1 && deletedF && insertFile) {
             return ResponseEntity.ok("일정 수정 성공");
-        } else if (result == 1 && (!deleted || !insertFile)) {
+        } else if (result == 1 && (!deletedF || !insertFile)) {
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body("일정은 수정되었지만 일부 파일 처리 실패");
-        } else if (result != 1 && (deleted || insertFile)) {
+        } else if (result != 1 && (deletedF || insertFile)) {
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body("파일은 처리되었지만 일정 수정 실패");
         } else {
             return ResponseEntity.badRequest().body("일정 수정 실패");

@@ -1,5 +1,6 @@
 package com.example.ocean.dto.response;
 
+import com.example.ocean.dto.request.EventAttendences;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,11 @@ public class PersonalEventDetailResponse {
     private String          progressStatus;
     private String          priority;
     private LocalDateTime   createdDate;
+
+
+    private int             notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
+
+    private List<EventAttendences> participantIds; // 작성자 외 참석자들 ID 리스트
 
     private List<FileInfo> fileList;
     @Data

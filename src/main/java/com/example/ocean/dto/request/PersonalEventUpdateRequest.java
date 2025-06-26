@@ -17,8 +17,9 @@ public class PersonalEventUpdateRequest {
     private String          isShared;       //공개여부
     private String          progressStatus; //진행도(진행전 진행중 종료됨)
     private String          priority;       //중요도
+    private LocalDateTime   completeDateTime;
 
-    private List<String> participantIds; // 작성자 외 참석자들 ID 리스트
-    private int             notificationMinutes; // 알림시간 (예: [1440, 60])
-    private List<UploadFileRequest> files; // 파일 업로드 요청
+    private List<String>    participantIds; // 작성자 외 참석자들 ID 리스트
+    private int             notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
+    private List<UploadFileRequest> files;  // 파일 업로드 요청
 }
