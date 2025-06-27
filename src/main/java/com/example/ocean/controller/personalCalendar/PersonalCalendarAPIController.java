@@ -2,7 +2,6 @@ package com.example.ocean.controller.personalCalendar;
 
 
 import com.example.ocean.dto.request.CreateEventRequest;
-import com.example.ocean.dto.request.EventAttendences;
 import com.example.ocean.dto.request.PersonalEventUpdateRequest;
 import com.example.ocean.dto.response.PersonalCalendarResponse;
 import com.example.ocean.dto.response.PersonalEventDetailResponse;
@@ -79,17 +78,13 @@ public class PersonalCalendarAPIController {
             @RequestPart("request") PersonalEventUpdateRequest request,
             @RequestPart(required = false) List<MultipartFile> files,
             @RequestPart(required = false) List<String> deletedFileIds,
-            @RequestPart(required = false) List<EventAttendences> attendences,
             @RequestPart(required = false) List<String> deletedAttendences
     ) {
         //System.out.println(request);
 
         int result = personalCalendarService.updatePersonalEvent(request);
         boolean deletedF = personalCalendarService.updateFileActive(eventCd, deletedFileIds);
-        boolean deletedA = personalCalendarService.deleteAttendencesByEventCdUserId(eventCd, deletedAttendences);
-        for(EventAttendences a : attendences){
-            personalCalendarService.insertAttendences(a);
-        }
+
 
         MultipartFile[] fileArray = files != null
                 ? files.toArray(new MultipartFile[0])

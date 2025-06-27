@@ -101,6 +101,13 @@
                   document.getElementById('detailStatus').innerText = data.progressStatus || '';
                   document.getElementById('detailShared').innerText = data.isShared === '1' ? '예' : '아니오';
 
+
+                  const attendencesList = data.participantIds
+                  const str = attendencesList.map(attendence => `<li>${attendence.userNickname}</li>`).join("");
+                  document.getElementById('detailAttendences').innerHTML =str;
+
+
+
                   if (data.fileList && data.fileList.length > 0) {
                       const fileItems = data.fileList.map(file => `
                         <li>
@@ -149,6 +156,7 @@
         function closeCreateEventModal() {
           document.getElementById('createEventModal').style.display = 'none';
         }
+
         //일정 정보 넘겨주는 함수
         function saveEvent() {
           const form = document.getElementById("eventForm");
@@ -399,7 +407,9 @@
         <textarea id="description" name="description" rows="3" cols="30"></textarea><br/><br/>
 
         <label>파일 첨부:</label>
-        <input type="file" id="fileUpload" name="files" multiple><br/><br/>
+        <input type="file" id="fileUpload" name="files" multiple><br/>
+        <ul id="insertedFiles"></ul>
+        <br/><br/>
 
         <label for="priority">중요도</label><br/>
         <select id="priority" name="priority">
@@ -447,6 +457,7 @@
     <p><strong>중요도:</strong> <span id="detailPriority"></span></p>
     <p><strong>진행 상태:</strong> <span id="detailStatus"></span></p>
     <p><strong>공유 여부:</strong> <span id="detailShared"></span></p>
+    <p><strong>참석자:</strong></p> <ul id="detailAttendences"></ul>
     <p><strong>파일:</strong></p>
     <ul id="detailFiles"></ul>
     <button onclick="closeDetailModal()">닫기</button>
@@ -499,6 +510,9 @@
             <option value="0">비공유</option>
             <option value="1">공유</option>
         </select>
+
+        <label>참석자</label>
+
 
         <label>파일 첨부:</label>
         <input type="file" id="update-fileUpload" name="files" multiple>

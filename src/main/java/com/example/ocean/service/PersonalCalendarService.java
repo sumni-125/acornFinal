@@ -3,7 +3,6 @@ package com.example.ocean.service;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
 import com.example.ocean.repository.CalendarEventRepository;
-import com.example.ocean.repository.EventAttendencesRepository;
 import com.example.ocean.repository.FileRepository;
 import com.example.ocean.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,6 @@ public class PersonalCalendarService {
 
     private final CalendarEventRepository calendarEventRepository;
     private final FileRepository fileRepository;
-    private final EventAttendencesRepository eventAttendencesRepository;
     private final S3Uploader s3Uploader;
 
     public List<PersonalCalendarResponse> selectPersonalCalendar(String userId){ return calendarEventRepository.selectPersonalCalendar(userId);}
@@ -57,16 +55,7 @@ public class PersonalCalendarService {
         event.setCreatedDate(LocalDateTime.now());
 
         System.out.println(event);
-        List<String> attendList = request.getParticipantIds();
-        for(String attendUserId : attendList){
-            EventAttendences attendence = new EventAttendences();
-            String userNickname = eventAttendencesRepository.selectUserNicknameByUserId(attendUserId, request.getWorkspaceCd());
 
-            attendence.setEventCd(eventCd);
-            attendence.setUserId(attendUserId);
-            attendence.setUserNickname(userNickname);
-            insertAttendences(attendence);
-        }
 
         int result = calendarEventRepository.insertPersonalEvent(event);
 
@@ -94,7 +83,6 @@ public class PersonalCalendarService {
             response.setPriority(event.getPriority());
         }
 
-        response.setParticipantIds(selectAttendenceIdByEventCd(eventCd));
         response.setFileList(selectFileEvent(eventCd));
 
         return response;
@@ -115,7 +103,6 @@ public class PersonalCalendarService {
     public int deletePersonalEvent(String eventCd){
         //파일 참석자 먼저 삭제하고 이벤트 삭제하기
         fileRepository.deleteFileByEventCd(eventCd);
-        eventAttendencesRepository.deleteAttendencesByEventCd(eventCd);
         return calendarEventRepository.deletePersonalEvent(eventCd);
     }
     // 파일 crud
@@ -187,31 +174,6 @@ public class PersonalCalendarService {
         return uri.getPath().substring(1); // 앞에 '/' 제거
     }
 
-
-
-
     // 참가자 테이블 crud
-
-    public int insertAttendences(EventAttendences attendences){
-        return eventAttendencesRepository.insertAttendences(attendences);
-    }
-
-    public List<EventAttendences> selectAttendenceIdByEventCd(String eventId){
-        return eventAttendencesRepository.selectAttendencesByEventCd(eventId);
-    }
-
-    @Transactional
-    public boolean deleteAttendencesByEventCdUserId(String eventCd, List<String> deletedUserIds){
-        int cnt=0;
-        for (String userId : deletedUserIds) {
-            int deleted = eventAttendencesRepository.deleteAttendencesByEventCdUserId(eventCd, userId);
-            cnt+=deleted;
-        }
-        return cnt == deletedUserIds.size();
-    }
-
-    public void deleteAttendencesByEventCd(String eventCd){
-        eventAttendencesRepository.deleteAttendencesByEventCd(eventCd);
-    }
 
 }

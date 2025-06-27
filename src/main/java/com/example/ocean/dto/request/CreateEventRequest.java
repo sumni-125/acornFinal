@@ -19,8 +19,6 @@ public class CreateEventRequest {
     private String          progressStatus;
     private String          priority;
     private LocalDateTime   completeDateTime;
-
-    private List<String>    participantIds; // 작성자 외 참석자들 ID 리스트
     private String          notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
 
 }
