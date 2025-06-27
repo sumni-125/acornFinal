@@ -1,12 +1,7 @@
 package com.example.ocean.security.oauth;
 
 import com.example.ocean.entity.User;
-import com.example.ocean.entity.Workspace;
-import com.example.ocean.entity.WorkspaceMember;
 import com.example.ocean.repository.UserRepository;
-import com.example.ocean.repository.WorkspaceRepository;
-import com.example.ocean.repository.WorkspaceMemberRepository;
-import com.example.ocean.security.oauth.UserPrincipal;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfo;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfoFactory;
 import lombok.RequiredArgsConstructor;
