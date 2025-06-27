@@ -1,11 +1,7 @@
 package com.example.ocean.service;
 
-import com.example.ocean.dto.request.CreateEventRequest;
-import com.example.ocean.dto.request.EventAttendences;
-import com.example.ocean.dto.request.PersonalEventUpdateRequest;
-import com.example.ocean.dto.response.PersonalCalendarResponse;
-import com.example.ocean.dto.response.PersonalEventDetailResponse;
-import com.example.ocean.dto.response.Event;
+import com.example.ocean.dto.request.*;
+import com.example.ocean.dto.response.*;
 import com.example.ocean.repository.CalendarEventRepository;
 import com.example.ocean.repository.EventAttendencesRepository;
 import com.example.ocean.repository.FileRepository;
@@ -17,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.IOException;
 import java.net.URI;
@@ -70,7 +67,6 @@ public class PersonalCalendarService {
             attendence.setUserNickname(userNickname);
             insertAttendences(attendence);
         }
-
 
         int result = calendarEventRepository.insertPersonalEvent(event);
 
@@ -129,7 +125,7 @@ public class PersonalCalendarService {
             for (MultipartFile file : files) {
                 String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
 
-                CreateEventRequest.FileEntity fileEntity = CreateEventRequest.FileEntity.builder()
+                FileEntity fileEntity = FileEntity.builder()
                         .fileId(UUID.randomUUID().toString())
                         .eventCd(eventCd)
                         .fileNm(file.getOriginalFilename())
@@ -148,11 +144,11 @@ public class PersonalCalendarService {
         return cnt==files.length;
     }
 
-    public List<PersonalEventDetailResponse.FileInfo> selectFileEvent(String eventCd){
-        List<CreateEventRequest.FileEntity> fileList = fileRepository.selectFileByEventCd(eventCd);
+    public List<FileInfo> selectFileEvent(String eventCd){
+        List<FileEntity> fileList = fileRepository.selectFileByEventCd(eventCd);
         if (fileList != null) {
-            List<PersonalEventDetailResponse.FileInfo> fileInfos = fileList.stream().map(file -> {
-                PersonalEventDetailResponse.FileInfo fileInfo = new PersonalEventDetailResponse.FileInfo();
+            List<FileInfo> fileInfos = fileList.stream().map(file -> {
+                FileInfo fileInfo = new FileInfo();
                 fileInfo.setFileNm(file.getFileNm());
                 fileInfo.setFileId(file.getFileId());
                 return fileInfo;
@@ -165,7 +161,7 @@ public class PersonalCalendarService {
     }
 
     public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
-        CreateEventRequest.FileEntity file = fileRepository.selectFileByFileId(fileId);
+        FileEntity file = fileRepository.selectFileByFileId(fileId);
         String key = extractKeyFromUrl(file.getFilePath());
         byte[] bytes = s3Uploader.download(key);
 
