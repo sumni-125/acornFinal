@@ -18,6 +18,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 
+
+// REST API 전용 컨트롤러 (JSON 응답)
 @RestController
 @RequestMapping("/api/workspaces")
 @RequiredArgsConstructor

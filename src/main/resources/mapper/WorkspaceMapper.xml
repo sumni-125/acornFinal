@@ -99,7 +99,7 @@
         AND i.STATUS IS NULL
     </select>
 
-    <select id="getAllPendingInvitations" resultType="map">
+    <select id="getAllPendingInvitations" resultType="java.util.HashMap">
         SELECT i.WORKSPACE_CD,
         i.INVITED_USER_ID,
         u.USER_NM,
@@ -172,7 +172,7 @@
         )
     </insert>
 
-    <select id="findGlobalMaxDeptNumber" resultType="int">
+    <select id="findGlobalMaxDeptNumber" resultType="java.lang.Integer">
         SELECT MAX(CAST(SUBSTRING(DEPT_CD, 2) AS UNSIGNED)) FROM WORKSPACE_DEPT
     </select>
 

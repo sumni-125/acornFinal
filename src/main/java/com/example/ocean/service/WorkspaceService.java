@@ -25,9 +25,11 @@ public class WorkspaceService {
         return workspaceMapper.findWorkspacesByUserId(userId);
     }
 
+    /*
     public void createWorkspace(Workspace workspace) {
         workspaceMapper.createWorkspace(workspace);
     }
+    */
 
     public void joinWorkspace(String workspaceCd, String userId, String userRole, String activeState) {
         workspaceMapper.addUserToWorkspace(userId, workspaceCd, userRole, activeState);
@@ -60,9 +62,11 @@ public class WorkspaceService {
         workspaceMapper.insertInvitation(workspaceCd, invitedUserId, inviteCd);
     }
 
+    /*
     public List<Map<String, Object>> getPendingInvitations(String workspaceCd) {
         return workspaceMapper.selectPendingInvitations(workspaceCd);
     }
+    */
 
     public void approveInvitation(String workspaceCd, String invitedUserId) {
         workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, "ACCEPT");
@@ -77,9 +81,11 @@ public class WorkspaceService {
         return workspaceMapper.getAllPendingInvitations();
     }
 
+    /*
     public String getUserNicknameInWorkspace(String workspaceCd, String userId) {
         return workspaceMapper.findNicknameInWorkspace(workspaceCd, userId);
     }
+    */
 
     public Workspace findWorkspaceByCd(String workspaceCd) {
         Workspace result = workspaceMapper.findWorkspaceByCd(workspaceCd);

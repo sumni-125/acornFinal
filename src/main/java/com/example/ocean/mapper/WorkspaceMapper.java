@@ -15,7 +15,11 @@ public interface WorkspaceMapper {
 
     List<Workspace> findWorkspacesByUserId(@Param("userId") String userId);
 
-    void createWorkspace(Workspace workspace);
+    //void createWorkspace(Workspace workspace);
+    //List<Map<String, Object>> selectPendingInvitations(@Param("workspaceCd") String workspaceCd);
+
+    //String findNicknameInWorkspace(@Param("workspaceCd") String workspaceCd,
+    //@Param("userId") String userId);
 
     void addUserToWorkspace(@Param("userId") String userId,
                             @Param("workspaceCd") String workspaceCd,
@@ -42,7 +46,7 @@ public interface WorkspaceMapper {
                           @Param("invitedUserId") String invitedUserId,
                           @Param("inviteCd") String inviteCd);
 
-    List<Map<String, Object>> selectPendingInvitations(@Param("workspaceCd") String workspaceCd);
+
 
     void updateInvitationStatus(@Param("workspaceCd") String workspaceCd,
                                 @Param("invitedUserId") String invitedUserId,
@@ -52,13 +56,12 @@ public interface WorkspaceMapper {
                                @Param("userId") String userId);
 
 
-    List<Map<String, Object>> getAllPendingInvitations();
+
 
     void rejectInvitation(@Param("workspaceCd") String workspaceCd,
                           @Param("invitedUserId") String invitedUserId);
 
-    String findNicknameInWorkspace(@Param("workspaceCd") String workspaceCd,
-                                   @Param("userId") String userId);
+
 
     Workspace findWorkspaceByCd(@Param("workspaceCd") String workspaceCd);
 
@@ -85,6 +88,8 @@ public interface WorkspaceMapper {
                         @Param("timestamp") Timestamp timestamp);
 
     List<WorkspaceMember> findMembersByWorkspaceCd(String workspaceCd);
+
+    List<Map<String, Object>> getAllPendingInvitations();
 
     void updateWorkspaceProfile(@Param("workspaceCd") String workspaceCd,
                                 @Param("userId") String userId,

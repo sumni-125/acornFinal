@@ -92,6 +92,9 @@ public class SecurityConfig {
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/favicon.ico", "/favicon.svg", "/favicon-*.png", "/apple-touch-icon.png").permitAll()
 
+                        // 워크스페이스 관련 경로 추가
+                        .requestMatchers("/workspace", "/workspace/**").authenticated()
+
                         // 메인 페이지
                         .requestMatchers("/", "/index", "/main/**").permitAll()
 
