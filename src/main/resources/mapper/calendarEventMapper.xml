@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.calendarSample.repository.CalendarEventRepository">
+<mapper namespace="com.example.ocean.repository.CalendarEventRepository">
 
     <select id="selectPersonalCalendar" parameterType="String" resultType="PersonalCalendarResponse">
         SELECT
@@ -14,7 +14,6 @@
             color
         FROM `EVENTS`
         WHERE user_id = #{userID}
-        AND is_shared = '0'
         ORDER BY priority
     </select>
 
