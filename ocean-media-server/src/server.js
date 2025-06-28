@@ -185,4 +185,5 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`에이콘 아카데미 접속 주소: https://172.30.1.49:${PORT}`);
   console.log(`투썸 플레이스 홍대 접속 주소: https://192.168.40.6:${PORT}`);
   console.log(`집 접속 주소: https://:192.168.0.16:${PORT}`);
+  console.log(`에이콘 아카데미 접속 주소2 : https://192.168.100.16:${PORT}`);
 });

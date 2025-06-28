@@ -62,12 +62,12 @@
             }
         }
 
-        // ===== Socket.IO 연결 =====  ==== 집 와이파이 : 192.168.0.16 에이콘 아카데미 : 172.30.1.49:3001
+        // ===== Socket.IO 연결 =====  ==== 집 와이파이 : 192.168.0.16 에이콘 아카데미 : 172.30.1.49 , 192.168.100.16
         async function connectSocket() {
             return new Promise((resolve, reject) => {
                 const serverUrl = window.location.hostname === 'localhost'
                     ? 'https://localhost:3001'
-                    : 'https://192.168.0.16:3001';
+                    : 'https://192.168.100.16:3001';
 
                 socket = io(serverUrl, {
                     transports: ['websocket'],
