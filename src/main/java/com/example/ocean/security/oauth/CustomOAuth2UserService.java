@@ -1,12 +1,7 @@
 package com.example.ocean.security.oauth;
 
 import com.example.ocean.entity.User;
-import com.example.ocean.entity.Workspace;
-import com.example.ocean.entity.WorkspaceMember;
 import com.example.ocean.repository.UserRepository;
-import com.example.ocean.repository.WorkspaceRepository;
-import com.example.ocean.repository.WorkspaceMemberRepository;
-import com.example.ocean.security.oauth.UserPrincipal;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfo;
 import com.example.ocean.security.oauth.provider.OAuth2UserInfoFactory;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
-    private final WorkspaceRepository workspaceRepository;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
+    //private final WorkspaceRepository workspaceRepository;
+    //private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @Override
     @Transactional
@@ -77,7 +72,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 savedUser.getUserId(), savedUser.getUserName());
 
         // 개인 워크스페이스 자동 생성 (선택사항)
-        createPersonalWorkspace(savedUser, oAuth2UserInfo);
+        //createPersonalWorkspace(savedUser, oAuth2UserInfo);
 
         // 다시 한번 확인
         boolean exists = userRepository.existsByUserId(savedUser.getUserId());
@@ -98,6 +93,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return savedUser;
     }
 
+    /*
     private void createPersonalWorkspace(User user, OAuth2UserInfo oAuth2UserInfo) {
         // 개인 워크스페이스 생성
         Workspace workspace = Workspace.builder()
@@ -119,4 +115,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         workspaceMemberRepository.save(member);
     }
+
+     */
 }
