@@ -6,6 +6,9 @@
   <title>Join Workspace | Ocean WorkSpace</title>
   <link rel="stylesheet" th:href="@{/css/Header.css}">
   <link rel="stylesheet" th:href="@{/css/joinWorkSpace.css}">
+
+  <!-- ⭐ Ocean Background CSS 추가 -->
+  <link rel="stylesheet" th:href="@{/css/ocean-background.css}">
 </head>
 <body>
 <!-- 헤더 -->
@@ -45,8 +48,12 @@
   <button type="button" class="btn-backMain" onclick="location.href='/workspace'">Back to Page</button>
 </div>
 
-<!-- JavaScript -->
+
+<!-- ⭐ Ocean Background JavaScript 추가 -->
+<script th:src="@{/js/ocean-background.js}"></script>
+<!-- 토큰JS -->
 <script th:src="@{/js/Token.js}"></script>
+
 <script th:src="@{/js/JoinWorkspace.js}"></script>
 
 </body>
