@@ -71,7 +71,7 @@
     // 로그아웃
         async function logout() {
             try {
-                // 1. 서버에 로그아웃 요청 (선택사항)
+                // 1. 서버에 로그아웃 요청
                 const token = localStorage.getItem('accessToken');
                 if (token) {
                     await fetch('/api/auth/logout', {
