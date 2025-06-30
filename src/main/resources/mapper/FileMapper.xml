@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.ocean.repository.FileRepository">
 
-    <insert id="insertFile" parameterType="FileEntity">
+    <insert id="insertFile" parameterType="EventUploadedFiles">
         INSERT INTO `FILE` (
         file_id, event_cd, file_nm, file_type, file_path, file_size,
         uploaded_by, uploaded_date, active_state
@@ -15,7 +15,7 @@
         )
     </insert>
 
-    <select id="selectFileByEventCd" parameterType="String" resultType="FileEntity">
+    <select id="selectFileByEventCd" parameterType="String" resultType="EventUploadedFiles">
         SELECT
         FILE_ID AS fileId,
         EVENT_CD AS eventCd,
@@ -31,7 +31,7 @@
         AND     ACTIVE_STATE = '1'
     </select>
 
-    <select id="selectFileByFileId" parameterType="String" resultType="FileEntity">
+    <select id="selectFileByFileId" parameterType="String" resultType="EventUploadedFiles">
         SELECT
         FILE_ID AS fileId,
         EVENT_CD AS eventCd,

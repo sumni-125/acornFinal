@@ -3,7 +3,9 @@ package com.example.ocean.service;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
 import com.example.ocean.repository.CalendarEventRepository;
+import com.example.ocean.repository.EventAttendencesRepository;
 import com.example.ocean.repository.FileRepository;
+import com.example.ocean.repository.MentionNotificationRepository;
 import com.example.ocean.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -30,12 +32,15 @@ public class PersonalCalendarService {
     private final CalendarEventRepository calendarEventRepository;
     private final FileRepository fileRepository;
     private final S3Uploader s3Uploader;
+    private final EventAttendencesRepository eventAttendencesRepository;
+    private final MentionNotificationRepository mentionNotificationRepository;
+
+    // 일정 crud
 
     public List<PersonalCalendarResponse> selectPersonalCalendar(String userId){ return calendarEventRepository.selectPersonalCalendar(userId);}
 
-    // 일정 crud
     @Transactional
-    public int createPersonalEvent(CreateEventRequest request, MultipartFile[] files){
+    public int createPersonalEvent(PersonalEventCreateRequest request, List<String> attendenceIds, MultipartFile[] files){
 
         Event event = new Event();
 
@@ -59,6 +64,8 @@ public class PersonalCalendarService {
 
         int result = calendarEventRepository.insertPersonalEvent(event);
 
+        insertAttendence(eventCd, attendenceIds);
+
         insertFile(files, eventCd, request.getUserId());
 
         return result;
@@ -73,6 +80,7 @@ public class PersonalCalendarService {
         if (event != null) {
             response.setEventCd(event.getEventCd());
             response.setUserId(event.getUserId());
+            response.setWorkspaceCd(event.getWorkspaceCd());
             response.setTitle(event.getTitle());
             response.setDescription(event.getDescription());
             response.setStartDatetime(event.getStartDatetime());
@@ -81,9 +89,12 @@ public class PersonalCalendarService {
             response.setIsShared(event.getIsShared());
             response.setProgressStatus(event.getProgressStatus());
             response.setPriority(event.getPriority());
+            response.setCreatedDate(event.getCreatedDate());
+            response.setNotifyTime(event.getNotifyTime());
         }
 
         response.setFileList(selectFileEvent(eventCd));
+        response.setAttendeesInfo(selectAttendeesInfo(eventCd));
 
         return response;
     }
@@ -102,7 +113,18 @@ public class PersonalCalendarService {
     @Transactional
     public int deletePersonalEvent(String eventCd){
         //파일 참석자 먼저 삭제하고 이벤트 삭제하기
+        
+        List<EventAttendences> attendences = eventAttendencesRepository.selectAttendence(eventCd);
+        
+        List<String> userIds = attendences.stream()
+                .map(EventAttendences::getUserId)
+                .collect(Collectors.toList());
+        
+        //멘션알림
+        createMentionNotification(eventCd, userIds, "DELETE");
+        
         fileRepository.deleteFileByEventCd(eventCd);
+        eventAttendencesRepository.deleteAttendeesByEventCd(eventCd);
         return calendarEventRepository.deletePersonalEvent(eventCd);
     }
     // 파일 crud
@@ -112,7 +134,7 @@ public class PersonalCalendarService {
             for (MultipartFile file : files) {
                 String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
 
-                FileEntity fileEntity = FileEntity.builder()
+                EventUploadedFiles eventUploadedFiles = EventUploadedFiles.builder()
                         .fileId(UUID.randomUUID().toString())
                         .eventCd(eventCd)
                         .fileNm(file.getOriginalFilename())
@@ -122,7 +144,7 @@ public class PersonalCalendarService {
                         .uploadedBy(userId)
                         .build();
 
-                int insert = fileRepository.insertFile(fileEntity);
+                int insert = fileRepository.insertFile(eventUploadedFiles);
                 cnt+=insert;
             }
         }
@@ -132,7 +154,7 @@ public class PersonalCalendarService {
     }
 
     public List<FileInfo> selectFileEvent(String eventCd){
-        List<FileEntity> fileList = fileRepository.selectFileByEventCd(eventCd);
+        List<EventUploadedFiles> fileList = fileRepository.selectFileByEventCd(eventCd);
         if (fileList != null) {
             List<FileInfo> fileInfos = fileList.stream().map(file -> {
                 FileInfo fileInfo = new FileInfo();
@@ -148,7 +170,7 @@ public class PersonalCalendarService {
     }
 
     public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
-        FileEntity file = fileRepository.selectFileByFileId(fileId);
+        EventUploadedFiles file = fileRepository.selectFileByFileId(fileId);
         String key = extractKeyFromUrl(file.getFilePath());
         byte[] bytes = s3Uploader.download(key);
 
@@ -175,5 +197,81 @@ public class PersonalCalendarService {
     }
 
     // 참가자 테이블 crud
+    @Transactional
+    public boolean insertAttendence (String eventCd, List<String> attendenceIds){
+        int cnt=0;
+        if (attendenceIds == null || attendenceIds.isEmpty()) {
+            // 선택된 참석자 없음, 그냥 리턴
+            return true;
+        }else{
+            for(String attendId : attendenceIds){
+                cnt+=eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
+            }
+        }
+        if(cnt==attendenceIds.size()){
+            createMentionNotification(eventCd, attendenceIds, "NEW");
+        }
+        return  cnt==attendenceIds.size();
+    }
+
+    public boolean updateAttendences(String eventCd, List<String> updatedAttendees){
+        List<EventAttendences> select = selectEventAttendences(eventCd);
+        if (!select.isEmpty()) {
+            deleteAttendences(eventCd);
+        }
+
+        boolean result = true;
+        if (updatedAttendees != null && !updatedAttendees.isEmpty()) {
+            result = insertAttendence(eventCd, updatedAttendees);
+        }
+        return result;
+    }
+
+    public List<EventAttendences> selectEventAttendences(String eventCd){
+        return eventAttendencesRepository.selectAttendence(eventCd);
+    }
+
+    public List<AttendeesInfo> selectAttendeesInfo(String eventCd){
+        return eventAttendencesRepository.selectAttendeesInfo(eventCd);
+    }
+
+    @Transactional
+    public void deleteAttendences(String eventCd) {
+        eventAttendencesRepository.deleteAttendeesByEventCd(eventCd);
+    }
+/*
+    //워크스페이스 멤버 닉네임 select
+    public List<WorkspaceMember> selectUserNicknameByWorkspaceCd(String workspaceCd){
+        return eventAttendencesRepository.selectUserNicknameByWorkspaceCd(workspaceCd);
+    }*/
+
+    // 멘션 알림기능
+    @Transactional
+    public void createMentionNotification(String eventCd, List<String> participantIds, String notiState) {
+        if (participantIds == null || participantIds.isEmpty()) {
+            return;
+        }
+        for (String userId : participantIds) {
+            MentionNotification mention = new MentionNotification(eventCd, userId, notiState, "0");
+            mentionNotificationRepository.insertMentionNotification(mention);
+        }
+    }
+
+    public  List<MentionNotification> selectUserNoti(String userId){
+        return mentionNotificationRepository.selectUserNoti(userId);
+    }
+
+    public void updateAllUserNoti(String userId){
+        mentionNotificationRepository.updateAllNoti(userId);
+    }
+
+    public void updateUserNoti(List<ReadNotiRequest> request){
+        if(request != null){
+            for(ReadNotiRequest noti : request){
+                mentionNotificationRepository.updateNoti(noti);
+            }
+        }
+
+    }
 
 }

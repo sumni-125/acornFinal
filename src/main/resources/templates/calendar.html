@@ -47,7 +47,9 @@
             initialView: 'dayGridMonth',
             locale: 'ko',
             //날짜 클릭시 : 일정 추가하는 함수
-            dateClick: function(info) {
+            dateClick: async function(info) {
+              const workspaceCd = "WS001";
+
 
               closeDetailModal();
               closeUpdateModal();
@@ -101,10 +103,10 @@
                   document.getElementById('detailStatus').innerText = data.progressStatus || '';
                   document.getElementById('detailShared').innerText = data.isShared === '1' ? '예' : '아니오';
 
-
-                  const attendencesList = data.participantIds
-                  const str = attendencesList.map(attendence => `<li>${attendence.userNickname}</li>`).join("");
-                  document.getElementById('detailAttendences').innerHTML =str;
+//                 attendences
+//                 const attendencesList = data.participantIds-->
+//                 const str = attendencesList.map(attendence => `<li>${attendence.userNickname}</li>`).join("");-->
+//                 document.getElementById('detailAttendences').innerHTML =str;-->
 
 
 
@@ -136,7 +138,7 @@
                 })
                 .catch(err => {
                   console.error(err);
-                  alert("일정 정보를 불러오는 데 실패했습니다.");
+                  alert("일정 정보를 조회하는데 실패했습니다.");
                 });
             }
 
@@ -411,6 +413,8 @@
         <ul id="insertedFiles"></ul>
         <br/><br/>
 
+        <!--div id = "workspaceMemberList"></div-->
+
         <label for="priority">중요도</label><br/>
         <select id="priority" name="priority">
             <option value="LOW">낮음</option>
@@ -457,7 +461,7 @@
     <p><strong>중요도:</strong> <span id="detailPriority"></span></p>
     <p><strong>진행 상태:</strong> <span id="detailStatus"></span></p>
     <p><strong>공유 여부:</strong> <span id="detailShared"></span></p>
-    <p><strong>참석자:</strong></p> <ul id="detailAttendences"></ul>
+    <!--p><strong>참석자:</strong></p> <ul id="detailAttendences"></ul-->
     <p><strong>파일:</strong></p>
     <ul id="detailFiles"></ul>
     <button onclick="closeDetailModal()">닫기</button>

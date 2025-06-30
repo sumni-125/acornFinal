@@ -19,4 +19,5 @@ public class Event {
     private String priority;            // PRIORITY (LOW / NORMAL / HIGH)
     private LocalDateTime createdDate;  // CREATED_DATE
     private LocalDateTime completeDateTime;
+    private String notifyTime;
 }

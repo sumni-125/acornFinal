@@ -74,4 +74,26 @@
         WHERE event_cd = #{eventCd}
     </delete>
 
+    <select id="select8AmAlarm" resultType="String">
+        SELECT
+        EVENT_CD AS eventCd
+        FROM `EVENTS`
+        WHERE
+        (
+        NOTIFY_TIME = '당일 오전 8시'
+        AND DATE(START_DATETIME) = CURDATE()
+        )
+    </select>
+
+    <select id="select8PmAlarm" resultType="String">
+        SELECT
+        EVENT_CD AS eventCd
+        FROM `EVENTS`
+        WHERE
+        (
+        NOTIFY_TIME = '전날 오후 8시'
+        AND DATE(START_DATETIME) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+        )
+    </select>
+
 </mapper>

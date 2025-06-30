@@ -1,13 +1,13 @@
 package com.example.ocean.dto.request;
 
-import lombok.Builder;
+import com.example.ocean.dto.response.EventUploadedFiles;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class CreateEventRequest {
+public class PersonalEventCreateRequest {
     private String          userId;
     private String          workspaceCd;
     private String          title;
@@ -20,5 +20,6 @@ public class CreateEventRequest {
     private String          priority;
     private LocalDateTime   completeDateTime;
     private String          notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
-
+    //private List<String>    attendenceIds;
+    //private List<EventUploadedFiles> files;
 }

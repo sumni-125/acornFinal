@@ -19,5 +19,4 @@ public class PersonalEventUpdateRequest {
     private String          priority;       //중요도
     private LocalDateTime   completeDateTime;
     private int             notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
-    //private List<UploadFileRequest> files;  // 파일 업로드 요청
 }
