@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${event.title} + ' 상세 정보'"></title>
+  <style>
+    /* 기본 스타일 초기화 */
+    body, h1, p, label, div, span, button, ul, li {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #E0E0E0; /* 밝은 회색 텍스트 */
+    }
+
+    body {
+        background-color: #1A1A1A; /* 어두운 배경 */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .container {
+        background-color: #2D2D2D; /* 컨테이너 배경 */
+        border-radius: 16px; /* 더 둥근 모서리 */
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6); /* 더 깊은 그림자 */
+        padding: 30px;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .header-actions {
+        display: flex;
+        justify-content: flex-end; /* 오른쪽 정렬 */
+        gap: 15px; /* 버튼들 사이 간격 */
+        margin-bottom: 25px; /* 본문과의 간격 */
+    }
+
+    .header-actions button {
+        background: none;
+        border: none;
+        font-size: 24px; /* 아이콘 크기 키우기 */
+        color: #B0B0B0; /* 아이콘 색상 */
+        cursor: pointer;
+        padding: 5px;
+        line-height: 1;
+        transition: color 0.2s, transform 0.2s;
+    }
+    .header-actions button:hover {
+        color: #FFF;
+        transform: scale(1.1);
+    }
+
+    /* 메인 콘텐츠 스타일 */
+    .content-section {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .content-section .icon {
+        font-size: 24px; /* 아이콘 크기 */
+        margin-right: 15px;
+        color: #B0B0B0;
+        flex-shrink: 0;
+        padding-top: 2px; /* 텍스트와 세로 정렬 맞추기 */
+    }
+
+    .content-section .text-content {
+        flex-grow: 1;
+    }
+
+    .content-section .main-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #E0E0E0;
+        margin-bottom: 5px;
+    }
+
+    .content-section .sub-text {
+        font-size: 15px;
+        color: #B0B0B0;
+        margin-bottom: 10px;
+    }
+
+    .content-section.description .text-content {
+        background-color: #3C3C3C; /* 설명 배경 */
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 120px;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #E0E0E0;
+        white-space: pre-wrap; /* 줄바꿈 유지 */
+        word-break: break-word; /* 긴 단어 줄바꿈 */
+    }
+
+    .content-section.location .text-content {
+        width: 100%; /* 위치 텍스트가 컨테이너 너비를 채우도록 */
+    }
+
+    .map-placeholder {
+        border: 1px dashed #555;
+        height: 180px; /* 지도 높이 조정 */
+        background-color: #3C3C3C;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #999;
+        margin-top: 10px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .attachments-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 10px;
+    }
+    .attachments-list li {
+        background-color: #3C3C3C;
+        border-radius: 10px;
+        padding: 12px 18px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 15px;
+    }
+    .attachments-list li a {
+        color: #007bff; /* 링크 색상 */
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        flex-grow: 1; /* 링크가 가능한 공간을 채우도록 */
+    }
+    .attachments-list li a:hover {
+        text-decoration: underline;
+    }
+    .attachments-list li .file-icon {
+        margin-right: 10px;
+        color: #B0B0B0;
+        font-size: 18px;
+    }
+    .attachments-list li .download-icon {
+        color: #B0B0B0;
+        font-size: 20px;
+        margin-left: 10px;
+        cursor: pointer;
+        transition: color 0.2s, transform 0.2s;
+    }
+    .attachments-list li .download-icon:hover {
+        color: #FFF;
+        transform: scale(1.1);
+    }
+
+    /* 이미지에 있는 파란색 동그라미 (이벤트 색상 표시) */
+    .color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 12px;
+        flex-shrink: 0;
+        background-color: #007bff; /* 기본 색상, 실제 색상은 th:style로 오버라이드 */
+    }
+
+    /* 아이콘 (예시, 실제로는 폰트어썸 등 사용 권장) */
+    .icon-edit::before { content: '✏️'; }
+    .icon-delete::before { content: '🗑️'; }
+    .icon-close::before { content: '✕'; } /* X 모양 아이콘 */
+    .icon-calendar::before { content: '🗓️'; }
+    .icon-user::before { content: '🧑‍🤝‍🧑'; }
+    .icon-location-pin::before { content: '📍'; }
+    .icon-description-text::before { content: '💬'; } /* 설명 아이콘 */
+    .icon-bell-notification::before { content: '🔔'; }
+    .icon-attachment::before { content: '📎'; }
+    .icon-file-doc::before { content: '📄'; } /* 문서 파일 아이콘 */
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header-actions">
+    <button type="button" class="edit-button" title="수정" th:if="${event.userId == currentUserId}">
+      <span class="icon icon-edit"></span>
+    </button>
+    <button type="button" class="delete-button" title="삭제" th:if="${event.userId == currentUserId}">
+      <span class="icon icon-delete"></span>
+    </button>
+    <button type="button" class="close-button" title="닫기">
+      <span class="icon icon-close"></span>
+    </button>
+  </div>
+
+  <div class="content-section">
+    <div class="color-dot" th:style="'background-color:' + ${event.color}"></div>
+    <div class="text-content">
+      <div class="main-title" th:text="${event.title}">코드 리뷰</div>
+      <div class="sub-text">
+                    <span th:if="${#temporals.format(event.startDatetime, 'yyyyMMdd') == #temporals.format(event.endDatetime, 'yyyyMMdd') and #temporals.format(event.startDatetime, 'HHmm') == '0000' and #temporals.format(event.endDatetime, 'HHmm') == '2359'}">
+                        <span th:text="${#temporals.format(event.startDatetime, 'M월 d일 (E)')} + ' 종일'">6월 10일 (화) 종일</span>
+                    </span>
+        <span th:unless="${#temporals.format(event.startDatetime, 'yyyyMMdd') == #temporals.format(event.endDatetime, 'yyyyMMdd') and #temporals.format(event.startDatetime, 'HHmm') == '0000' and #temporals.format(event.endDatetime, 'HHmm') == '2359'}">
+                        <span th:text="${#temporals.format(event.startDatetime, 'M월 d일 (E) 오전 H:mm')}">6월 10일 (화) 오전 10:00</span>
+                        <span> - </span>
+                        <span th:text="${#temporals.format(event.endDatetime, '오전 H:mm')}">오전 11:00</span>
+                    </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <span class="icon icon-user"></span>
+    <div class="text-content">
+      <div class="main-title" th:text="${event.userName ?: event.userId}">이수민</div>
+    </div>
+  </div>
+
+  <div class="content-section location">
+    <span class="icon icon-location-pin"></span>
+    <div class="text-content">
+      <div class="main-title" th:text="${event.location}">서울 마포구 서교동 354-8</div>
+      <div class="map-placeholder">
+        <p>여기에 지도 API가 표시될 공간</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section description">
+    <span class="icon icon-description-text"></span>
+    <div class="text-content" th:text="${event.description}">
+      텍스트 출력<br>텍스트 출력 공간
+    </div>
+  </div>
+
+  <div class="content-section">
+    <span class="icon icon-bell-notification"></span>
+    <div class="text-content">
+      <div class="main-title" th:text="${event.notifyTime == 0 ? '알림 없음' : #strings.concat(event.notifyTime / 60 >= 1 ? (event.notifyTime / 60) + '시간 ' : '', event.notifyTime % 60 != 0 ? (event.notifyTime % 60) + '분 전' : '전')}">
+        1시간 전
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <span class="icon icon-attachment"></span>
+    <div class="text-content">
+      <ul class="attachments-list" th:if="${not #lists.isEmpty(event.files)}">
+        <li th:each="file : ${event.files}">
+          <a th:href="@{/files/download/{fileId}(fileId=${file.fileId})}" target="_blank">
+            <span class="file-icon icon-file-doc"></span>
+            <span th:text="${file.fileNm}">첨부파일_이름.pdf</span>
+          </a>
+          <a th:href="@{/files/download/{fileId}(fileId=${file.fileId})}" title="다운로드">
+            <span class="download-icon">⬇️</span>
+          </a>
+        </li>
+      </ul>
+      <div class="main-title" th:unless="${not #lists.isEmpty(event.files)}">첨부파일 없음</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 닫기 버튼 (X) 클릭 시 동작
+  document.querySelector('.close-button').addEventListener('click', function() {
+      alert('상세 페이지를 닫습니다. (실제 기능은 백엔드 구현 후 연동)');
+      // 예시: window.history.back(); // 이전 페이지로 돌아가기
+      // 예시: location.href = '/events/list'; // 목록 페이지로 이동
+  });
+
+  // 수정 버튼 클릭 시 동작 (작성자에게만 보임)
+  const editButton = document.querySelector('.edit-button');
+  if (editButton) { // 버튼이 존재하는 경우에만 이벤트 리스너 추가
+      editButton.addEventListener('click', function() {
+          const eventCd = /*[[${event.eventCd}]]*/ 'temp_event_cd'; // Thymeleaf 변수 사용
+          alert('수정 페이지로 이동합니다. (이벤트 코드: ' + eventCd + ')');
+          window.location.href = '/events/edit/' + eventCd; // 예시 URL
+      });
+  }
+
+  // 삭제 버튼 클릭 시 동작 (작성자에게만 보임)
+  const deleteButton = document.querySelector('.delete-button');
+  if (deleteButton) { // 버튼이 존재하는 경우에만 이벤트 리스너 추가
+      deleteButton.addEventListener('click', function() {
+          if (confirm('정말로 이 이벤트를 삭제하시겠습니까?')) {
+              const eventCd = /*[[${event.eventCd}]]*/ 'temp_event_cd'; // Thymeleaf 변수 사용
+              alert('삭제 요청을 보냅니다. (이벤트 코드: ' + eventCd + ') 백엔드 구현 후 연동 예정.');
+              // 예시: fetch('/events/delete/' + eventCd, { method: 'POST' })
+              //           .then(response => { /* 삭제 성공/실패 처리 */ });
+          }
+      });
+  }
+</script>
+</body>
+</html>
