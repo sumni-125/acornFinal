@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.ocean.repository.FileRepository">
+
+    <insert id="insertFile" parameterType="EventUploadedFiles">
+        INSERT INTO `FILE` (
+        file_id, event_cd, file_nm, file_type, file_path, file_size,
+        uploaded_by, uploaded_date, active_state
+        ) VALUES (
+        #{fileId}, #{eventCd}, #{fileNm}, #{fileType}, #{filePath}, #{fileSize},
+        #{uploadedBy}, NOW(), '1'
+        )
+    </insert>
+
+    <select id="selectFileByEventCd" parameterType="String" resultType="EventUploadedFiles">
+        SELECT
+        FILE_ID AS fileId,
+        EVENT_CD AS eventCd,
+        FILE_NM AS fileNm,
+        FILE_TYPE AS fileType,
+        FILE_PATH AS filePath,
+        FILE_SIZE AS fileSize,
+        UPLOADED_BY AS uploadedBy,
+        UPLOADED_DATE AS uploadedDate,
+        ACTIVE_STATE AS activeState
+        FROM   `FILE`
+        WHERE   event_cd = #{eventCd}
+        AND     ACTIVE_STATE = '1'
+    </select>
+
+    <select id="selectFileByFileId" parameterType="String" resultType="EventUploadedFiles">
+        SELECT
+        FILE_ID AS fileId,
+        EVENT_CD AS eventCd,
+        FILE_NM AS fileNm,
+        FILE_TYPE AS fileType,
+        FILE_PATH AS filePath,
+        FILE_SIZE AS fileSize,
+        UPLOADED_BY AS uploadedBy,
+        UPLOADED_DATE AS uploadedDate,
+        ACTIVE_STATE AS activeState
+        FROM   `FILE`
+        WHERE   FILE_ID = #{fileId}
+        AND     ACTIVE_STATE = '1'
+    </select>
+
+    <update id="updateByEventCdAndFileId" parameterType="String">
+        UPDATE `FILE`
+        SET ACTIVE_STATE = '0'
+        WHERE event_cd = #{eventCd}
+        AND   FILE_ID = #{fileId}
+    </update>
+
+    <delete id="deleteFileByEventCd" parameterType="String">
+        DELETE
+        FROM `FILE`
+        WHERE event_cd = #{eventCd}
+    </delete>
+</mapper>
