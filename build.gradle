@@ -48,6 +48,7 @@ dependencies {
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
+
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
@@ -64,6 +65,11 @@ dependencies {
 
 	// aws s3버킷 사용
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+	
+	// 이메일
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+
 }
 
 tasks.named('test') {
