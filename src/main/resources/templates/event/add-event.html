@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>이벤트 등록 (코드 리뷰)</title>
+  <style>
+    body, h1, p, label, input, textarea, select, button {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #E0E0E0; /* 밝은 회색 텍스트 */
+    }
+
+    body {
+        background-color: #1A1A1A; /* 어두운 배경 */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .container {
+        background-color: #2D2D2D; /* 컨테이너 배경 */
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        padding: 30px;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .header h1 {
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .close-button {
+        background: none;
+        border: none;
+        font-size: 28px;
+        color: #E0E0E0;
+        cursor: pointer;
+        padding: 5px;
+        line-height: 1;
+    }
+    .close-button:hover {
+        color: #FFF;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #B0B0B0;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"],
+    textarea,
+    select,
+    input[type="number"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background-color: #3C3C3C; /* 입력 필드 배경 */
+        color: #E0E0E0; /* 입력 필드 텍스트 */
+        font-size: 16px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="datetime-local"]:focus,
+    textarea:focus,
+    select:focus,
+    input[type="number"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+        outline: none;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .flex-container {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* 요소들 사이의 간격 */
+    }
+
+    .datetime-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .datetime-group input {
+        flex-grow: 1;
+    }
+    .datetime-group span {
+        color: #B0B0B0;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+    .checkbox-container input[type="checkbox"] {
+        margin-right: 8px;
+        width: auto; /* 체크박스 너비 자동 */
+        accent-color: #007bff; /* 체크박스 색상 */
+    }
+    .checkbox-container label {
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+
+    .file-input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background-color: #3C3C3C;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .file-input-container:hover {
+        border-color: #007bff;
+    }
+    .file-input-container input[type="file"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .file-input-container .icon {
+        margin-right: 10px;
+        color: #B0B0B0;
+        font-size: 18px; /* 아이콘 크기 */
+    }
+    .file-input-container span {
+        color: #E0E0E0;
+        font-size: 16px;
+    }
+
+
+    .map-placeholder {
+        border: 1px dashed #555;
+        height: 200px;
+        background-color: #3C3C3C;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #999;
+        margin-top: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .submit-button-wrapper {
+        text-align: right;
+        margin-top: 30px;
+    }
+
+    button[type="submit"] {
+        background-color: #007bff; /* 파란색 버튼 */
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    button[type="submit"]:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    }
+
+    /* 색상 피커 커스터마이징 */
+    input[type="color"] {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: 50%;
+        overflow: hidden; /* 원형으로 자르기 */
+        flex-shrink: 0; /* flex item이 줄어들지 않도록 */
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%; /* 원형으로 */
+    }
+
+    /* 우선순위 드롭다운 화살표 색상 변경 (일부 브라우저에서만 작동) */
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg fill="%23E0E0E0" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px; /* 화살표 공간 확보 */
+    }
+
+    /* 아이콘을 위한 기본 스타일 (폰트어썸 등 사용 시 교체) */
+    .icon-clock::before { content: '⏱️'; /* 또는 유니코드/폰트어썸 */ margin-right: 5px; }
+    .icon-description::before { content: '📝'; }
+    .icon-attach::before { content: '📎'; }
+    .icon-bell::before { content: '🔔'; }
+    .icon-location::before { content: '📍'; }
+    .icon-priority::before { content: '⭐'; }
+
+    /* 이미지에 있는 파란 동그라미 아이콘을 대체할 스타일 */
+    .header .settings-icon {
+        width: 30px;
+        height: 30px;
+        background-color: #007bff; /* 파란색 */
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>이벤트 등록</h1>
+    <div class="flex-container">
+      <button type="button" class="close-button">&times;</button>
+    </div>
+  </div>
+
+  <form th:action="@{/events/save}" th:object="${event}" method="post" enctype="multipart/form-data">
+
+    <div class="form-group flex-container">
+      <input type="text" id="title" th:field="*{title}" placeholder="제목 입력칸" required>
+      <input type="color" id="color" th:field="*{color}" value="#0066CC">
+    </div>
+
+    <div class="form-group">
+      <label class="icon-clock">일시</label>
+      <div class="datetime-group">
+        <input type="datetime-local" id="startDatetime" th:field="*{startDatetime}" required>
+        <span>&mdash;</span>
+        <input type="datetime-local" id="endDatetime" th:field="*{endDatetime}" required>
+      </div>
+      <div class="checkbox-container">
+        <input type="checkbox" id="allDay" name="allDay">
+        <label for="allDay">종일</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description" class="icon-description">설명 추가</label>
+      <textarea id="description" th:field="*{description}" rows="4" placeholder="자세한 설명을 입력하세요."></textarea>
+    </div>
+
+    <div class="form-group">
+      <div class="file-input-container">
+        <span class="icon icon-attach"></span>
+        <span>첨부파일 추가</span>
+        <input type="file" id="file" name="files" multiple>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="notifyTime" class="icon-bell">알림 시간</label>
+      <select id="notifyTime" th:field="*{notifyTime}" required>
+        <option value="0">알림 없음</option>
+        <option value="5">5분 전</option>
+        <option value="10">10분 전</option>
+        <option value="15">15분 전</option>
+        <option value="30">30분 전</option>
+        <option value="60">1시간 전</option>
+        <option value="1440">1일 전</option> </select>
+    </div>
+
+    <div class="form-group">
+      <label for="location" class="icon-location">위치 추가</label>
+      <input type="text" id="location" placeholder="위치를 입력하거나 지도에서 선택하세요.">
+      <div class="map-placeholder">
+        <p>지도 API가 표시될 공간</p>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="priority" class="icon-priority">중요도</label>
+      <select id="priority" th:field="*{priority}" required>
+        <option value="LOW">낮음</option>
+        <option value="NORMAL" selected>보통</option>
+        <option value="HIGH">높음</option>
+      </select>
+    </div>
+
+    <div class="submit-button-wrapper">
+      <button type="submit">등록하기</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  /* "종일" 체크박스 로직 */
+  const allDayCheckbox = document.getElementById('allDay');
+  const startDatetimeInput = document.getElementById('startDatetime');
+  const endDatetimeInput = document.getElementById('endDatetime');
+
+  // 페이지 로드 시 현재 날짜/시간으로 초기값 설정
+  document.addEventListener('DOMContentLoaded', () => {
+      const now = new Date();
+      startDatetimeInput.value = formatDateToLocalISO(now);
+      // 종료 시간은 시작 시간보다 1시간 뒤로 설정 (예시)
+      now.setHours(now.getHours() + 1);
+      endDatetimeInput.value = formatDateToLocalISO(now);
+  });
+
+
+  allDayCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+          // 종일 선택 시, 시작 날짜와 종료 날짜를 같게 하고 시간을 자정으로 설정
+          const startDate = new Date(startDatetimeInput.value);
+          startDate.setHours(0, 0, 0, 0); // 자정으로 설정
+
+          const endDate = new Date(startDate);
+          endDate.setHours(23, 59, 0, 0); // 하루의 끝으로 설정 (초와 밀리초는 0으로)
+
+          startDatetimeInput.value = formatDateToLocalISO(startDate);
+          endDatetimeInput.value = formatDateToLocalISO(endDate);
+
+          // 종일 선택 시 시간 입력을 비활성화하거나 스타일을 변경할 수 있습니다.
+          // startDatetimeInput.setAttribute('disabled', 'true');
+          // endDatetimeInput.setAttribute('disabled', 'true');
+
+      } else {
+          // 종일 해제 시, datetime-local로 다시 변경하고 필요하다면 현재 시간으로 초기화
+          // startDatetimeInput.removeAttribute('disabled');
+          // endDatetimeInput.removeAttribute('disabled');
+
+          // 초기화하지 않고 기존 값 유지 (사용자 경험상 더 좋을 수 있음)
+          // 만약 초기화가 필요하다면 아래 주석 해제:
+          // const now = new Date();
+          // startDatetimeInput.value = formatDateToLocalISO(now);
+          // now.setHours(now.getHours() + 1);
+          // endDatetimeInput.value = formatDateToLocalISO(now);
+      }
+  });
+
+  // Date 객체를 input[type="datetime-local"] 형식으로 변환하는 헬퍼 함수
+  function formatDateToLocalISO(date) {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  // 닫기 버튼 (X) 클릭 시 동작
+  document.querySelector('.close-button').addEventListener('click', function() {
+      // 실제 애플리케이션에서는 모달 닫기, 페이지 이동 등의 동작을 구현합니다.
+      alert('폼이 닫힙니다. (실제 기능은 백엔드 구현 후 연동)');
+      // 예시: location.href = '/some/other/page';
+  });
+
+  // 첨부파일 추가 버튼 클릭 시 input type="file" 클릭
+  document.querySelector('.file-input-container').addEventListener('click', function(e) {
+      // 실제 파일 입력 필드를 직접 클릭하지 않은 경우에만 동작
+      if (e.target !== document.getElementById('file')) {
+          document.getElementById('file').click();
+      }
+  });
+
+  // 첨부파일 선택 시 파일명 표시 (선택 사항)
+  document.getElementById('file').addEventListener('change', function() {
+      const fileNameSpan = document.querySelector('.file-input-container span:last-child');
+      if (this.files.length > 0) {
+          if (this.files.length === 1) {
+              fileNameSpan.textContent = this.files[0].name;
+          } else {
+              fileNameSpan.textContent = `${this.files.length}개의 파일 선택됨`;
+          }
+      } else {
+          fileNameSpan.textContent = '첨부파일 추가';
+      }
+  });
+</script>
+</body>
+</html>
