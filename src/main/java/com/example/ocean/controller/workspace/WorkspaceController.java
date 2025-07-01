@@ -6,15 +6,18 @@ import com.example.ocean.domain.WorkspaceMember;
 import com.example.ocean.service.WorkspaceService;
 import com.example.ocean.security.oauth.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -38,39 +41,38 @@ public class WorkspaceController {
         return ResponseEntity.ok(workspaces);
     }
 
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        // "yyyy-MM-dd" 형식의 문자열을 Timestamp 타입으로 변환하도록 설정
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        binder.registerCustomEditor(Timestamp.class, new CustomDateEditor(dateFormat, true));
+    }
+
     // 워크스페이스 생성
     @PostMapping
     public ResponseEntity<Workspace> createWorkspace(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestBody Map<String, Object> requestData) {
+            @ModelAttribute Workspace workspace, // 2. 여기에 workspaceNm, endDate 등이 자동으로 담겨옵니다.
+            @RequestParam(value = "departments", required = false) List<String> departments,
+            @RequestParam(value = "workspaceImageFile", required = false) MultipartFile workspaceImg){
+        try {
+            // 3. 서비스 호출: 컨트롤러는 서비스에 데이터를 넘겨주기만.
+            //    - UUID, 초대코드, 날짜 생성 등은 서비스에서 처리.
+                // 컨트롤러는 서비스 호출만 담당.
+                Workspace createdWorkspace = workspaceService.createWorkspace(
+                        userPrincipal,
+                        workspace,
+                        departments,
+                        workspaceImg
+                );
 
-        String workspaceCd = UUID.randomUUID().toString();
-        String inviteCd = UUID.randomUUID().toString().substring(0, 8);
+                return ResponseEntity
+                        .status(HttpStatus.CREATED)
+                        .body(createdWorkspace);
 
-        Workspace workspace = new Workspace();
-        workspace.setWorkspaceCd(workspaceCd);
-        workspace.setWorkspaceNm((String) requestData.get("workspaceName"));
-        workspace.setInviteCd(inviteCd);
-        workspace.setActiveState("1");
-        workspace.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
-
-        // endDate 처리
-        String endDateStr = (String) requestData.get("endDate");
-        workspace.setEndDate(Timestamp.valueOf(endDateStr + " 00:00:00"));
-
-        // departments 처리
-        List<String> departmentsList = (List<String>) requestData.get("departments");
-        String[] departments = departmentsList.toArray(new String[0]);
-
-        workspaceService.createWorkspaceWithDepartments(
-                workspace,
-                departments,
-                userPrincipal.getId()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(workspace);
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
     }
 
     // 워크스페이스 상세 조회
