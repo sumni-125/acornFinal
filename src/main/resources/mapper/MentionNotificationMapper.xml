@@ -12,7 +12,7 @@
         )
     </insert>
 
-    <select id="selectUserNoti" parameterType="String" resultType="MentionNotification">
+    <select id="selectUserNoti" parameterType="String" resultType="com.example.ocean.dto.request.MentionNotification">
         SELECT  EVENT_CD AS eventCd, USER_ID AS userId,
                 NOTI_STATE AS notiState, READ_STATE AS readState
         FROM   `MENTION_NOTIFICATION`
@@ -25,7 +25,7 @@
         WHERE   USER_ID = #{userId}
     </update>
 
-    <update id="updateNoti" parameterType="ReadNotiRequest">
+    <update id="updateNoti" parameterType="com.example.ocean.dto.request.ReadNotiRequest">
         UPDATE `MENTION_NOTIFICATION`
         SET     READ_STATE = '1'
         WHERE   EVENT_CD = #{eventCd}

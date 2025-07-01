@@ -1,7 +1,7 @@
 package com.example.ocean.service;
 
 import com.example.ocean.repository.CalendarEventRepository;
-import com.example.ocean.repository.WorkspaceMemberRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,7 +13,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 public class EventAlarmMailService {
 
     private final CalendarEventRepository calendarEventRepository;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
+    //private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @Autowired
     private JavaMailSender  emailSender;
@@ -28,4 +28,5 @@ public class EventAlarmMailService {
     public void alarm8pm(){
 
     }
+
 }

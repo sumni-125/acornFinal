@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.ocean.repository.CalendarEventRepository">
 
-    <select id="selectPersonalCalendar" parameterType="String" resultType="PersonalCalendarResponse">
+    <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.PersonalCalendarResponse">
         SELECT
             event_cd AS eventCd,
             title,
@@ -17,7 +17,7 @@
         ORDER BY priority
     </select>
 
-    <insert id="insertPersonalEvent" parameterType="Event">
+    <insert id="insertPersonalEvent" parameterType="com.example.ocean.dto.response.Event">
         INSERT INTO `EVENTS` (
             event_cd, user_id, workspace_cd, title, description,
             start_datetime, end_datetime, color,
@@ -32,7 +32,7 @@
 
 
 
-    <select id="selectPersonalEvent" parameterType="String" resultType="Event">
+    <select id="selectPersonalEvent" parameterType="String" resultType="com.example.ocean.dto.response.Event">
         SELECT
             event_cd AS eventCd,
             user_id AS userId,
@@ -52,7 +52,7 @@
 
 
 
-    <update id="updatePersonalEvent" parameterType="PersonalEventUpdateRequest">
+    <update id="updatePersonalEvent" parameterType="com.example.ocean.dto.request.PersonalEventUpdateRequest">
         UPDATE `EVENTS`
         <set>
             <if test="title         != null">   title           = #{title},</if>

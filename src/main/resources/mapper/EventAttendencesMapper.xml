@@ -13,13 +13,13 @@
         )
     </insert>
 
-    <select id="selectAttendence" parameterType="String" resultType="EventAttendences">
+    <select id="selectAttendence" parameterType="String" resultType="com.example.ocean.dto.response.EventAttendences">
         SELECT EVENT_CD AS eventCd, USER_ID AS userId
         FROM `EVENT_ATTENDENCES`
         WHERE EVENT_CD = #{eventCd}
     </select>
     
-    <select id="selectAttendeesInfo" parameterType="String" resultType="AttendeesInfo">
+    <select id="selectAttendeesInfo" parameterType="String" resultType="com.example.ocean.dto.response.AttendeesInfo">
         SELECT
                 ea.EVENT_CD AS eventCd,
                 ea.USER_ID AS userId,

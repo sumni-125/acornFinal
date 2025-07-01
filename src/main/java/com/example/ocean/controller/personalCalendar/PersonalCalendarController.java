@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class PersonalCalendarController {
     @GetMapping("/personalCalendar")
     public String main(){
-        return "calendar";
+        return "personalCalendar";
     }
 }

@@ -37,7 +37,6 @@ public class PersonalCalendarAPIController {
     public ResponseEntity<List<PersonalCalendarResponse>> personalCalendar(
             @RequestParam(required = false) String userId
     ) {
-        userId="USR001";
         List<PersonalCalendarResponse> result = personalCalendarService.selectPersonalCalendar(userId);
         //List <Workspace
         if (result == null || result.isEmpty()) {
