@@ -5,6 +5,9 @@ import com.example.ocean.repository.RecordingFileRepository;
 import com.example.ocean.dto.RecordingDto;
 import com.example.ocean.dto.request.RecordingStartRequest;
 import com.example.ocean.dto.request.RecordingStopRequest;
+import com.example.ocean.dto.request.RecordingFailRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 public class RecordingService {
 
     private final RecordingFileRepository recordingFileRepository;
+    private final EntityManager entityManager;  // ⭐ EntityManager 추가
 
     @Value("${recording.storage.path:/var/ocean/recordings}")
     private String recordingStoragePath;
@@ -34,6 +38,12 @@ public class RecordingService {
     @Transactional
     public RecordingDto startRecording(RecordingStartRequest request) {
         try {
+            // ⭐ 룸 존재 여부만 확인 (생성하지 않음)
+            if (!isMeetingRoomExists(request.getRoomId())) {
+                log.error("미팅룸이 존재하지 않음: roomId={}", request.getRoomId());
+                throw new RuntimeException("미팅룸을 찾을 수 없습니다. 먼저 미팅을 시작해주세요.");
+            }
+
             // 녹화 ID 생성
             String recordingId = generateRecordingId();
 
@@ -72,6 +82,18 @@ public class RecordingService {
             throw new RuntimeException("녹화 시작 실패: " + e.getMessage());
         }
     }
+
+    /**
+     * ⭐ 미팅룸 존재 여부만 확인 (생성하지 않음)
+     */
+    private boolean isMeetingRoomExists(String roomId) {
+        String checkQuery = "SELECT COUNT(*) FROM MEETING_ROOMS WHERE ROOM_CD = :roomId AND STATUS = 'IN_PROGRESS'";
+        Query query = entityManager.createNativeQuery(checkQuery);
+        query.setParameter("roomId", roomId);
+        Number count = (Number) query.getSingleResult();
+        return count.intValue() > 0;
+    }
+
 
     /**
      * 녹화 종료
@@ -113,7 +135,7 @@ public class RecordingService {
      * 녹화 실패 처리
      */
     @Transactional
-    public void failRecording(String recordingId, String reason) {
+    public void failRecording(String recordingId, RecordingFailRequest request) {
         try {
             RecordingFile recording = recordingFileRepository.findById(recordingId)
                     .orElseThrow(() -> new RuntimeException("녹화 정보를 찾을 수 없습니다"));
@@ -123,7 +145,7 @@ public class RecordingService {
 
             recordingFileRepository.save(recording);
 
-            log.error("녹화 실패: recordingId={}, reason={}", recordingId, reason);
+            log.error("녹화 실패: recordingId={}, reason={}", recordingId, request.getReason());
 
         } catch (Exception e) {
             log.error("녹화 실패 처리 중 오류", e);
