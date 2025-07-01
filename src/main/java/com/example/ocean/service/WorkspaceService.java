@@ -89,7 +89,6 @@ public class WorkspaceService {
 
     public Workspace findWorkspaceByCd(String workspaceCd) {
         Workspace result = workspaceMapper.findWorkspaceByCd(workspaceCd);
-        System.out.println("조회한 workspace: " + result);
         return result;
     }
 

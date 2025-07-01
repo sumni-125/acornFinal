@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -231,4 +232,51 @@ public class WorkspaceController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/workspace/{workspaceCd}/set-profile")
+    public String setProfilePageByPath(@PathVariable String workspaceCd,
+                                       Model model) {
+        List<WorkspaceDept> departments = workspaceService.getDepartments(workspaceCd);
+        model.addAttribute("workspaceCd", workspaceCd);
+        model.addAttribute("departments", departments);
+        return "workspace/set-profile";
+    }
+
+    // 사용자 정보 저장
+    @PostMapping("/workspace/{workspaceCd}/set-profile")
+    public ResponseEntity<Map<String, String>> saveUserProfile(@PathVariable String workspaceCd,
+                                                               @AuthenticationPrincipal UserPrincipal userPrincipal,
+                                                               @RequestParam("userNickname") String userNickname,
+                                                               @RequestParam("email") String email,
+                                                               @RequestParam("phoneNum") String phoneNum,
+                                                               @RequestParam("statusMsg") String statusMsg,
+                                                               @RequestParam("deptCd") String deptCd,
+                                                               @RequestParam("position") String position,
+                                                               @RequestParam(value = "userImg", required = false) MultipartFile userImg) throws IOException {
+
+        String fileName = null;
+        if (userImg != null && !userImg.isEmpty()) {
+            File uploadDir = new File("C:/ocean_img");
+            if (!uploadDir.exists()) uploadDir.mkdirs();
+
+            String ext = userImg.getOriginalFilename().substring(userImg.getOriginalFilename().lastIndexOf("."));
+            fileName = UUID.randomUUID() + ext;
+            userImg.transferTo(new File(uploadDir, fileName));
+        }
+
+        workspaceService.updateWorkspaceProfile(
+                workspaceCd, userPrincipal.getId(),
+                userNickname, statusMsg, email, phoneNum,
+                fileName
+        );
+
+        workspaceService.updateDeptAndPosition(
+                workspaceCd, userPrincipal.getId(), deptCd, position
+        );
+
+        Map<String, String> res = new HashMap<>();
+        res.put("redirectUrl", "/workspace/" + workspaceCd);
+        return ResponseEntity.ok(res);
+    }
+
 }

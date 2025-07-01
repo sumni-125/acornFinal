@@ -108,7 +108,7 @@
 
           <div class="navigation">
             <button type="button" class="btn btn-prev">이전으로</button>
-            <button type="submit" class="btn btn-submit">참가하기</button>
+            <button type="button" class="btn btn-submit" onclick="submitProfile()">참가하기</button>
           </div>
         </div>
       </div>
@@ -122,11 +122,9 @@
 <script th:src="@{/js/ocean-background.js}"></script>
 <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
 <script>
-  // 전역 변수로 swiper 선언
   let swiper;
 
   document.addEventListener('DOMContentLoaded', function() {
-      // 스와이퍼 초기화 (수정된 부분)
       swiper = new Swiper('.swiper-container', {
           allowTouchMove: false,
           pagination: {
@@ -147,47 +145,41 @@
           }
       });
 
-      // 이미지 미리보기 (수정된 부분)
-     document.getElementById('profileImage').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            document.getElementById('profilePreview').src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
+      document.getElementById('profileImage').addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+              const reader = new FileReader();
+              reader.onload = function(event) {
+                  document.getElementById('profilePreview').src = event.target.result;
+              };
+              reader.readAsDataURL(file);
+          }
+      });
 
-
-      // 첫 번째 슬라이드 유효성 검사 (수정된 부분)
+      // ✅ 수정된 첫 번째 슬라이드 유효성 검사
       window.validateFirstSlide = function() {
-          const workspaceName = document.getElementById('workspaceNm').value;
+          const nickname = document.getElementById('userNickname').value;
 
-          if (!workspaceName) {
-              alert('워크스페이스 이름은 필수 입력 항목입니다.');
+          if (!nickname.trim()) {
+              alert('닉네임은 필수 입력 항목입니다.');
               return;
           }
 
           swiper.slideNext();
       };
 
-      // 다음 버튼 이벤트 (수정된 부분)
       document.querySelector('.btn-next').addEventListener('click', function() {
           validateFirstSlide();
       });
 
-      // 이전 버튼 이벤트 (수정된 부분)
       document.querySelector('.btn-prev').addEventListener('click', function() {
           swiper.slidePrev();
       });
 
-      // 취소 버튼 이벤트
       document.querySelector('.btn-back').addEventListener('click', function() {
           location.href='/workspace';
       });
 
-      // 부서 추가 기능 (수정된 부분)
       window.addDepartment = function() {
           const section = document.getElementById('department-section');
           const div = document.createElement('div');
@@ -211,7 +203,6 @@
           section.appendChild(div);
       };
 
-      // 부서 제거 기능 (수정된 부분)
       window.removeDepartment = function(button) {
           const inputGroups = document.querySelectorAll('.department-input-group');
           if (inputGroups.length > 1) {
@@ -221,9 +212,35 @@
           }
       };
 
-      // 날짜 유효성 검사
-      document.getElementById('endDate').min = new Date().toISOString().split('T')[0];
+      // 날짜 필드 없지만 안전 차원에서 유지
+      const endDateInput = document.getElementById('endDate');
+      if (endDateInput) {
+          endDateInput.min = new Date().toISOString().split('T')[0];
+      }
   });
+
+  function submitProfile() {
+    const formData = new FormData(document.querySelector('form'));
+
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+        } else {
+            alert('프로필 저장 후 이동에 실패했습니다.');
+        }
+    })
+    .catch(err => {
+        alert('오류가 발생했습니다.');
+        console.error(err);
+    });
+}
+
 </script>
+
 </body>
 </html>

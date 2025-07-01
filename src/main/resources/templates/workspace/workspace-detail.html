@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>워크스페이스 상세</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            width: 80px;
+            background-color: #1f1f1f;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .sidebar button {
+            background: none;
+            color: white;
+            border: none;
+            margin-top: auto;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .content {
+            flex-grow: 1;
+            background-color: #121212;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .topbar .workspace-info {
+            background-color: #2a2a2a;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        .member-list {
+            background-color: #1c1c1c;
+            padding: 15px;
+            border-radius: 10px;
+            width: 220px;
+            margin-left: auto;
+            margin-top: 10px;
+        }
+        .member-list h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .member {
+            margin: 8px 0;
+            padding: 6px 8px;
+            background-color: #2a2a2a;
+            border-radius: 6px;
+        }
+        .member span {
+            display: block;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <!-- 사이드바 메뉴 아이콘 예시 -->
+    <div>🏠</div>
+    <div>📅</div>
+    <div>📍</div>
+    <div>📋</div>
+    <button onclick="location.href='/workspace'">←</button>
+</div>
+
+<div class="content">
+    <!-- 상단 초대코드 및 워크스페이스 이름 (8번 영역) -->
+    <div class="topbar">
+        <div class="workspace-info">
+            <h2 th:text="${workspace.workspaceNm}">워크스페이스 제목</h2>
+            <p th:text="'초대코드: ' + ${workspace.inviteCd}">초대코드</p>
+        </div>
+    </div>
+
+    <!-- D-Day 블록 (3번 영역) -->
+    <div class="dday-block" style="background-color: #1c1c2e; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
+        <h2 style="font-size: 36px; margin: 0;">D-<span th:text="${dday}">21</span></h2>
+        <div style="background-color: #3a3a3a; height: 12px; border-radius: 6px; margin-top: 10px; overflow: hidden;">
+            <div th:style="'width:' + ${progressPercent} + '%; height:100%; background-color:#4caf50;'"></div>
+        </div>
+        <p style="margin-top: 6px; font-size: 14px;" th:text="'진행률: ' + ${progressPercent} + '%'">진행률: 80%</p>
+    </div>
+
+    <!-- 멤버 목록 (9번 영역) -->
+    <div class="member-list">
+        <h3>워크스페이스 멤버</h3>
+        <div th:each="member : ${members}" class="member">
+            <span th:text="${member.userNickname}">닉네임</span>
+            <span th:text="'역할: ' + ${member.userRole}">역할</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

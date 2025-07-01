@@ -19,6 +19,59 @@
         }
     });
 
+    // 찜 기능
+    document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('input[name="selectedWorkspaces"]').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const isChecked = e.target.checked;
+                        const workspaceCd = e.target.value;
+                    });
+                });
+
+                // 찜/찜 해제 버튼 이벤트 등록
+                document.querySelector(".btn-favorite").addEventListener("click", () => {
+                    updateFavorites(true);
+                });
+
+                document.querySelector(".btn-unfavorite").addEventListener("click", () => {
+                    updateFavorites(false);
+                });
+
+                function updateFavorites(isFavorite) {
+                    const selectedCheckboxes = document.querySelectorAll('input[name="selectedWorkspaces"]:checked');
+
+                    if (selectedCheckboxes.length === 0) {
+                        alert("워크스페이스를 선택해주세요.");
+                        return;
+                    }
+
+                    selectedCheckboxes.forEach((checkbox) => {
+                        const workspaceCd = checkbox.value;
+
+                        console.log("요청 URL:", `/api/workspaces/${workspaceCd}/favorite`);
+
+                        fetch(`/api/workspaces/${workspaceCd}/favorite`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ favorite: isFavorite })
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("서버 오류 발생");
+                        })
+                        .then(() => {
+                            alert(isFavorite ? "찜 완료!" : "찜 해제 완료!");
+                            location.reload(); // 상태 반영 위해 새로고침
+                        })
+                        .catch(error => {
+                            console.error("에러 발생:", error);
+                            alert("처리 중 에러가 발생했습니다.");
+                        });
+                    });
+                }
+            });
+
     function updateAuthUI() {
         const accessToken = localStorage.getItem('accessToken');
         const loginBtn = document.querySelector('.login-btn');
@@ -113,3 +166,4 @@
             // 5. 메인 페이지로 이동
             window.location.href = '/';
         }
+
