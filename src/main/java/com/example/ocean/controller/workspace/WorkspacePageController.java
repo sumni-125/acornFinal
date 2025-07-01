@@ -158,9 +158,21 @@ public class WorkspacePageController {
         }
 
         WorkspaceMember member = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
-        if (member.getUserNickname() == null || member.getUserNickname().isBlank()) {
-            return "redirect:/workspace/set-profile?workspaceCd=" + workspaceCd;
+
+        if (member == null) {
+            log.warn("워크스페이스 참가 페이지 접근 - 사용자: {}, 워크스페이스 코드: {}, member == null", userPrincipal.getName(), workspaceCd);
+            return "redirect:/workspace/" + workspaceCd + "/set-profile";
         }
+
+        log.info("워크스페이스 참가 페이지 접근 - 사용자: {}, 워크스페이스 코드: {}", userPrincipal.getName(), workspaceCd);
+        log.info("닉네임 값: '{}'", member.getUserNickname());
+        log.info("닉네임 null 여부: {}", member.getUserNickname() == null);
+        log.info("닉네임 isBlank 여부: {}", member.getUserNickname().isBlank());
+
+        if (member.getUserNickname() == null || member.getUserNickname().isBlank()) {
+            return "redirect:/workspace/" + workspaceCd + "/set-profile";
+        }
+
 
         Workspace workspace = workspaceService.findWorkspaceByCd(workspaceCd);
         if (workspace == null) {
@@ -188,12 +200,24 @@ public class WorkspacePageController {
         return "workspace/workspace-detail";
     }
 
-    @GetMapping("/workspace/set-profile")
-    public String setProfilePage(@RequestParam("workspaceCd") String workspaceCd,
-                                 Model model) {
+    @GetMapping("/workspace/{workspaceCd}/set-profile")
+    public String setProfilePageByPath(@PathVariable String workspaceCd,
+                                       @AuthenticationPrincipal UserPrincipal userPrincipal,
+                                       Model model) {
         List<WorkspaceDept> departments = workspaceService.getDepartments(workspaceCd);
+
+        WorkspaceMember member = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
+
+        // ✅ null 방어 추가
+        if (member == null) {
+            // 잘못된 접근이므로 워크스페이스 상세로 리다이렉트
+            return "redirect:/workspace/" + workspaceCd;
+        }
+
         model.addAttribute("workspaceCd", workspaceCd);
         model.addAttribute("departments", departments);
+        model.addAttribute("member", member);
+
         return "workspace/set-profile";
     }
 

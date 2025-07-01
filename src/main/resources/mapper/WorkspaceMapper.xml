@@ -249,8 +249,11 @@
         PHONE_NUM     AS phoneNum,
         JOINED_DATE   AS joinedDate
         FROM WORKSPACE_MEMBERS
-        WHERE WORKSPACE_CD = #{workspaceCd} AND USER_ID = #{userId}
+        WHERE WORKSPACE_CD = #{workspaceCd}
+        AND USER_ID = #{userId}
+        AND ACTIVE_STATE = 1
     </select>
+
 
     <!-- 부서 및 직책 정보 업데이트 -->
     <update id="updateDeptAndPosition" parameterType="map">

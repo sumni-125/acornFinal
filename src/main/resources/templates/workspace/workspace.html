@@ -49,7 +49,9 @@
 
         <div class="space-list">
             <!-- Thymeleaf 반복문으로 워크스페이스 목록 표시 -->
-            <div th:each="ws : ${workspaceList}" class="space-item" th:attr="data-id=${ws.workspaceCd}"
+            <div th:each="ws : ${workspaceList}"
+                 class="space-item"
+                 th:attr="data-id=${ws.workspaceCd}"
                  onclick="goToDetail(this)">
                 <input type="checkbox" name="selectedWorkspaces" th:value="${ws.workspaceCd}"
                        onclick="event.stopPropagation()">

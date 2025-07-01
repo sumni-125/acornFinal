@@ -6,9 +6,10 @@
         // 워크스페이스 상세 페이지로 이동
             window.goToDetail = function(element) {
                 const workspaceCd = element.getAttribute('data-id');
+                console.log("✅ 선택된 workspaceCd:", workspaceCd);
                 if (workspaceCd) {
                     // 워크스페이스 입장 시간 업데이트 후 이동
-                    location.href = `/workspace/${workspaceCd}`;
+                    window.location.href = "/workspace/" + workspaceCd;
                 }
             };
 

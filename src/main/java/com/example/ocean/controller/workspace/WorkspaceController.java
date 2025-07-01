@@ -233,17 +233,8 @@ public class WorkspaceController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/workspace/{workspaceCd}/set-profile")
-    public String setProfilePageByPath(@PathVariable String workspaceCd,
-                                       Model model) {
-        List<WorkspaceDept> departments = workspaceService.getDepartments(workspaceCd);
-        model.addAttribute("workspaceCd", workspaceCd);
-        model.addAttribute("departments", departments);
-        return "workspace/set-profile";
-    }
-
     // 사용자 정보 저장
-    @PostMapping("/workspace/{workspaceCd}/set-profile")
+    @PostMapping("/{workspaceCd}/set-profile")
     public ResponseEntity<Map<String, String>> saveUserProfile(@PathVariable String workspaceCd,
                                                                @AuthenticationPrincipal UserPrincipal userPrincipal,
                                                                @RequestParam("userNickname") String userNickname,

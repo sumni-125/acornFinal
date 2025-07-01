@@ -6,10 +6,10 @@
   <title>프로필 설정 | Ocean WorkSpace</title>
   <link rel="stylesheet" th:href="@{/css/Header.css}">
   <link rel="stylesheet" th:href="@{/css/setProfile.css}">
-  <link rel="stylesheet" href="/src/main/resources/static/css/Header.css">
+  <!-- <link rel="stylesheet" href="/src/main/resources/static/css/Header.css">
   <link rel="stylesheet" href="/src/main/resources/static/css/setProfile.css">
+  -->
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
-
   <!-- ⭐ Ocean Background CSS 추가 -->
   <link rel="stylesheet" th:href="@{/css/ocean-background.css}">
 
@@ -47,36 +47,57 @@
 </header>
 <div class="container">
 
-  <form th:action="@{'/workspace/' + ${workspaceCd} + '/set-profile'}" method="post" enctype="multipart/form-data">
+  <form th:action="@{'/api/workspaces/' + ${workspaceCd} + '/set-profile'}" method="post" enctype="multipart/form-data">
+    <!-- 🔽 workspaceCd 전달 -->
+    <input type="hidden" name="workspaceCd" th:value="${workspaceCd}">
+
     <div class="swiper-container">
       <div class="swiper-wrapper">
         <!-- 슬라이드 1: 기본 정보 -->
         <div class="swiper-slide">
           <div class="profile-image">
             <img id="profilePreview" class="profile-image-preview"
-                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0icmdiYSg3OSwgMTcyLCAyNTQsIDAuMSkiLz48dGV4dCB4PSI1MCIgeT0iNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPlVwbG9hZDwvdGV4dD48L3N2Zz4="
+                 src="data:image/svg+xml;base64,..."
                  onclick="document.getElementById('profileImage').click()">
             <input type="file" id="profileImage" name="userImg" accept="image/*">
           </div>
 
           <div class="form-group">
             <label for="userNickname">닉네임</label>
-            <input type="text" id="userNickname" name="userNickname" placeholder="사용하실 닉네임을 입력해주세요" required>
+            <input type="text"
+                   id="userNickname"
+                   name="userNickname"
+                   th:value="${member != null} ? ${member.userNickname} : ''"
+                   placeholder="사용하실 닉네임을 입력해주세요"
+                   required>
           </div>
 
           <div class="form-group">
             <label for="email">이메일</label>
-            <input type="email" id="email" name="email" placeholder="SmapleEmail@gmail.com" required>
+            <input type="email"
+                   id="email"
+                   name="email"
+                   th:value="${member != null} ? ${member.email} : ''"
+                   placeholder="SmapleEmail@gmail.com"
+                   required>
           </div>
 
           <div class="form-group">
             <label for="phoneNum">전화번호</label>
-            <input type="text" id="phoneNum" name="phoneNum" placeholder="010-1234-5678">
+            <input type="text"
+                   id="phoneNum"
+                   name="phoneNum"
+                   th:value="${member != null} ? ${member.phoneNum} : ''"
+                   placeholder="010-1234-5678">
           </div>
 
           <div class="form-group">
             <label for="statusMsg">상태 메시지</label>
-            <input type="text" id="statusMsg" name="statusMsg" placeholder="상태 메시지를 입력하세요">
+            <input type="text"
+                   id="statusMsg"
+                   name="statusMsg"
+                   th:value="${member != null} ? ${member.statusMsg} : ''"
+                   placeholder="상태 메시지를 입력하세요">
           </div>
 
           <div class="navigation">
@@ -84,6 +105,7 @@
             <button type="button" class="btn btn-next" onclick="validateFirstSlide()">다음</button>
           </div>
         </div>
+
 
         <!-- 슬라이드 2: 부서 및 직급 정보 -->
         <div class="swiper-slide">
@@ -221,11 +243,19 @@
 
   function submitProfile() {
     const formData = new FormData(document.querySelector('form'));
+    const workspaceCd = document.querySelector('input[name="workspaceCd"]')?.value ||
+                        new URLSearchParams(window.location.search).get('workspaceCd');
 
-    fetch(window.location.pathname, {
-        method: 'POST',
-        body: formData
+    if (!workspaceCd) {
+        alert('워크스페이스 ID가 존재하지 않아 저장할 수 없습니다.');
+        return;
+    }
+
+    fetch(`/api/workspaces/${workspaceCd}/set-profile`, {
+      method: 'POST',
+      body: formData
     })
+
     .then(res => res.json())
     .then(data => {
         if (data.redirectUrl) {
