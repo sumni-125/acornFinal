@@ -112,7 +112,7 @@
                        onclick="event.stopPropagation()">
 
                 <div class="space-profile">
-                    <img th:src="@{'/images/' + ${ws.workspaceImg}}" width="100" height="100"
+                    <img th:src="@{${ws.workspaceImg}}" width="100" height="100"
                          th:if="${ws.workspaceImg != null}">
                     <svg th:unless="${ws.workspaceImg != null}" viewBox="0 0 100 100"
                          xmlns="http://www.w3.org/2000/svg">

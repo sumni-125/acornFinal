@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -41,20 +42,34 @@ public class WorkspaceController {
         return ResponseEntity.ok(workspaces);
     }
 
+    // 1. @InitBinder 수정: 'endDate' 필드를 자동 변환 대상에서 제외.
     @InitBinder
     public void initBinder(WebDataBinder binder) {
-        // "yyyy-MM-dd" 형식의 문자열을 Timestamp 타입으로 변환하도록 설정
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        binder.registerCustomEditor(Timestamp.class, new CustomDateEditor(dateFormat, true));
+        // 스프링이 'endDate' 필드를 자동으로 변환하려는 시도를 막기.
+        binder.setDisallowedFields("endDate");
     }
 
     // 워크스페이스 생성
     @PostMapping
     public ResponseEntity<Workspace> createWorkspace(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @ModelAttribute Workspace workspace, // 2. 여기에 workspaceNm, endDate 등이 자동으로 담겨옵니다.
+            @ModelAttribute Workspace workspace, // 2. 여기에 workspaceNm, endDate 등이 자동으로 담겨옴.
+            @RequestParam(value = "endDate", required = false) String endDateStr,
             @RequestParam(value = "departments", required = false) List<String> departments,
             @RequestParam(value = "workspaceImageFile", required = false) MultipartFile workspaceImg){
+
+        // --- 수동으로 날짜 변환 및 설정 로직 추가 ---
+        if (endDateStr != null && !endDateStr.isEmpty()) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+                Date parsedDate = dateFormat.parse(endDateStr);
+                workspace.setEndDate(new Timestamp(parsedDate.getTime()));
+            } catch (ParseException e) {
+                // 날짜 형식이 잘못되었을 경우의 예외 처리 (필요 시)
+                // 예를 들어, 로그를 남기거나 특정 에러 응답을 반환할 수 있음.
+                e.printStackTrace();
+            }
+        }
         try {
             // 3. 서비스 호출: 컨트롤러는 서비스에 데이터를 넘겨주기만.
             //    - UUID, 초대코드, 날짜 생성 등은 서비스에서 처리.
