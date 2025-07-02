@@ -19,18 +19,6 @@
 }
 
 .nav-item {
-<<<<<<< HEAD
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 13px;
-  color: #ccc;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.nav-item:hover {
-=======
   width: 100%;
   text-align: center;
 }
@@ -46,7 +34,6 @@
 }
 
 .nav-item a:hover {
->>>>>>> 30d034b58c0cde43cf088ed5151f566877623d2c
   background-color: #333;
 }
 
