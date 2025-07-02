@@ -1,5 +1,6 @@
 const roomManager = require('./RoomManager');
 const Peer = require('./Peer');
+const Recorder = require('./recorder');
 
 const peers = new Map();
 
@@ -20,7 +21,10 @@ module.exports = (io, worker, router) => {
 
     socket.on('join-room', async (data) => {
       try {
-        const { roomId, workspaceId, peerId, displayName } = data;
+        const { roomId, workspaceId, peerId, displayName, userId } = data;
+
+        // ⭐ 디버깅 로그 추가
+        console.log('join-room 데이터:', { roomId, workspaceId, peerId, displayName, userId });
         console.log(`${displayName} joining room ${roomId}`);
 
         // 룸 가져오기 또는 생성
@@ -31,8 +35,12 @@ module.exports = (io, worker, router) => {
 
         // Peer 생성
         const peer = new Peer(socket, roomId, peerId, displayName);
-        peers.set(socket.id, peer);
+        peer.userId = userId;
 
+        // ⭐ 저장 확인
+        console.log('Peer 생성 완료:', { peerId: peer.id, userId: peer.userId });
+
+        peers.set(socket.id, peer);
         // 룸에 피어 추가 (Peer 인스턴스 자체를 저장)
         room.peers.set(peerId, peer);
         console.log(`Peer ${peerId} added to room ${roomId}`);
@@ -478,8 +486,91 @@ module.exports = (io, worker, router) => {
         callback({ error: error.message });
       }
     });
-  });
-};
+
+    // 녹화 시작
+    socket.on('start-recording', async (data, callback) => {
+        try {
+            const room = roomManager.getRoom(data.roomId);
+            const peer = peers.get(socket.id);
+
+            // ⭐ 디버깅 로그
+            console.log('녹화 시작 - socket.id:', socket.id);
+            console.log('녹화 시작 - peer:', peer);
+            console.log('녹화 시작 - peer.userId:', peer ? peer.userId : 'peer가 없음');
+
+            if (!peer || !peer.userId) {
+                throw new Error('사용자 정보를 찾을 수 없습니다');
+            }
+
+            // 실제 사용자 ID 사용
+            const result = await room.startRecording(peer.userId);
+
+            // 다른 사용자에게 알림
+            io.to(data.roomId).emit('recording-started', {
+                recordingId: result.recordingId,
+                startedBy: peer.displayName
+            });
+
+            callback(result);
+        } catch (error) {
+            console.error('녹화 시작 실패:', error);
+            callback({ error: error.message });
+        }
+    });
+
+    // 녹화 종료
+    socket.on('stop-recording', async (data, callback) => {
+        try {
+            const { roomId } = data;
+            const peer = peers.get(socket.id);
+
+            if (!peer) {
+                return callback({ error: '인증되지 않은 사용자' });
+            }
+
+                    const room = roomManager.getRoom(roomId);
+                    if (!room) {
+                        return callback({ error: '룸을 찾을 수 없습니다' });
+                    }
+
+                    // 녹화 종료
+                    const result = await room.stopRecording();
+
+                    // 모든 참가자에게 녹화 종료 알림
+                    io.to(roomId).emit('recording-stopped', {
+                        recordingId: result.recordingId,
+                        stoppedBy: peer.displayName
+                    });
+
+                    callback({ success: true, ...result });
+
+                } catch (error) {
+                    console.error('녹화 종료 오류:', error);
+                    callback({ error: error.message });
+                }
+            });
+        // 녹화 상태 확인
+        socket.on('get-recording-status', async (data, callback) => {
+            try {
+                const { roomId } = data;
+                const room = roomManager.getRoom(roomId);
+
+                if (!room) {
+                    return callback({ error: '룸을 찾을 수 없습니다' });
+                }
+
+                callback({
+                    isRecording: room.recordingStatus,
+                    recordingId: room.recorder?.recordingId
+                });
+
+            } catch (error) {
+                console.error('녹화 상태 확인 오류:', error);
+                callback({ error: error.message });
+            }
+        });
+    });
+ };
 
 // WebRTC Transport 생성 함수 에이콘 아카데미 IP :172.30.1.49 , 192.168.100.16  투썸플레이스 신촌점 : 192.168.40.6 집 와이파이 : 192.168.0.16
 async function createWebRtcTransport(router) {
