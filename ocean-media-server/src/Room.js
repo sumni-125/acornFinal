@@ -13,7 +13,7 @@ class Room {
   }
 
   // 녹화 시작
-  // Room.js의 startRecording 메소드를 다음으로 완전히 교체:
+  // Room.js의 startRecording 메소드를 다음으로 교체:
 
   async startRecording(recorderId) {
       if (this.recordingStatus) {
@@ -32,28 +32,38 @@ class Room {
               throw new Error('녹화할 미디어 스트림이 없습니다');
           }
 
-          // ⭐ FFmpeg가 수신할 포트 설정 (MediaSoup가 사용하지 않는 포트)
+          // ⭐ FFmpeg가 수신할 포트 설정 (고정 포트)
           const ffmpegVideoPort = 5004;
           const ffmpegAudioPort = 5006;
 
-          // ⭐ PlainTransport 생성 - MediaSoup가 FFmpeg로 전송
-          const videoTransport = await this.router.createPlainTransport({
-              listenIp: { ip: '127.0.0.1', announcedIp: null },
+          // ⭐ PlainTransport 생성 - comedia false
+          const transportOptions = {
+              listenIp: {
+                  ip: '127.0.0.1',
+                  announcedIp: null
+              },
               rtcpMux: false,
-              comedia: false
+              comedia: false,  // ⭐ false로 설정
+              enableSctp: false,
+              numSctpStreams: { OS: 1024, MIS: 1024 }
+          };
+
+          const videoTransport = await this.router.createPlainTransport(transportOptions);
+          const audioTransport = await this.router.createPlainTransport(transportOptions);
+
+          console.log('비디오 Transport 정보:', {
+              id: videoTransport.id,
+              port: videoTransport.tuple.localPort,
+              rtcpPort: videoTransport.rtcpTuple?.localPort
           });
 
-          const audioTransport = await this.router.createPlainTransport({
-              listenIp: { ip: '127.0.0.1', announcedIp: null },
-              rtcpMux: false,
-              comedia: false
+          console.log('오디오 Transport 정보:', {
+              id: audioTransport.id,
+              port: audioTransport.tuple.localPort,
+              rtcpPort: audioTransport.rtcpTuple?.localPort
           });
 
-          // MediaSoup가 사용하는 포트 (소스 포트)
-          console.log('MediaSoup 비디오 Transport 포트:', videoTransport.tuple.localPort);
-          console.log('MediaSoup 오디오 Transport 포트:', audioTransport.tuple.localPort);
-
-          // ⭐ MediaSoup가 FFmpeg로 연결 (FFmpeg가 수신할 포트로)
+          // ⭐ MediaSoup가 FFmpeg로 전송하도록 연결
           await videoTransport.connect({
               ip: '127.0.0.1',
               port: ffmpegVideoPort,
@@ -77,7 +87,13 @@ class Room {
               videoConsumer = await videoTransport.consume({
                   producerId: videoProducer.id,
                   rtpCapabilities: this.router.rtpCapabilities,
-                  paused: true
+                  paused: false  // 바로 시작
+              });
+
+              console.log('비디오 Consumer 생성:', {
+                  id: videoConsumer.id,
+                  kind: videoConsumer.kind,
+                  rtpParameters: videoConsumer.rtpParameters
               });
           }
 
@@ -85,7 +101,13 @@ class Room {
               audioConsumer = await audioTransport.consume({
                   producerId: audioProducer.id,
                   rtpCapabilities: this.router.rtpCapabilities,
-                  paused: true
+                  paused: false  // 바로 시작
+              });
+
+              console.log('오디오 Consumer 생성:', {
+                  id: audioConsumer.id,
+                  kind: audioConsumer.kind,
+                  rtpParameters: audioConsumer.rtpParameters
               });
           }
 
@@ -99,21 +121,11 @@ class Room {
 
           // ⭐ FFmpeg가 수신할 포트를 전달
           const result = await this.recorder.startRecording(
-              ffmpegVideoPort,
-              ffmpegAudioPort,
+              ffmpegVideoPort,  // 5004
+              ffmpegAudioPort,  // 5006
               videoConsumer ? videoConsumer.rtpParameters : null,
               audioConsumer ? audioConsumer.rtpParameters : null
           );
-
-          // Consumer 재개
-          if (videoConsumer) {
-              await videoConsumer.resume();
-              console.log('비디오 Consumer 재개됨');
-          }
-          if (audioConsumer) {
-              await audioConsumer.resume();
-              console.log('오디오 Consumer 재개됨');
-          }
 
           this.recordingStatus = true;
           this.recordingTransports = {

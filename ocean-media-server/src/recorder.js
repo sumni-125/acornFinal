@@ -59,8 +59,11 @@ class Recorder {
             // ⭐ FFmpeg 실행 - SDP 파일 사용
             const ffmpegArgs = [
                 '-loglevel', 'debug',  // 디버깅 로그
+                '-analyzeduration', '10M',  // 분석 시간 증가
+                '-probesize', '10M',  // 프로브 크기 증가
                 '-protocol_whitelist', 'file,rtp,udp',
                 '-reorder_queue_size', '0',  // RTP 재정렬 비활성화
+                '-max_delay', '5000000',  // 최대 지연 시간 5초
                 '-i', sdpPath,
                 '-c:v', 'copy',  // 코덱 복사 (재인코딩 없음)
                 '-c:a', 'copy',  // 코덱 복사 (재인코딩 없음)
@@ -139,6 +142,7 @@ class Recorder {
         if (videoRtpParameters && videoCodec) {
             sdp += `m=video ${this.videoPort} RTP/AVP ${videoCodec.payloadType}\r\n`;
             sdp += 'c=IN IP4 127.0.0.1\r\n';
+            sdp += 'b=AS:5000\r\n';  // 대역폭 설정
             sdp += `a=rtcp:${this.videoPort + 1} IN IP4 127.0.0.1\r\n`;
             sdp += 'a=recvonly\r\n';
             sdp += `a=rtpmap:${videoCodec.payloadType} ${videoCodec.mimeType.split('/')[1].toUpperCase()}/${videoCodec.clockRate}\r\n`;
