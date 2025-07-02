@@ -94,7 +94,7 @@
     });
     /*]]>*/
   </script>
-  <form th:action="@{'/workspace/' + ${workspaceCd} + '/set-profile'}" method="post" enctype="multipart/form-data">
+  <form th:data-workspace-cd="${workspaceCd}" method="post" enctype="multipart/form-data">
     <div class="swiper-container">
       <div class="swiper-wrapper">
         <!-- 슬라이드 1: 기본 정보 -->
@@ -203,6 +203,9 @@
   let swiper;
 
   document.addEventListener('DOMContentLoaded', function() {
+    // workspaceCd를 hidden input이나 data 속성에서 가져오기
+    const workspaceCd = document.querySelector('form').dataset.workspaceCd;
+
     // Swiper 초기화
     swiper = new Swiper('.swiper-container', {
       allowTouchMove: false,
@@ -217,12 +220,15 @@
     });
 
     // 이전 버튼 이벤트
-    document.querySelector('.btn-prev').addEventListener('click', () => {
+    document.querySelector('.btn-prev')?.addEventListener('click', () => {
       swiper.slidePrev();
     });
 
+    // 프로필 폼 참조
+    const profileForm = document.querySelector('form');
+
     // 프로필 이미지 미리보기
-    document.getElementById('profileImage').addEventListener('change', function(e) {
+    document.getElementById('profileImage')?.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
@@ -233,37 +239,53 @@
       }
     });
 
-    // 폼 제출 처리
-    form.addEventListener('submit', async function(e) {
+    // 폼 제출 이벤트
+    profileForm?.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       try {
-        // 프로필 이미지 먼저 업로드
-        const imageFile = document.getElementById('profileImage').files[0];
-        if (imageFile) {
-          const imageFormData = new FormData();
-          imageFormData.append('image', imageFile);
+        const formData = new FormData(this);
 
-          const imageResponse = await fetch(`/api/workspaces/${workspaceCd}/profile/image`, {
-            method: 'POST',
-            body: imageFormData
-          });
-
-          if (!imageResponse.ok) {
-            throw new Error('이미지 업로드 실패');
+        // 필수 필드 검증
+        const requiredFields = ['userNickname', 'email', 'deptCd', 'position'];
+        for (let field of requiredFields) {
+          if (!formData.get(field)) {
+            alert(`${field} 필드는 필수입니다.`);
+            return;
           }
         }
 
-        // 나머지 프로필 정보 업데이트
+        // 이미지 파일 처리
+        const imageFile = formData.get('userImg');
+        if (imageFile && imageFile.size > 0) {
+          const imageFormData = new FormData();
+          imageFormData.append('image', imageFile);
+
+          try {
+            const imageResponse = await fetch(`/api/workspaces/${workspaceCd}/profile/image`, {
+              method: 'POST',
+              body: imageFormData
+            });
+
+            if (!imageResponse.ok) {
+              throw new Error('이미지 업로드 실패');
+            }
+          } catch (imageError) {
+            console.error('이미지 업로드 에러:', imageError);
+          }
+        }
+
+        // 프로필 데이터 준비
         const profileData = {
-          userNickname: this.userNickname.value,
-          email: this.email.value,
-          phoneNum: this.phoneNum.value,
-          statusMsg: this.statusMsg.value,
-          deptCd: this.deptCd.value,
-          position: this.position.value
+          userNickname: formData.get('userNickname'),
+          email: formData.get('email'),
+          phoneNum: formData.get('phoneNum') || '',
+          statusMsg: formData.get('statusMsg') || '',
+          deptCd: formData.get('deptCd'),
+          position: formData.get('position')
         };
 
+        // 프로필 정보 업데이트
         const response = await fetch(`/api/workspaces/${workspaceCd}/profile`, {
           method: 'PUT',
           headers: {
@@ -273,10 +295,10 @@
         });
 
         if (!response.ok) {
-          throw new Error('프로필 업데이트 실패');
+          const errorText = await response.text();
+          throw new Error('프로필 설정 실패: ' + errorText);
         }
 
-        // 성공 시 페이지 이동
         window.location.href = `/wsmain?workspaceCd=${workspaceCd}`;
 
       } catch (error) {
@@ -284,6 +306,7 @@
         alert('프로필 설정 중 오류가 발생했습니다: ' + error.message);
       }
     });
+
 
   });
 
