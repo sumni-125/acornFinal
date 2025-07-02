@@ -18,5 +18,5 @@ public class TeamEventDetail {
     private String          progressStatus;
     private String          priority;
     private LocalDateTime   createdDate;
-    private String          notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
+    private int             notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
 }

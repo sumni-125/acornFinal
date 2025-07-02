@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -68,8 +69,8 @@ public class TeamCalendarAPIController {
     ) {
         int result = teamCalendarService.updateTeamEvent(request, deletedFileIds, files);
         return result == 1
-                ? ResponseEntity.ok("일정 등록 성공")
-                : ResponseEntity.badRequest().body("일정 등록 실패");
+                ? ResponseEntity.ok("일정 수정 성공")
+                : ResponseEntity.badRequest().body("일정 수정 실패");
     }
 
     @DeleteMapping("/events/{eventCd}")
@@ -81,6 +82,11 @@ public class TeamCalendarAPIController {
         return result == 1
                 ? ResponseEntity.ok("일정 삭제 성공")
                 : ResponseEntity.badRequest().body("일정 삭제 실패");
+    }
+
+    @GetMapping("/events/{eventCd}/files")
+    public ResponseEntity<byte[]> downloadFile(@RequestParam("fileId") String fileId) throws IOException {
+        return teamCalendarService.downloadFile(fileId);
     }
 
 }

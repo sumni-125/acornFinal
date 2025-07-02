@@ -15,5 +15,5 @@ public class CreateTeamEventRequest {
     private String          progressStatus;
     private String          priority;
     private LocalDateTime   createdDate;
-    private String          notifyTime;
+    private int             notifyTime;
 }

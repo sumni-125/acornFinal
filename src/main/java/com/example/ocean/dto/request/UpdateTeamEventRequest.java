@@ -16,5 +16,5 @@ public class UpdateTeamEventRequest {
     private String          isShared;
     private String          progressStatus;
     private String          priority;
-    private String          notifyTime;
+    private int             notifyTime;
 }

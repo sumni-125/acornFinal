@@ -11,9 +11,15 @@ import com.example.ocean.repository.MentionNotificationRepository;
 import com.example.ocean.repository.TeamEventRepository;
 import com.example.ocean.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -60,13 +66,17 @@ public class TeamCalendarService {
         detail.setProgressStatus(request.getProgressStatus());
         detail.setPriority(request.getPriority());
         detail.setCreatedDate(LocalDateTime.now());
+        detail.setNotifyTime(request.getNotifyTime());
 
         int events = teamEventRepository.insertTeamEvent(detail);
 
         // 참가자 삽입
         int attendences=0;
-        for(String attendId : attendenceIds){
-            attendences+=eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
+        if (attendenceIds != null && attendenceIds.size() > 0) {
+            for(String attendId : attendenceIds){
+                attendences+=eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
+            }
+
         }
 
         // 파일추가
@@ -82,9 +92,12 @@ public class TeamCalendarService {
         String userId = updateTeamEventRequest.getUserId();
 
         //삭제된파일
-        for(String fileId:deletedFileIds){
-            fileRepository.updateFileActive(eventCd, fileId);
+        if (deletedFileIds != null && deletedFileIds.size() > 0) {
+            for(String fileId:deletedFileIds){
+                fileRepository.updateFileActive(eventCd, fileId);
+            }
         }
+
         //추가된파일
         uploadFiles(eventCd, userId, insertedFiles);
 
@@ -121,13 +134,34 @@ public class TeamCalendarService {
         }
     }
 
+    public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
+        InsertFileRequest file = fileRepository.selectFileByFileId(fileId);
+        String key = extractKeyFromUrl(file.getFilePath());
+        byte[] bytes = s3Uploader.download(key);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + URLEncoder.encode(file.getFileNm(), "UTF-8") + "\"")
+                .body(bytes);
+    }
+
+    private String extractKeyFromUrl(String url) {
+        URI uri = URI.create(url);
+        return uri.getPath().substring(1); // 앞에 '/' 제거
+    }
+
     private void insertMentionNotification(String eventCd, String notiState) {
         // 멘션
         List<AttendeesInfo> attendeesInfos=eventAttendencesRepository.selectAttendeesInfo(eventCd);
-        for(AttendeesInfo info :attendeesInfos){
-            String attendId = info.getUserId();
-            MentionNotification noti = new MentionNotification(eventCd, attendId, notiState,"0" );
-            mentionNotificationRepository.insertMentionNotification(noti);
+        if (attendeesInfos != null && attendeesInfos.size() > 0) {
+            for(AttendeesInfo info :attendeesInfos){
+                String attendId = info.getUserId();
+                MentionNotification noti = new MentionNotification(eventCd, attendId, notiState,"0" );
+                mentionNotificationRepository.insertMentionNotification(noti);
+            }
         }
+
     }
+
 }
