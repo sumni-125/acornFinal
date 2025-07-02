@@ -109,4 +109,6 @@ public interface WorkspaceMapper {
 
     void updateUserState(Map<String, Object> param);
 
+    String findWorkspaceNameByWorkspaceCd(@Param("workspaceCd") String workspaceCd);
+
 }

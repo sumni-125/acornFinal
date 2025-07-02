@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>개인 캘린더</title>
+  <link th:href="@{/css/lnb.css}" rel='stylesheet'/>
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet'/>
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <style>
@@ -708,9 +709,7 @@
 <div class="app-container">
   <div class="sidebar-left">
     <nav>
-      <nav th:replace="lnb :: lnbFragment">
-        <!--iframe src="/lnb.html" scrolling="no" frameborder="0" style="width:100%; height: auto; min-height: 200px;"></iframe-->
-      </nav>
+      <nav th:replace="lnb :: lnbFragment"></nav>
     </nav>
   </div>
 
@@ -772,10 +771,10 @@
       <div class="form-group">
         <label for="notification" class="icon-bell">알림 시간</label>
         <select id="notification" name="notification" required>
-          <option value="BEFORE_DAY_9AM">전날 오전 9시</option>
-          <option value="DAY_9AM">당일 오전 9시</option>
-          <option value="BEFORE_1HOUR">1시간 전</option>
-          <option value="0">알림 없음</option> </select>
+          <option value="0">알림 없음</option>
+          <option value="1440">전날 오전 9시</option>
+          <option value="540">당일 오전 9시</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -795,6 +794,13 @@
         </select>
       </div>
 
+      <div class="form-group">
+        <div class="checkbox-container">
+          <input type="checkbox" id="isShared" name="isShared">
+          <label for="isShared">공유</label>
+        </div>
+      </div>
+
       <div class="submit-button-wrapper">
         <button type="submit">등록하기</button>
       </div>
@@ -805,10 +811,10 @@
 <div id="eventDetailModal" class="modal-overlay">
   <div class="modal-content">
     <div class="header-actions">
-      <button type="button" class="edit-button" title="수정" th:if="${currentUserId == event.userId}" onclick="openUpdateModal()">
+      <button type="button" class="edit-button" title="수정" style="display:none;" onclick="openUpdateModal()">
         <span class="icon icon-edit"></span>
       </button>
-      <button type="button" class="delete-button" title="삭제" th:if="${currentUserId == event.userId}" onclick="deleteEvent()">
+      <button type="button" class="delete-button" title="삭제" style="display:none;" onclick="deleteEvent()">
         <span class="icon icon-delete"></span>
       </button>
       <button type="button" class="modal-close-button" onclick="closeDetailModal()">
@@ -819,15 +825,15 @@
     <div class="title-section">
       <div class="color-dot" th:style="'background-color:' + ${event?.color}"></div>
       <div class="text-content">
-        <div class="main-title" th:text="${event?.title}">제목 없음</div>
+        <div class="main-title" id="detailTitle" th:text="${event?.title}">제목 없음</div>
         <div class="sub-text">
                         <span th:if="${event?.startDatetime != null and event?.endDatetime != null and #temporals.format(event.startDatetime, 'yyyyMMdd') == #temporals.format(event.endDatetime, 'yyyyMMdd') and #temporals.format(event.startDatetime, 'HHmm') == '0000' and #temporals.format(event.endDatetime, 'HHmm') == '2359'}">
                             <span th:text="${#temporals.format(event.startDatetime, 'M월 d일 (E)')} + ' 종일'"></span>
                         </span>
           <span th:unless="${event?.startDatetime == null or event?.endDatetime == null or (#temporals.format(event.startDatetime, 'yyyyMMdd') == #temporals.format(event.endDatetime, 'yyyyMMdd') and #temporals.format(event.startDatetime, 'HHmm') == '0000' and #temporals.format(event.endDatetime, 'HHmm') == '2359')}">
-                            <span th:text="${event?.startDatetime != null ? #temporals.format(event.startDatetime, 'M월 d일 (E) 오전 H:mm') : '시작일 없음'}"></span>
+                            <span th:text="${event?.startDatetime != null ? #temporals.format(event.startDatetime, 'M월 d일 (E) a h:mm') : '시작일 없음'}"></span>
                             <span> - </span>
-                            <span th:text="${event?.endDatetime != null ? #temporals.format(event.endDatetime, '오전 H:mm') : '종료일 없음'}"></span>
+                            <span th:text="${event?.endDatetime != null ? #temporals.format(event.endDatetime, 'M월 d일 (E) a h:mm') : '종료일 없음'}"></span>
                         </span>
         </div>
       </div>
@@ -904,9 +910,8 @@
       <div class="form-group">
         <label for="update-notification" class="icon-bell">알림</label>
         <select id="update-notification" name="notification">
-          <option value="BEFORE_DAY_9AM">전날 오전 9시</option>
-          <option value="DAY_9AM">당일 오전 9시</option>
-          <option value="BEFORE_1HOUR">1시간 전</option>
+          <option value="1440">전날 오전 9시</option>
+          <option value="540">당일 오전 9시</option>
           <option value="0">알림 없음</option>
         </select>
       </div>
@@ -1017,35 +1022,36 @@
                   })
                   .then(data => {
                       // 상세 모달에 데이터 채우기
-                      document.getElementById('detailTitle').innerText = data.title || '제목 없음';
-                      document.getElementById('detailAuthor').innerText = data.userName || data.userId || '알 수 없음';
+                      const event = data.event;
+
+                      console.log("event", event);
+                      console.log("currentUserId", currentUserId);
+
+                      document.getElementById('detailTitle').innerText = event.title || '제목 없음';
+                      document.getElementById('detailAuthor').innerText = event.userName || event.userId || '알 수 없음';
                       document.getElementById('detailLocation').innerText = data.location || '위치 정보 없음';
-                      document.getElementById('detailDescriptionDisplay').innerText = data.description || '설명 없음';
+                      document.getElementById('detailDescriptionDisplay').innerText = event.description || '설명 없음';
 
                       // 알림 시간 포맷팅
-                      const notifyTimeMinutes = data.notifyTime; // 가정: notifyTime은 분 단위 숫자
+                      const notifyTimeMinutes = event.notifyTime; // 가정: notifyTime은 분 단위 숫자
                       let notificationText = '알림 없음';
                       if (notifyTimeMinutes > 0) {
-                          if (notifyTimeMinutes === 1440) notificationText = '1일 전'; // 24시간 * 60분
-                          else if (notifyTimeMinutes === 60) notificationText = '1시간 전';
-                          else if (notifyTimeMinutes === 30) notificationText = '30분 전';
-                          else if (notifyTimeMinutes === 15) notificationText = '15분 전';
-                          else if (notifyTimeMinutes === 10) notificationText = '10분 전';
-                          else if (notifyTimeMinutes === 5) notificationText = '5분 전';
-                          else notificationText = notifyTimeMinutes + '분 전';
+                          if (notifyTimeMinutes === 1440) notificationText = '전날 9시';
+                          else if (notifyTimeMinutes === 540) notificationText = '당일 9시';
                       }
                       document.getElementById('detailNotification').innerText = notificationText;
 
                       // 날짜 및 시간 포맷팅 (FullCalendar 날짜 형식에 따라 조정)
                       // ISO 문자열을 Date 객체로 변환하여 포맷팅
-                      const startDateTime = data.startDatetime ? new Date(data.startDatetime) : null;
-                      const endDateTime = data.endDatetime ? new Date(data.endDatetime) : null;
+                      const startDateTime = event.startDatetime ? new Date(event.startDatetime) : null;
+                      const endDateTime = event.endDatetime ? new Date(event.endDatetime) : null;
 
                       let dateTimeDisplay = '';
                       if (startDateTime && endDateTime) {
                           const startDateFormatted = formatDate(startDateTime, 'M월 d일 (E)');
-                          const startTimeFormatted = formatDate(startDateTime, '오전 h:mm');
-                          const endTimeFormatted = formatDate(endDateTime, '오전 h:mm');
+                          const startTimeFormatted = formatDate(startDateTime, 'a h:mm');
+                          const endDateFormatted = formatDate(endDateTime, 'M월 d일 (E)');
+                          const endTimeFormatted = formatDate(endDateTime, 'a h:mm');
 
                           // 종일 이벤트 확인 (00:00 - 23:59:59)
                           const isAllDay = startDateTime.getHours() === 0 && startDateTime.getMinutes() === 0 &&
@@ -1054,7 +1060,7 @@
                           if (isAllDay && startDateFormatted === formatDate(endDateTime, 'M월 d일 (E)')) {
                               dateTimeDisplay = `${startDateFormatted} 종일`;
                           } else {
-                              dateTimeDisplay = `${startDateFormatted} ${startTimeFormatted} - ${endTimeFormatted}`;
+                              dateTimeDisplay = `${startDateFormatted} ${startTimeFormatted} - ${endDateFormatted} ${endTimeFormatted}`;
                           }
                       } else {
                           dateTimeDisplay = '일시 정보 없음';
@@ -1063,7 +1069,7 @@
 
 
                       // 이벤트 색상 표시 업데이트
-                      document.querySelector('#eventDetailModal .color-dot').style.backgroundColor = data.color || '#007bff';
+                      document.querySelector('#eventDetailModal .color-dot').style.backgroundColor = event.color || '#007bff';
 
                       // 첨부파일 목록
                       const detailFilesUl = document.getElementById('detailFiles');
@@ -1094,7 +1100,7 @@
                       const editBtn = detailButtonsContainer.querySelector('.edit-button');
                       const deleteBtn = detailButtonsContainer.querySelector('.delete-button');
 
-                      if (data.userId === currentUserId) {
+                      if (event.userId === currentUserId) {
                           if (editBtn) editBtn.style.display = 'block';
                           if (deleteBtn) deleteBtn.style.display = 'block';
                       } else {
@@ -1143,26 +1149,30 @@
 
   // Date 객체를 원하는 형식의 문자열로 포맷하는 헬퍼 함수
   function formatDate(date, format) {
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1; // 0-11
-      const day = date.getDate();
-      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
-      let hours = date.getHours();
-      const minutes = date.getMinutes();
-      const ampm = hours >= 12 ? '오후' : '오전';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // the hour '0' should be '12'
-      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+    let hours24 = date.getHours();
+    let hours12 = hours24 % 12;
+    hours12 = hours12 ? hours12 : 12;
+    const minutes = date.getMinutes();
+    const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+    const ampm = hours24 >= 12 ? '오후' : '오전';
 
-      return format
-          .replace('yyyy', year)
-          .replace('M', month)
-          .replace('d', day)
-          .replace('E', dayOfWeek)
-          .replace('H', hours)
-          .replace('m', formattedMinutes)
-          .replace('오전', ampm);
-  }
+    return format
+        .replace('yyyy', year)
+        .replace('M', month)
+        .replace('d', day)
+        .replace('E', dayOfWeek)
+        .replace('HH', hours24 < 10 ? '0' + hours24 : hours24)
+        .replace('H', hours24)
+        .replace('hh', hours12 < 10 ? '0' + hours12 : hours12)
+        .replace('h', hours12)
+        .replace('m', formattedMinutes)
+        .replace('a', ampm);
+}
+
 
   // ====== 일정 추가 모달 함수 (기존 calendar.html 스크립트에서 가져옴) ======
   function closeCreateEventModal() {
@@ -1181,16 +1191,15 @@
           startDatetime: form.startDatetime.value, // id 변경됨
           endDatetime: form.endDatetime.value,     // id 변경됨
           color: form.color.value,
-          isShared: form.isShared.checked ? '1' : '0',
+          isShared: form.isShared ? (form.isShared.checked ? '1' : '0') : '0',
           progressStatus: "TODO", // 새 일정은 기본 TODO로 가정 (폼에 없음)
           priority: form.priority.value,
-          notifyTime: form.notification.value === 'BEFORE_DAY_9AM' ? 1440 :
-                      form.notification.value === 'DAY_9AM' ? 9 * 60 : // 540분
-                      form.notification.value === 'BEFORE_1HOUR' ? 60 :
-                      parseInt(form.notification.value) // 숫자로 변환 (0분일 경우)
+          notifyTime: parseInt(form.notification.value) // 숫자로 변환
       };
 
       formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
+
+
 
       const files = form.fileUpload.files; // id 변경됨
       for (let i = 0; i < files.length; i++) {
@@ -1292,11 +1301,13 @@
       closeCreateEventModal();
       closeDetailModal();
 
-      const eventData = window.selectedEventData;
-      if (!eventData) {
+      const data = window.selectedEventData;
+      if (!data) {
           alert("수정할 이벤트 데이터가 없습니다.");
           return;
       }
+
+      const eventData = data.event;
 
       // 수정 폼에 기존 값 불러오기
       document.getElementById('update-eventCd').value = eventData.eventCd;
@@ -1308,7 +1319,7 @@
       document.getElementById('update-priority').value = eventData.priority || 'NORMAL';
       document.getElementById('update-progressStatus').value = eventData.progressStatus || 'TODO';
       document.getElementById('update-isShared').value = eventData.isShared === '1' ? '1' : '0'; // '1' 또는 '0'으로 설정
-      document.getElementById('update-location').value = eventData.location || ''; // 위치 필드 추가
+      document.getElementById('update-location').value = data.location || ''; // 위치 필드 추가
 
       // 알림 시간 설정 (notification 매핑)
       let notifyTimeVal = eventData.notifyTime;
@@ -1332,8 +1343,8 @@
       updateFilesUl.innerHTML = ''; // 초기화
       deletedFileIds = []; // 삭제할 파일 ID 목록 초기화
 
-      if (eventData.fileList && eventData.fileList.length > 0) {
-          eventData.fileList.forEach(file => {
+      if (data.fileList && data.fileList.length > 0) {
+          data.fileList.forEach(file => {
               const li = document.createElement('li');
               li.innerHTML = `
                   <span>${file.fileNm}</span>
@@ -1384,10 +1395,7 @@
           userId: currentUserId, // 현재 유저 ID 사용 (작성자)
           workspaceCd: "8a151dac-0baa-4938-9379-746219ea1e4c", // 임시 워크스페이스 코드
           location: document.getElementById('update-location').value, // 위치 필드 추가
-           notifyTime: document.getElementById('update-notification').value === 'BEFORE_DAY_9AM' ? 1440 :
-                      document.getElementById('update-notification').value === 'DAY_9AM' ? 9 * 60 : // 540분
-                      document.getElementById('update-notification').value === 'BEFORE_1HOUR' ? 60 :
-                      parseInt(document.getElementById('update-notification').value) // 숫자로 변환 (0분일 경우)
+          notifyTime: parseInt(document.getElementById('update-notification').value) // 숫자로 변환
       };
 
 
@@ -1424,9 +1432,8 @@
   // ====== 일정 삭제 함수 (기존 calendar.html 스크립트에서 가져옴) ======
   function deleteEvent() {
       const confirmDelete = confirm("정말로 이 일정을 삭제하시겠습니까?");
-
       if (confirmDelete) {
-          const eventCd = window.selectedEventData?.eventCd;
+          const eventCd = window.selectedEventData?.event?.eventCd;
           if (!eventCd) {
               alert("삭제할 이벤트 코드가 없습니다.");
               return;

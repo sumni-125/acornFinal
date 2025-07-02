@@ -7,22 +7,24 @@
 
     <insert id="insertEventAttendences" parameterType="map">
         INSERT INTO `EVENT_ATTENDENCES`(
-        EVENT_CD, USER_ID
+            EVENT_CD, USER_ID
         )VALUES(
-        #{eventCd}, #{userId}
+            #{eventCd}, #{userId}
         )
     </insert>
 
+    <!-- 참석자 userid 선택 -->
     <select id="selectAttendence" parameterType="String" resultType="com.example.ocean.dto.response.EventAttendences">
-        SELECT EVENT_CD AS eventCd, USER_ID AS userId
-        FROM `EVENT_ATTENDENCES`
-        WHERE EVENT_CD = #{eventCd}
+        SELECT  USER_ID AS userId
+        FROM   `EVENT_ATTENDENCES`
+        WHERE   EVENT_CD = #{eventCd}
     </select>
-    
+
+    <!-- 참석자 userid, nickname 선택 -->
     <select id="selectAttendeesInfo" parameterType="String" resultType="com.example.ocean.dto.response.AttendeesInfo">
         SELECT
-                ea.EVENT_CD AS eventCd,
-                ea.USER_ID AS userId,
+                ea.EVENT_CD      AS eventCd,
+                ea.USER_ID       AS userId,
                 wm.USER_NICKNAME AS userNickName
         FROM   `EVENT_ATTENDENCES` ea
         JOIN
@@ -33,16 +35,17 @@
                     FROM   `EVENTS`
                     WHERE   EVENT_CD = #{eventCd}
                 )
-        WHERE
-        ea.EVENT_CD = #{eventCd}
+        WHERE   ea.EVENT_CD = #{eventCd}
     </select>
 
+    <!-- 일정 삭제시 참석자 삭제 -->
     <delete id="deleteAttendeesByEventCd" parameterType="String">
         DELETE
         FROM   `EVENT_ATTENDENCES`
         WHERE   EVENT_CD = #{eventCd}
     </delete>
 
+    <!-- 이벤트 수정시 참석자 삭제 -->
     <delete id="deleteAttendeesByUserId" parameterType="String">
         DELETE
         FROM   `EVENT_ATTENDENCES`

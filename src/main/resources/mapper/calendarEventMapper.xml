@@ -5,94 +5,84 @@
 
 <mapper namespace="com.example.ocean.repository.CalendarEventRepository">
 
+    <!-- 개인 일정 목록 불러오기 -->
     <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.PersonalCalendarResponse">
         SELECT
-            event_cd AS eventCd,
-            title,
-            start_datetime AS startDatetime,
-            end_datetime AS endDatetime,
-            color
-        FROM `EVENTS`
-        WHERE user_id = #{userID}
-        ORDER BY priority
+                EVENT_CD AS eventCd, TITLE, START_DATETIME AS startDatetime,
+                END_DATETIME AS endDatetime, COLOR
+        FROM   `EVENTS`
+        WHERE   user_id = #{userID}
+        ORDER BY PRIORITY
     </select>
 
+    <!-- 개인일정 생성 -->
     <insert id="insertPersonalEvent" parameterType="com.example.ocean.dto.response.Event">
-        INSERT INTO `EVENTS` (
-            event_cd, user_id, workspace_cd, title, description,
-            start_datetime, end_datetime, color,
-            is_shared, progress_status, priority, created_date
+        INSERT
+        INTO   `EVENTS`
+        (
+                EVENT_CD, USER_ID, WORKSPACE_CD, TITLE, DESCRIPTION,
+                START_DATETIME, END_DATETIME, COLOR, IS_SHARED,
+                PROGRESS_STATUS, PRIORITY, NOTIFY_TIME, CREATED_DATE
         ) VALUES (
-            #{eventCd}, #{userId}, #{workspaceCd}, #{title}, #{description},
-            #{startDatetime}, #{endDatetime}, #{color},
-            #{isShared}, #{progressStatus}, #{priority}, #{createdDate}
+                #{eventCd}, #{userId}, #{workspaceCd}, #{title}, #{description},
+                #{startDatetime}, #{endDatetime}, #{color}, #{isShared},
+                #{progressStatus}, #{priority}, #{notifyTime}, #{createdDate}
         )
 
     </insert>
 
-
-
+    <!-- 일정선택 -->
     <select id="selectPersonalEvent" parameterType="String" resultType="com.example.ocean.dto.response.Event">
         SELECT
-            event_cd AS eventCd,
-            user_id AS userId,
-            workspace_cd AS workspaceCd,
-            title,
-            description,
-            start_datetime AS startDatetime,
-            end_datetime AS endDatetime,
-            color,
-            is_shared AS isShared,
-            progress_status AS progressStatus,
-            priority AS priority,
-            created_date AS createdDate
-        FROM `EVENTS`
-        WHERE event_cd = #{eventCd}
+                EVENT_CD AS eventCd, USER_ID AS userId, WORKSPACE_CD AS workspaceCd, TITLE,
+                DESCRIPTION, START_DATETIME AS startDatetime, END_DATETIME AS endDatetime,
+                COLOR, IS_SHARED AS isShared, PROGRESS_STATUS AS progressStatus, PRIORITY AS priority,
+                NOTIFY_TIME AS notifyTime, CREATED_DATE AS createdDate
+        FROM   `EVENTS`
+        WHERE   EVENT_CD = #{eventCd}
+    </select>
+    <select id="selectMailInfo" parameterType="String" resultType="com.example.ocean.dto.response.MailInfo">
+        SELECT
+                EVENT_CD AS eventCd,WORKSPACE_CD AS workspaceCd, TITLE, DESCRIPTION
+        FROM   `EVENTS`
+        WHERE   EVENT_CD = #{eventCd}
     </select>
 
-
-
+    <!-- 일정 수정 -->
     <update id="updatePersonalEvent" parameterType="com.example.ocean.dto.request.PersonalEventUpdateRequest">
         UPDATE `EVENTS`
         <set>
-            <if test="title         != null">   title           = #{title},</if>
-            <if test="description   != null">   description     = #{description},</if>
-            <if test="startDatetime != null">   start_datetime  = #{startDatetime},</if>
-            <if test="endDatetime   != null">   end_datetime    = #{endDatetime},</if>
-            <if test="color         != null">   color           = #{color},</if>
-            <if test="isShared      != null">   is_shared       = #{isShared},</if>
-            <if test="progressStatus != null">  progress_status = #{progressStatus},</if>
-            <if test="priority      != null">   priority        = #{priority},</if>
+            <if test="title          != null">   TITLE           = #{title},</if>
+            <if test="description    != null">   DESCRIPTION     = #{description},</if>
+            <if test="startDatetime  != null">   START_DATETIME  = #{startDatetime},</if>
+            <if test="endDatetime    != null">   END_DATETIME    = #{endDatetime},</if>
+            <if test="color          != null">   COLOR           = #{color},</if>
+            <if test="isShared       != null">   IS_SHARED       = #{isShared},</if>
+            <if test="progressStatus != null">   PROGRESS_STATUS = #{progressStatus},</if>
+            <if test="priority       != null">   PRIORITY        = #{priority},</if>
+            <if test="notifyTime     != null">   NOTIFY_TIME     = #{notifyTime},</if>
         </set>
-        WHERE event_cd = #{eventCd}
-        AND user_id  = #{userId}
+        WHERE   EVENT_CD = #{eventCd}
+        AND     USER_ID  = #{userId}
     </update>
 
+    <!-- 일정 삭제 -->
     <delete id="deletePersonalEvent" parameterType="String">
         DELETE
-        FROM `EVENTS`
-        WHERE event_cd = #{eventCd}
+        FROM   `EVENTS`
+        WHERE   EVENT_CD = #{eventCd}
     </delete>
 
-    <select id="select8AmAlarm" resultType="String">
-        SELECT
-        EVENT_CD AS eventCd
-        FROM `EVENTS`
-        WHERE
-        (
-        NOTIFY_TIME = '당일 오전 8시'
-        AND DATE(START_DATETIME) = CURDATE()
-        )
-    </select>
-
-    <select id="select8PmAlarm" resultType="String">
-        SELECT
-        EVENT_CD AS eventCd
-        FROM `EVENTS`
-        WHERE
-        (
-        NOTIFY_TIME = '전날 오후 8시'
-        AND DATE(START_DATETIME) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+    <!-- 9시 알림 조회 -->
+    <select id="selectTodayAlarm" resultType="String">
+        SELECT  EVENT_CD AS eventCd
+        FROM   `EVENTS`
+        WHERE (
+                NOTIFY_TIME = 540
+            AND DATE(START_DATETIME) = CURDATE()
+        ) OR (
+                NOTIFY_TIME = 1440
+            AND DATE(START_DATETIME) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
         )
     </select>
 

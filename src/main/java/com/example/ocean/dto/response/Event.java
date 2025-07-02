@@ -11,13 +11,12 @@ public class Event {
     private String userId;              // USER_ID (FK)
     private String title;               // TITLE
     private String description;         // DESCRIPTION
-    private LocalDateTime startDatetime; // START_DATETIME
-    private LocalDateTime endDatetime;   // END_DATETIME
+    private LocalDateTime startDatetime;// START_DATETIME
+    private LocalDateTime endDatetime;  // END_DATETIME
     private String color;               // COLOR (ENUM: RED ORANGE YELLOW GREEN BLUE GRAY)
     private String isShared;            // IS_SHARED ('0' or '1')
     private String progressStatus;      // PROGRESS_STATUS (BEFORE / ING / DONE)
     private String priority;            // PRIORITY (LOW / NORMAL / HIGH)
     private LocalDateTime createdDate;  // CREATED_DATE
-    private LocalDateTime completeDateTime;
-    private String notifyTime;
+    private int notifyTime;
 }

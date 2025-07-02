@@ -18,8 +18,6 @@ public class PersonalEventCreateRequest {
     private String          isShared;
     private String          progressStatus;
     private String          priority;
-    private LocalDateTime   completeDateTime;
-    private String          notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
-    //private List<String>    attendenceIds;
-    //private List<EventUploadedFiles> files;
+    private LocalDateTime   createdDate;
+    private int             notifyTime;
 }

@@ -9,6 +9,7 @@ import java.util.List;
 public class PersonalEventUpdateRequest {
     private String          eventCd;        //이벤트아이디(pk)
     private String          userId;         //작성자코드
+    private String          workspaceCd;
     private String          title;          //제목
     private String          description;    //설명
     private LocalDateTime   startDatetime;  //시작일
@@ -17,6 +18,5 @@ public class PersonalEventUpdateRequest {
     private String          isShared;       //공개여부
     private String          progressStatus; //진행도(진행전 진행중 종료됨)
     private String          priority;       //중요도
-    private LocalDateTime   completeDateTime;
     private int             notifyTime;     // 알림시간( 당일 오전 8시 / 전날 오후 8시 )
 }

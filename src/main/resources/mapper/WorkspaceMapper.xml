@@ -292,4 +292,10 @@
         WHERE WM.WORKSPACE_CD = #{workspaceCd} AND WM.USER_ID = #{userId}
     </update>
 
+    <!--워크스페이스 이름 찾기(메일보내기용)-->
+    <select id="findWorkspaceNameByWorkspaceCd" parameterType="String" resultType="String">
+        SELECT  WORKSPACE_NM
+        FROM   `WORKSPACE`
+        WHERE   WORKSPACE_CD = #{workspaceCd}
+    </select>
 </mapper>

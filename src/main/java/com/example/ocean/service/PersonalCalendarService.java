@@ -37,17 +37,20 @@ public class PersonalCalendarService {
 
     // 일정 crud
 
-    public List<PersonalCalendarResponse> selectPersonalCalendar(String userId){ return calendarEventRepository.selectPersonalCalendar(userId);}
+    public List<PersonalCalendarResponse> getPersonalEvents(String userId){
+        return calendarEventRepository.selectPersonalCalendar(userId);
+    }
 
     @Transactional
     public int createPersonalEvent(PersonalEventCreateRequest request, List<String> attendenceIds, MultipartFile[] files){
 
+        String eventCd = "evnt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String userId = request.getUserId();
+
         Event event = new Event();
 
-        String eventCd = "evnt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-
         event.setEventCd(eventCd);
-        event.setUserId(request.getUserId());
+        event.setUserId(userId);
         event.setWorkspaceCd(request.getWorkspaceCd());
         event.setTitle(request.getTitle());
         event.setDescription(request.getDescription());
@@ -57,84 +60,73 @@ public class PersonalCalendarService {
         event.setIsShared(request.getIsShared());
         event.setProgressStatus(request.getProgressStatus());
         event.setPriority(request.getPriority());
+        event.setNotifyTime(request.getNotifyTime());
         event.setCreatedDate(LocalDateTime.now());
-
-        System.out.println(event);
-
 
         int result = calendarEventRepository.insertPersonalEvent(event);
 
-        insertAttendence(eventCd, attendenceIds);
+        // 참가자 삽입
+        if (attendenceIds != null && !attendenceIds.isEmpty()) {
+            for(String attendId : attendenceIds){
+                eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
+            }
+        }
 
-        insertFile(files, eventCd, request.getUserId());
+        // 파일추가
+        uploadFiles(eventCd, userId, files);
+
+        insertMentionNotification(eventCd, "NEW");
 
         return result;
     }
 
-
-
     public PersonalEventDetailResponse getPersonalEventDetail(String eventCd){
 
         Event event = calendarEventRepository.selectPersonalEvent(eventCd);
-        PersonalEventDetailResponse response = new PersonalEventDetailResponse();
-        if (event != null) {
-            response.setEventCd(event.getEventCd());
-            response.setUserId(event.getUserId());
-            response.setWorkspaceCd(event.getWorkspaceCd());
-            response.setTitle(event.getTitle());
-            response.setDescription(event.getDescription());
-            response.setStartDatetime(event.getStartDatetime());
-            response.setEndDatetime(event.getEndDatetime());
-            response.setColor(event.getColor());
-            response.setIsShared(event.getIsShared());
-            response.setProgressStatus(event.getProgressStatus());
-            response.setPriority(event.getPriority());
-            response.setCreatedDate(event.getCreatedDate());
-            response.setNotifyTime(event.getNotifyTime());
-        }
+        List<EventUploadedFiles> fileList = fileRepository.selectFileByEventCd(eventCd);
+        List<AttendeesInfo> attendences = eventAttendencesRepository.selectAttendeesInfo(eventCd);
 
-        response.setFileList(selectFileEvent(eventCd));
-        response.setAttendeesInfo(selectAttendeesInfo(eventCd));
+        PersonalEventDetailResponse response = new PersonalEventDetailResponse(event, fileList, attendences);
 
         return response;
     }
 
     @Transactional
-    public int updatePersonalEvent(PersonalEventUpdateRequest event){
-        if(event.getProgressStatus().equals("DONE")){
-            event.setEndDatetime(LocalDateTime.now());
-        }else{
-            event.setEndDatetime(null);
+    public int updatePersonalEvent(PersonalEventUpdateRequest personalEventUpdateRequest, List<String> deletedFileIds, MultipartFile[] insertedFiles){
+        int events = calendarEventRepository.updatePersonalEvent(personalEventUpdateRequest);
+        String eventCd = personalEventUpdateRequest.getEventCd();
+        String userId = personalEventUpdateRequest.getUserId();
+
+        //삭제된파일
+        if (deletedFileIds != null && !deletedFileIds.isEmpty()) {
+            for(String fileId:deletedFileIds){
+                fileRepository.updateFileActiveByEventCdAndFileId(eventCd, fileId);
+            }
         }
 
-        return calendarEventRepository.updatePersonalEvent(event);
+        //추가된파일
+        uploadFiles(eventCd, userId, insertedFiles);
+        //멘션
+        insertMentionNotification(eventCd, "MODIFY");
+        return events;
     }
 
     @Transactional
-    public int deletePersonalEvent(String eventCd){
+    public int deletePersonalEvent(String eventCd, String userId){
         //파일 참석자 먼저 삭제하고 이벤트 삭제하기
-        
-        List<EventAttendences> attendences = eventAttendencesRepository.selectAttendence(eventCd);
-        
-        List<String> userIds = attendences.stream()
-                .map(EventAttendences::getUserId)
-                .collect(Collectors.toList());
-        
-        //멘션알림
-        createMentionNotification(eventCd, userIds, "DELETE");
-        
+        insertMentionNotification(eventCd, "DELETE");
+
         fileRepository.deleteFileByEventCd(eventCd);
         eventAttendencesRepository.deleteAttendeesByEventCd(eventCd);
         return calendarEventRepository.deletePersonalEvent(eventCd);
     }
-    // 파일 crud
-    public boolean insertFile(MultipartFile[] files, String eventCd, String userId) {
-        int cnt=0;
+
+    public void uploadFiles(String eventCd, String userId, MultipartFile[] files) {
+        //파일 s3 업로드 + 테이블에 삽입
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
-
-                EventUploadedFiles eventUploadedFiles = EventUploadedFiles.builder()
+                EventUploadedFiles insertFileRequest = EventUploadedFiles.builder()
                         .fileId(UUID.randomUUID().toString())
                         .eventCd(eventCd)
                         .fileNm(file.getOriginalFilename())
@@ -144,28 +136,9 @@ public class PersonalCalendarService {
                         .uploadedBy(userId)
                         .build();
 
-                int insert = fileRepository.insertFile(eventUploadedFiles);
-                cnt+=insert;
+                fileRepository.insertFile(insertFileRequest);
+
             }
-        }
-        if (files == null || files.length == 0) return true;
-
-        return cnt==files.length;
-    }
-
-    public List<FileInfo> selectFileEvent(String eventCd){
-        List<EventUploadedFiles> fileList = fileRepository.selectFileByEventCd(eventCd);
-        if (fileList != null) {
-            List<FileInfo> fileInfos = fileList.stream().map(file -> {
-                FileInfo fileInfo = new FileInfo();
-                fileInfo.setFileNm(file.getFileNm());
-                fileInfo.setFileId(file.getFileId());
-                return fileInfo;
-            }).collect(Collectors.toList());
-
-            return fileInfos;
-        }else{
-            return Collections.emptyList();
         }
     }
 
@@ -181,94 +154,20 @@ public class PersonalCalendarService {
                 .body(bytes);
     }
 
-    @Transactional
-    public boolean updateFileActive(String eventCd, List<String> deletedFileIds){
-        int cnt=0;
-        for (String fileId : deletedFileIds) {
-            int updated = fileRepository.updateFileActive(eventCd, fileId);
-            cnt+=updated;
-        }
-        return cnt == deletedFileIds.size();
-    }
-
     private String extractKeyFromUrl(String url) {
         URI uri = URI.create(url);
         return uri.getPath().substring(1); // 앞에 '/' 제거
     }
 
-    // 참가자 테이블 crud
-    @Transactional
-    public boolean insertAttendence (String eventCd, List<String> attendenceIds){
-        int cnt=0;
-        if (attendenceIds == null || attendenceIds.isEmpty()) {
-            // 선택된 참석자 없음, 그냥 리턴
-            return true;
-        }else{
-            for(String attendId : attendenceIds){
-                cnt+=eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
-            }
-        }
-        if(cnt==attendenceIds.size()){
-            createMentionNotification(eventCd, attendenceIds, "NEW");
-        }
-        return  cnt==attendenceIds.size();
-    }
+    private void insertMentionNotification(String eventCd, String notiState) {
+        // 멘션
+        List<AttendeesInfo> attendeesInfos=eventAttendencesRepository.selectAttendeesInfo(eventCd);
 
-    public boolean updateAttendences(String eventCd, List<String> updatedAttendees){
-        List<EventAttendences> select = selectEventAttendences(eventCd);
-        if (!select.isEmpty()) {
-            deleteAttendences(eventCd);
-        }
-
-        boolean result = true;
-        if (updatedAttendees != null && !updatedAttendees.isEmpty()) {
-            result = insertAttendence(eventCd, updatedAttendees);
-        }
-        return result;
-    }
-
-    public List<EventAttendences> selectEventAttendences(String eventCd){
-        return eventAttendencesRepository.selectAttendence(eventCd);
-    }
-
-    public List<AttendeesInfo> selectAttendeesInfo(String eventCd){
-        return eventAttendencesRepository.selectAttendeesInfo(eventCd);
-    }
-
-    @Transactional
-    public void deleteAttendences(String eventCd) {
-        eventAttendencesRepository.deleteAttendeesByEventCd(eventCd);
-    }
-/*
-    //워크스페이스 멤버 닉네임 select
-    public List<WorkspaceMember> selectUserNicknameByWorkspaceCd(String workspaceCd){
-        return eventAttendencesRepository.selectUserNicknameByWorkspaceCd(workspaceCd);
-    }*/
-
-    // 멘션 알림기능
-    @Transactional
-    public void createMentionNotification(String eventCd, List<String> participantIds, String notiState) {
-        if (participantIds == null || participantIds.isEmpty()) {
-            return;
-        }
-        for (String userId : participantIds) {
-            MentionNotification mention = new MentionNotification(eventCd, userId, notiState, "0");
-            mentionNotificationRepository.insertMentionNotification(mention);
-        }
-    }
-
-    public  List<MentionNotification> selectUserNoti(String userId){
-        return mentionNotificationRepository.selectUserNoti(userId);
-    }
-
-    public void updateAllUserNoti(String userId){
-        mentionNotificationRepository.updateAllNoti(userId);
-    }
-
-    public void updateUserNoti(List<ReadNotiRequest> request){
-        if(request != null){
-            for(ReadNotiRequest noti : request){
-                mentionNotificationRepository.updateNoti(noti);
+        if (attendeesInfos != null && !attendeesInfos.isEmpty()) {
+            for(AttendeesInfo info :attendeesInfos){
+                String attendId = info.getUserId();
+                MentionNotification noti = new MentionNotification(eventCd, attendId, notiState,"0" );
+                mentionNotificationRepository.insertMentionNotification(noti);
             }
         }
 

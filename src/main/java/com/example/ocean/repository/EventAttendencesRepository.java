@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper
 public interface EventAttendencesRepository {
     int insertEventAttendences (@Param("eventCd") String eventCd, @Param("userId") String userId);
-    List<EventAttendences> selectAttendence(@Param("eventCd") String eventCd);
+    List<String> selectAttendence(@Param("eventCd") String eventCd);
     List<AttendeesInfo> selectAttendeesInfo(@Param("eventCd") String eventCd);
     int deleteAttendeesByEventCd(@Param("eventCd") String eventCd);
 

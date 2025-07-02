@@ -47,7 +47,7 @@
         AND     ACTIVE_STATE = '1'
     </select>
 
-    <update id="updateByEventCdAndFileId" parameterType="String">
+    <update id="updateFileActiveByEventCdAndFileId" parameterType="String">
         UPDATE `FILE`
         SET ACTIVE_STATE = '0'
         WHERE event_cd = #{eventCd}
