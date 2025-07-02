@@ -173,7 +173,6 @@ public class WorkspacePageController {
             return "redirect:/workspace/" + workspaceCd + "/set-profile";
         }
 
-
         Workspace workspace = workspaceService.findWorkspaceByCd(workspaceCd);
         if (workspace == null) {
             model.addAttribute("error", "해당 워크스페이스를 찾을 수 없습니다.");
@@ -199,6 +198,7 @@ public class WorkspacePageController {
 
         return "workspace/workspace-detail";
     }
+
 
     @GetMapping("/workspace/{workspaceCd}/set-profile")
     public String setProfilePageByPath(@PathVariable String workspaceCd,
