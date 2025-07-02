@@ -8,7 +8,7 @@
                 const workspaceCd = element.getAttribute('data-id');
                 if (workspaceCd) {
                     // 워크스페이스 입장 시간 업데이트 후 이동
-                    location.href = `/workspace/${workspaceCd}`;
+                    location.href = `/wsmain?workspaceCd=${workspaceCd}`;
                 }
             };
 
