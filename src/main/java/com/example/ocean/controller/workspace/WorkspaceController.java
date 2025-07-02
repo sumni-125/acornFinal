@@ -167,7 +167,7 @@ public class WorkspaceController {
     }
 
     // 워크스페이스 입장 시간 업데이트
-    @PostMapping("/{workspaceCd}/enter")
+    @PatchMapping("/{workspaceCd}/enter")
     public ResponseEntity<Void> enterWorkspace(
             @PathVariable String workspaceCd,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
@@ -177,7 +177,7 @@ public class WorkspaceController {
     }
 
     // 워크스페이스 퇴장 시간 업데이트
-    @PostMapping("/{workspaceCd}/exit")
+    @PatchMapping("/{workspaceCd}/exit")
     public ResponseEntity<Void> exitWorkspace(
             @PathVariable String workspaceCd,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
