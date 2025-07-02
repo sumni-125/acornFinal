@@ -3,16 +3,17 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.ocean.repository.TeamEventRepository">
+<mapper namespace="com.example.ocean.repository.EventAttendencesRepository">
+
     <insert id="insertEventAttendences" parameterType="map">
         INSERT INTO `EVENT_ATTENDENCES`(
-        EVENT_CD, USER_ID
+        EVENT_CD AS eventCd, USER_ID AS userId
         )VALUES(
         #{eventCd}, #{userId}
         )
     </insert>
 
-    <select id="selectAttendeesInfo" parameterType="String" resultType="AttendeesInfo">
+    <select id="selectAttendeesInfo" parameterType="String" resultType="com.example.ocean.dto.response.AttendeesInfo">
         SELECT
         ea.EVENT_CD AS eventCd,
         ea.USER_ID AS userId,

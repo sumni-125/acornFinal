@@ -16,7 +16,7 @@
         AND   IS_SHARED = '1'
     </select>
 
-    <select id="selectTeamEventDetail" parameterType="String" resultType="TeamEventDetail">
+    <select id="selectTeamEventDetail" parameterType="String" resultType="com.example.ocean.dto.response.TeamEventDetail">
         SELECT
                 EVENT_CD AS eventCd, USER_ID AS userId, WORKSPACE_CD AS workspaceCd,
                 TITLE, DESCRIPTION, START_DATETIME AS startDatetime, END_DATETIME AS endDatetime,
@@ -26,7 +26,7 @@
         WHERE   EVENT_CD = #{eventCd}
     </select>
 
-    <insert id="insertTeamEvent" parameterType="TeamEventDetail">
+    <insert id="insertTeamEvent" parameterType="com.example.ocean.dto.response.TeamEventDetail">
         INSERT INTO `EVENTS` (
             EVENT_CD, USER_ID, WORKSPACE_CD, TITLE, DESCRIPTION,
             START_DATETIME, END_DATETIME, COLOR, IS_SHARED,
@@ -38,7 +38,7 @@
         )
     </insert>
 
-    <update id="updateTeamEvent" parameterType="TeamEventDetail">
+    <update id="updateTeamEvent" parameterType="com.example.ocean.dto.response.TeamEventDetail">
         UPDATE `EVENTS`
         SET     TITLE = #{title}, DESCRIPTION = #{description}, START_DATETIME = #{startDatetime}, END_DATETIME = #{endDatetime},
                 COLOR = #{color}, IS_SHARED = #{isShared}, PROGRESS_STATUS = #{progressStatus}, PRIORITY = #{priority}, NOTIFY_TIME = #{notifyTime}

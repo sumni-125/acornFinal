@@ -5,7 +5,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.example.ocean.mapper")
+@MapperScan({
+		"com.example.ocean.repository",
+		"com.example.ocean.mapper"
+})
 public class OceanApplication {
 
 	public static void main(String[] args) {
