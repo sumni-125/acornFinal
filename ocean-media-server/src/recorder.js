@@ -20,9 +20,6 @@ class Recorder {
         this.filePath = null;
     }
 
-    /**
-    * 녹화 시작
-    */
     async startRecording(videoPort, audioPort, videoRtpParameters, audioRtpParameters) {
         try {
             // Spring Boot에 녹화 시작 알림
@@ -61,11 +58,14 @@ class Recorder {
 
             // ⭐ FFmpeg 실행 - SDP 파일 사용
             const ffmpegArgs = [
+                '-loglevel', 'debug',  // 디버깅 로그
                 '-protocol_whitelist', 'file,rtp,udp',
+                '-reorder_queue_size', '0',  // RTP 재정렬 비활성화
                 '-i', sdpPath,
                 '-c:v', 'copy',  // 코덱 복사 (재인코딩 없음)
                 '-c:a', 'copy',  // 코덱 복사 (재인코딩 없음)
                 '-f', 'webm',
+                '-flags', '+global_header',
                 '-y',
                 this.filePath
             ];
@@ -128,35 +128,33 @@ class Recorder {
         const videoCodec = videoRtpParameters?.codecs?.[0];
         const audioCodec = audioRtpParameters?.codecs?.[0];
 
-        // 기본 SDP 헤더
-        let sdp = `v=0
-    o=- 0 0 IN IP4 127.0.0.1
-    s=MediaSoup Recording
-    c=IN IP4 127.0.0.1
-    t=0 0
-    `;
+        // 기본 SDP 헤더 - 들여쓰기 없이
+        let sdp = 'v=0\r\n';
+        sdp += 'o=- 0 0 IN IP4 127.0.0.1\r\n';
+        sdp += 's=MediaSoup Recording\r\n';
+        sdp += 'c=IN IP4 127.0.0.1\r\n';
+        sdp += 't=0 0\r\n';
 
         // 비디오 스트림 추가
         if (videoRtpParameters && videoCodec) {
-            sdp += `m=video ${this.videoPort} RTP/AVP ${videoCodec.payloadType}
-    c=IN IP4 127.0.0.1
-    a=rtcp:${this.videoPort + 1} IN IP4 127.0.0.1
-    a=recvonly
-    a=rtpmap:${videoCodec.payloadType} ${videoCodec.mimeType.split('/')[1].toUpperCase()}/${videoCodec.clockRate}
-    `;
+            sdp += `m=video ${this.videoPort} RTP/AVP ${videoCodec.payloadType}\r\n`;
+            sdp += 'c=IN IP4 127.0.0.1\r\n';
+            sdp += `a=rtcp:${this.videoPort + 1} IN IP4 127.0.0.1\r\n`;
+            sdp += 'a=recvonly\r\n';
+            sdp += `a=rtpmap:${videoCodec.payloadType} ${videoCodec.mimeType.split('/')[1].toUpperCase()}/${videoCodec.clockRate}\r\n`;
 
             // VP8 관련 추가 파라미터
             if (videoCodec.mimeType.toLowerCase() === 'video/vp8') {
                 if (videoCodec.rtcpFeedback) {
                     videoCodec.rtcpFeedback.forEach(fb => {
                         if (fb.type === 'nack' && fb.parameter === 'pli') {
-                            sdp += `a=rtcp-fb:${videoCodec.payloadType} nack pli\n`;
+                            sdp += `a=rtcp-fb:${videoCodec.payloadType} nack pli\r\n`;
                         } else if (fb.type === 'nack' && !fb.parameter) {
-                            sdp += `a=rtcp-fb:${videoCodec.payloadType} nack\n`;
+                            sdp += `a=rtcp-fb:${videoCodec.payloadType} nack\r\n`;
                         } else if (fb.type === 'ccm' && fb.parameter === 'fir') {
-                            sdp += `a=rtcp-fb:${videoCodec.payloadType} ccm fir\n`;
+                            sdp += `a=rtcp-fb:${videoCodec.payloadType} ccm fir\r\n`;
                         } else if (fb.type === 'goog-remb') {
-                            sdp += `a=rtcp-fb:${videoCodec.payloadType} goog-remb\n`;
+                            sdp += `a=rtcp-fb:${videoCodec.payloadType} goog-remb\r\n`;
                         }
                     });
                 }
@@ -167,21 +165,20 @@ class Recorder {
                 const params = Object.entries(videoCodec.parameters)
                     .map(([key, value]) => `${key}=${value}`)
                     .join(';');
-                sdp += `a=fmtp:${videoCodec.payloadType} ${params}\n`;
+                sdp += `a=fmtp:${videoCodec.payloadType} ${params}\r\n`;
             }
         }
 
         // 오디오 스트림 추가
         if (audioRtpParameters && audioCodec) {
-            sdp += `m=audio ${this.audioPort} RTP/AVP ${audioCodec.payloadType}
-    c=IN IP4 127.0.0.1
-    a=rtcp:${this.audioPort + 1} IN IP4 127.0.0.1
-    a=recvonly
-    `;
+            sdp += `m=audio ${this.audioPort} RTP/AVP ${audioCodec.payloadType}\r\n`;
+            sdp += 'c=IN IP4 127.0.0.1\r\n';
+            sdp += `a=rtcp:${this.audioPort + 1} IN IP4 127.0.0.1\r\n`;
+            sdp += 'a=recvonly\r\n';
 
             // 오디오 코덱 정보
             if (audioCodec.mimeType.toLowerCase() === 'audio/opus') {
-                sdp += `a=rtpmap:${audioCodec.payloadType} opus/${audioCodec.clockRate}/${audioCodec.channels || 2}\n`;
+                sdp += `a=rtpmap:${audioCodec.payloadType} opus/${audioCodec.clockRate}/${audioCodec.channels || 2}\r\n`;
 
                 // Opus 파라미터
                 const opusParams = [];
@@ -202,14 +199,14 @@ class Recorder {
                     }
                 }
 
-                sdp += `a=fmtp:${audioCodec.payloadType} ${opusParams.join('; ')}\n`;
+                sdp += `a=fmtp:${audioCodec.payloadType} ${opusParams.join('; ')}\r\n`;
             } else {
                 // 다른 오디오 코덱의 경우
                 sdp += `a=rtpmap:${audioCodec.payloadType} ${audioCodec.mimeType.split('/')[1]}/${audioCodec.clockRate}`;
                 if (audioCodec.channels && audioCodec.channels > 1) {
                     sdp += `/${audioCodec.channels}`;
                 }
-                sdp += '\n';
+                sdp += '\r\n';
             }
         }
 
