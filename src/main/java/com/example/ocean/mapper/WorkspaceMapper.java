@@ -32,8 +32,30 @@ public interface WorkspaceMapper {
                            @Param("statusMsg") String statusMsg,
                            @Param("email") String email,
                            @Param("phoneNum") String phoneNum,
-                           @Param("userRole") String userRole,
-                           @Param("userImg") String userImg);
+                           @Param("userRole") String userRole);
+
+    // 워크스페이스 멤버 프로필 정보 업데이트
+    void updateUserProfile(@Param("workspaceCd") String workspaceCd,
+                           @Param("userId") String userId,
+                           @Param("userNickname") String userNickname,
+                           @Param("statusMsg") String statusMsg,
+                           @Param("email") String email,
+                           @Param("phoneNum") String phoneNum,
+                           @Param("userRole") String userRole);
+
+
+    // 워크스페이스 멤버 부서 및 직급 정보 업데이트
+    void updateUserDeptAndPosition(@Param("workspaceCd") String workspaceCd,
+                                     @Param("userId") String userId,
+                                     @Param("deptCd") String deptCd,
+                                     @Param("position") String position
+    );
+
+    // 워크스페이스 멤버 이미지 업데이트
+    void updateProfileImageOnly(@Param("workspaceCd") String workspaceCd,
+                                @Param("userId") String userId,
+                                @Param("userImg") String userImg);
+
 
     // 초대 코드로 워크스페이스 조회
     Workspace findByInviteCode(String inviteCd);

@@ -9,18 +9,23 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 // 페이지 렌더링 전용 컨트롤러 (HTML 응답)
 @Slf4j
@@ -148,6 +153,96 @@ public class WorkspacePageController {
     }
     */
 
+    @PostMapping("/workspace/{workspaceCd}/set-profile")
+    @ResponseBody
+    public String handleSetProfile(
+            @PathVariable String workspaceCd,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam("userNickname") String userNickname,
+            @RequestParam("email") String email,
+            @RequestParam(value = "phoneNum", required = false) String phoneNum,
+            @RequestParam(value = "statusMsg", required = false) String statusMsg,
+            @RequestParam("deptCd") String deptCd,
+            @RequestParam("position") String position,
+            @RequestParam(value = "userImg", required = false) MultipartFile userImgFile) {
+
+        try {
+            log.info("프로필 설정 시작 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
+
+            String userImgFileName = null;
+            if (userImgFile != null && !userImgFile.isEmpty()) {
+                userImgFileName = saveProfileImage(userImgFile);
+            }
+
+            // 멤버 존재 여부 확인
+            WorkspaceMember existingMember = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
+
+            if (existingMember == null) {
+                // 새 멤버 추가
+                workspaceService.insertUserProfileToWorkspace(
+                        workspaceCd,
+                        userPrincipal.getId(),
+                        userNickname,
+                        statusMsg,
+                        email,
+                        phoneNum,
+                        "MEMBER"
+                );
+            } else {
+                // 기존 멤버 업데이트
+                workspaceService.updateWorkspaceProfile(
+                        workspaceCd,
+                        userPrincipal.getId(),
+                        userNickname,
+                        statusMsg,
+                        email,
+                        phoneNum,
+                        "MEMBER"
+                );
+            }
+
+            // 부서 및 직급 정보 업데이트
+            workspaceService.updateDeptAndPosition(
+                    workspaceCd,
+                    userPrincipal.getId(),
+                    deptCd,
+                    position
+            );
+
+            log.info("프로필 설정 완료 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
+            return "success";
+
+        } catch (Exception e) {
+            log.error("프로필 설정 중 오류 발생", e);
+            return "error: " + e.getMessage();
+        }
+    }
+
+
+
+
+    // 프로필 이미지 저장 헬퍼 메소드
+    private String saveProfileImage(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            return null;
+        }
+
+        File uploadDir = new File("C:/ocean_img");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        String originalFileName = file.getOriginalFilename();
+        String ext = originalFileName != null ? originalFileName.substring(originalFileName.lastIndexOf(".")) : "";
+        String savedFileName = UUID.randomUUID().toString() + ext;
+
+        file.transferTo(new File(uploadDir, savedFileName));
+        return savedFileName;
+    }
+
+
+
+
     @GetMapping("/workspace/{workspaceCd}")
     public String workspaceDetailPage(@PathVariable String workspaceCd,
                                       @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -156,48 +251,34 @@ public class WorkspacePageController {
             return "redirect:/login";
         }
 
-        WorkspaceMember member = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
+        // 1. 멤버 정보 조회
+        WorkspaceMember member = workspaceService.findMemberByWorkspaceAndUser(
+                workspaceCd,
+                userPrincipal.getId()
+        );
 
+        // 2. 멤버가 없는 경우
         if (member == null) {
             log.warn("워크스페이스 참가 페이지 접근 - 사용자: {}, 워크스페이스 코드: {}, member == null", userPrincipal.getName(), workspaceCd);
             return "redirect:/workspace/" + workspaceCd + "/set-profile";
         }
 
-        log.info("워크스페이스 참가 페이지 접근 - 사용자: {}, 워크스페이스 코드: {}", userPrincipal.getName(), workspaceCd);
-        log.info("닉네임 값: '{}'", member.getUserNickname());
-        log.info("닉네임 null 여부: {}", member.getUserNickname() == null);
-        log.info("닉네임 isBlank 여부: {}", member.getUserNickname().isBlank());
-
+        // 3. 프로필 정보가 없는 경우
         if (member.getUserNickname() == null || member.getUserNickname().isBlank()) {
             return "redirect:/workspace/" + workspaceCd + "/set-profile";
         }
 
-
+        // 4. 워크스페이스 존재 여부 확인
         Workspace workspace = workspaceService.findWorkspaceByCd(workspaceCd);
         if (workspace == null) {
             model.addAttribute("error", "해당 워크스페이스를 찾을 수 없습니다.");
             return "workspace/error";
         }
 
-        List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(workspaceCd);
-
-        LocalDate endDate = LocalDate.ofInstant(workspace.getEndDate().toInstant(), ZoneId.systemDefault());
-        LocalDate createdDate = LocalDate.ofInstant(workspace.getCreatedDate().toInstant(), ZoneId.systemDefault());
-
-        long dday = ChronoUnit.DAYS.between(LocalDate.now(), endDate);
-        dday = Math.max(dday, 0);
-
-        long totalDays = ChronoUnit.DAYS.between(createdDate, endDate);
-        long passedDays = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
-        int progressPercent = totalDays > 0 ? (int) ((double) passedDays / totalDays * 100) : 100;
-
-        model.addAttribute("workspace", workspace);
-        model.addAttribute("members", members);
-        model.addAttribute("dday", dday);
-        model.addAttribute("progressPercent", progressPercent);
-
-        return "workspace/workspace-detail";
+        // 5. 모든 조건을 만족하면 wsmain으로 리다이렉트
+        return "redirect:/wsmain?workspaceCd=" + workspaceCd;
     }
+
 
     @GetMapping("/workspace/{workspaceCd}/set-profile")
     public String setProfilePageByPath(@PathVariable String workspaceCd,

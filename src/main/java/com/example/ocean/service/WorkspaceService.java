@@ -5,6 +5,7 @@ import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
 import com.example.ocean.mapper.WorkspaceMapper;
 import com.example.ocean.security.oauth.UserPrincipal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class WorkspaceService {
 
@@ -52,9 +54,8 @@ public class WorkspaceService {
 
     public void insertUserProfileToWorkspace(String workspaceCd, String userId,
                                              String userNickname, String statusMsg,
-                                             String email, String phoneNum, String role,
-                                             String userImg) {
-        workspaceMapper.insertUserProfile(workspaceCd, userId, userNickname, statusMsg, email, phoneNum, role, userImg);
+                                             String email, String phoneNum, String role) {
+        workspaceMapper.insertUserProfile(workspaceCd, userId, userNickname, statusMsg, email, phoneNum, role);
     }
 
     public Workspace findByInviteCode(String inviteCd) {
@@ -184,12 +185,55 @@ public class WorkspaceService {
     }
 
     // 사용자 멀티 프로필
-    public void updateWorkspaceProfile(String workspaceCd, String userId,
-                                       String userNickname, String statusMsg,
-                                       String email, String phoneNum,
-                                       String userImg) {
-        workspaceMapper.updateWorkspaceProfile(workspaceCd, userId, userNickname, statusMsg, email, phoneNum, userImg);
+    public void updateWorkspaceProfile(
+            String workspaceCd,
+            String userId,
+            String userNickname,
+            String statusMsg,
+            String email,
+            String phoneNum,
+            String userRole
+    ) {
+        try {
+            log.info("프로필 업데이트 시작");
+            log.info("워크스페이스: {}", workspaceCd);
+            log.info("사용자: {}", userId);
+            log.info("닉네임: {}", userNickname);
+            log.info("상태메시지: {}", statusMsg);
+            log.info("이메일: {}", email);
+            log.info("전화번호: {}", phoneNum);
+            log.info("역할: {}", userRole);
+
+            workspaceMapper.updateUserProfile(
+                    workspaceCd,
+                    userId,
+                    userNickname,
+                    statusMsg,
+                    email,
+                    phoneNum,
+                    userRole
+            );
+            log.info("프로필 업데이트 완료");
+        } catch (Exception e) {
+            log.error("프로필 업데이트 실패", e);
+            throw new RuntimeException("프로필 업데이트 중 오류가 발생했습니다.", e);
+        }
     }
+
+
+    // 사용자 '이미지'만 업데이트 매서드
+    public void updateProfileImage(String workspaceCd, String userId, String imageFileName) {
+        try {
+            workspaceMapper.updateProfileImageOnly(workspaceCd, userId, imageFileName);
+        } catch (Exception e) {
+            log.error("프로필 이미지 업데이트 실패 - workspaceCd: {}, userId: {}", workspaceCd, userId, e);
+            throw new RuntimeException("프로필 이미지 업데이트 중 오류가 발생했습니다.", e);
+        }
+    }
+
+
+
+
 
     public void updateDeptAndPosition(String workspaceCd, String userId,
                                       String deptCd, String position) {

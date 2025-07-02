@@ -12,6 +12,7 @@
     <link rel="stylesheet" th:href="@{/css/ocean-background.css}">
 
     <script>
+        // 찜 기능
         document.addEventListener('DOMContentLoaded', function () {
             // 체크박스 클릭 시 workspaceCd 콘솔 출력
             document.querySelectorAll('input[name="selectedWorkspaces"]').forEach(cb => {
@@ -51,17 +52,17 @@
                         },
                         body: JSON.stringify({ favorite: isFavorite })
                     })
-                    .then(response => {
-                        if (!response.ok) throw new Error("서버 오류 발생");
-                    })
-                    .then(() => {
-                        alert(isFavorite ? "찜 완료!" : "찜 해제 완료!");
-                        location.reload(); // 상태 반영 위해 새로고침
-                    })
-                    .catch(error => {
-                        console.error("에러 발생:", error);
-                        alert("처리 중 에러가 발생했습니다.");
-                    });
+                        .then(response => {
+                            if (!response.ok) throw new Error("서버 오류 발생");
+                        })
+                        .then(() => {
+                            alert(isFavorite ? "찜 완료!" : "찜 해제 완료!");
+                            location.reload(); // 상태 반영 위해 새로고침
+                        })
+                        .catch(error => {
+                            console.error("에러 발생:", error);
+                            alert("처리 중 에러가 발생했습니다.");
+                        });
                 });
             }
         });
@@ -152,6 +153,38 @@
 
 <!--토큰 JS -->
 <script th:src="@{/js/Token.js}"></script>
+
+<script>
+    window.goToDetail = async function(workspaceCd) {
+        try {
+            // 멤버 프로필 정보 확인
+            const response = await fetch(`/api/workspaces/${workspaceCd}/profile`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+                }
+            });
+
+            if (response.ok) {
+                const memberProfile = await response.json();
+
+                // 프로필 정보 있는지 확인
+                if (memberProfile && memberProfile.userNickname) {
+                    // 프로필 있으면 메인 페이지로
+                    window.location.href = `/wsmain?workspaceCd=${workspaceCd}`;
+                } else {
+                    // 프로필 없으면 프로필 설정 페이지로
+                    window.location.href = `/workspace/${workspaceCd}/set-profile`;
+                }
+            } else {
+                throw new Error('프로필 조회 실패');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('오류가 발생했습니다.');
+        }
+    }
+
+</script>
 
 <!--워크 스페이스 리스트 JS -->
 <script th:src="@{/js/Workspace.js}"></script>

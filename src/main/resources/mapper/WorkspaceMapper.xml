@@ -37,25 +37,56 @@
     <update id="updateUserProfile">
         UPDATE WORKSPACE_MEMBERS
         SET
-        USER_NICKNAME = #{userNickname},
-        STATUS_MSG = #{statusMsg},
-        EMAIL = #{email},
-        PHONE_NUM = #{phoneNum}
+            USER_NICKNAME = #{userNickname},
+            STATUS_MSG = #{statusMsg},
+            EMAIL = #{email},
+            PHONE_NUM = #{phoneNum},
+            USER_ROLE = #{userRole},
+            USER_IMG = #{userImg}
         WHERE
-        WORKSPACE_CD = #{workspaceCd}
-        AND USER_ID = #{userId}
+            WORKSPACE_CD = #{workspaceCd}
+          AND USER_ID = #{userId}
     </update>
+
+    <!-- 사용자 프로필 이미지 업데이트 -->
+    <update id="updateProfileImage">
+        UPDATE WORKSPACE_MEMBERS
+        SET USER_IMG = #{userImg}
+        WHERE WORKSPACE_CD = #{workspaceCd}
+          AND USER_ID = #{userId}
+    </update>
+
+    <!-- 사용자 프로필 이미지'만' 업데이트 -->
+    <update id="updateProfileImageOnly">
+        UPDATE WORKSPACE_MEMBERS
+        SET USER_IMG = #{userImg}
+        WHERE WORKSPACE_CD = #{workspaceCd}
+          AND USER_ID = #{userId}
+    </update>
+
+
+
+    <!-- 멤버 부서 및 직급 정보 업데이트 -->
+    <update id="updateMemberDeptAndPosition">
+        UPDATE workspace_member
+        SET
+            dept_cd = #{deptCd},
+            position = #{position}
+        WHERE workspace_cd = #{workspaceCd}
+          AND user_id = #{userId}
+    </update>
+
 
     <!-- 사용자 프로필 추가 -->
     <insert id="insertUserProfile">
         INSERT INTO WORKSPACE_MEMBERS (
         WORKSPACE_CD, USER_ID, USER_NICKNAME,
         STATUS_MSG, EMAIL, PHONE_NUM,
-        USER_ROLE, ACTIVE_STATE, JOINED_DATE, USER_IMG
+        USER_ROLE, ACTIVE_STATE, JOINED_DATE
         ) VALUES (
         #{workspaceCd}, #{userId}, #{userNickname},
         #{statusMsg}, #{email}, #{phoneNum},
-        #{userRole}, '1', NOW(), #{userImg}
+        #{userRole}, '1', NOW()
         )
     </insert>
 

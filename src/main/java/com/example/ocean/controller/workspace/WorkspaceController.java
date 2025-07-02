@@ -6,6 +6,7 @@ import com.example.ocean.domain.WorkspaceMember;
 import com.example.ocean.service.WorkspaceService;
 import com.example.ocean.security.oauth.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import java.util.*;
 @RequestMapping("/api/workspaces")
 @RequiredArgsConstructor
 public class WorkspaceController {
+
 
     private final WorkspaceService workspaceService;
 
@@ -134,28 +136,54 @@ public class WorkspaceController {
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestBody WorkspaceMember profileData) {
 
-        workspaceService.updateWorkspaceProfile(
-                workspaceCd,
-                userPrincipal.getId(),
-                profileData.getUserNickname(),
-                profileData.getStatusMsg(),
-                profileData.getEmail(),
-                profileData.getPhoneNum(),
-                null // 이미지는 별도 처리
-        );
+        try {
+            // 멤버 존재 여부 확인
+            WorkspaceMember existingMember = workspaceService
+                    .findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
 
-        workspaceService.updateDeptAndPosition(
-                workspaceCd,
-                userPrincipal.getId(),
-                profileData.getDeptCd(),
-                profileData.getPosition()
-        );
+            if (existingMember == null) {
+                // 새 멤버 추가
+                workspaceService.insertUserProfileToWorkspace(
+                        workspaceCd,
+                        userPrincipal.getId(),
+                        profileData.getUserNickname(),
+                        profileData.getStatusMsg(),
+                        profileData.getEmail(),
+                        profileData.getPhoneNum(),
+                        "MEMBER"
+                );
+            } else {
+                // 기존 멤버 업데이트
+                workspaceService.updateWorkspaceProfile(
+                        workspaceCd,
+                        userPrincipal.getId(),
+                        profileData.getUserNickname(),
+                        profileData.getStatusMsg(),
+                        profileData.getEmail(),
+                        profileData.getPhoneNum(),
+                        profileData.getUserRole()
+                );
+            }
 
-        WorkspaceMember updatedProfile = workspaceService
-                .findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
+            // 부서 및 직급 정보 업데이트
+            workspaceService.updateDeptAndPosition(
+                    workspaceCd,
+                    userPrincipal.getId(),
+                    profileData.getDeptCd(),
+                    profileData.getPosition()
+            );
 
-        return ResponseEntity.ok(updatedProfile);
+            WorkspaceMember updatedProfile = workspaceService
+                    .findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
+
+            return ResponseEntity.ok(updatedProfile);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
+
+
 
     // 부서 목록 조회
     @GetMapping("/{workspaceCd}/departments")
@@ -221,32 +249,48 @@ public class WorkspaceController {
     public ResponseEntity<Map<String, String>> uploadProfileImage(
             @PathVariable String workspaceCd,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam("image") MultipartFile image) throws IOException {
+            @RequestParam("image") MultipartFile image) {
 
-        if (image.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+        try {
+            if (image.isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            File uploadDir = new File("C:/uploads/workspace/");
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            String originalFilename = image.getOriginalFilename();
+            String ext = originalFilename != null ?
+                    originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
+            String savedFileName = UUID.randomUUID() + ext;
+
+            File destFile = new File(uploadDir, savedFileName);
+            image.transferTo(destFile);
+
+            // 이미지 파일명만 DB에 업데이트
+            workspaceService.updateWorkspaceProfile(
+                    workspaceCd,
+                    userPrincipal.getId(),
+                    null,  // userNickname
+                    null,  // statusMsg
+                    null,  // email
+                    null,  // phoneNum
+                    null   // userRole
+            );
+
+            Map<String, String> response = new HashMap<>();
+            response.put("imageUrl", savedFileName);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(errorResponse);
         }
-
-        File uploadDir = new File("C:/ocean_img");
-        if (!uploadDir.exists()) uploadDir.mkdirs();
-
-        String ext = image.getOriginalFilename()
-                .substring(image.getOriginalFilename().lastIndexOf("."));
-        String savedFileName = UUID.randomUUID() + ext;
-
-        image.transferTo(new File(uploadDir, savedFileName));
-
-        // DB 업데이트
-        workspaceService.updateWorkspaceProfile(
-                workspaceCd,
-                userPrincipal.getId(),
-                null, null, null, null,
-                savedFileName
-        );
-
-        Map<String, String> response = new HashMap<>();
-        response.put("imageUrl", savedFileName);
-
-        return ResponseEntity.ok(response);
     }
+
 }
