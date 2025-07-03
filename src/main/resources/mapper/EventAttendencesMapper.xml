@@ -7,7 +7,7 @@
 
     <insert id="insertEventAttendences" parameterType="map">
         INSERT INTO `EVENT_ATTENDENCES`(
-            EVENT_CD, USER_ID
+            EVENT_CD AS eventCd, USER_ID AS userId
         )VALUES(
             #{eventCd}, #{userId}
         )
@@ -45,11 +45,11 @@
         WHERE   EVENT_CD = #{eventCd}
     </delete>
 
-    <!-- 이벤트 수정시 참석자 삭제 -->
+<!--
     <delete id="deleteAttendeesByUserId" parameterType="String">
         DELETE
         FROM   `EVENT_ATTENDENCES`
         WHERE   USER_ID = #{userId}
     </delete>
-
+-->
 </mapper>

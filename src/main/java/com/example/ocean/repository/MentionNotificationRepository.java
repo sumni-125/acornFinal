@@ -12,5 +12,6 @@ public interface MentionNotificationRepository {
     int insertMentionNotification(MentionNotification notification);
     List<MentionNotification> selectUserNoti(@Param("usreId") String userId);
     int updateAllNoti(@Param("usreId") String userId);
+
     int updateNoti(ReadNotiRequest request);
 }

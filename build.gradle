@@ -59,16 +59,15 @@ dependencies {
 
 	// Spring Boot Actuator (health check용)
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	
+
 	// Spring Session
 	implementation 'org.springframework.session:spring-session-core'
 
 	// aws s3버킷 사용
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
-	
+
 	// 이메일
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-
 
 }
 

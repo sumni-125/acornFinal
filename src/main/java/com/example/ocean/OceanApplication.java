@@ -10,7 +10,6 @@ import org.springframework.context.annotation.ComponentScan;
 		"com.example.ocean.mapper",
 		"com.example.ocean.repository"
 })
-
 public class OceanApplication {
 
 	public static void main(String[] args) {

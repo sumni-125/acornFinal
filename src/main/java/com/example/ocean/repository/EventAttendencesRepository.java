@@ -1,7 +1,7 @@
 package com.example.ocean.repository;
 
 import com.example.ocean.dto.response.AttendeesInfo;
-import com.example.ocean.dto.response.EventAttendences;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

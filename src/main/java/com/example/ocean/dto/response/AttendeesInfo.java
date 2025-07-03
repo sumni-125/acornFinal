@@ -3,11 +3,8 @@ package com.example.ocean.dto.response;
 import lombok.Data;
 
 @Data
-
 public class AttendeesInfo {
-
-    String eventCd;
-    String userId;
-    String userNickName;
-
+    private String eventCd;
+    private String userId;
+    private String userNickName;
 }
