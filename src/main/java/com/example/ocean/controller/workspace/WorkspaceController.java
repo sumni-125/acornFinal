@@ -270,4 +270,19 @@ public class WorkspaceController {
         return ResponseEntity.ok(res);
     }
 
+    // 이메일 전송
+    @PostMapping("/invite-email")
+    @ResponseBody
+    public ResponseEntity<String> sendWorkspaceInvite(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String inviteCode = request.get("inviteCode");
+
+        try {
+            workspaceService.sendInviteEmail(email, inviteCode);
+            return ResponseEntity.ok("이메일 전송 완료");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("이메일 전송 실패: " + e.getMessage());
+        }
+    }
+
 }

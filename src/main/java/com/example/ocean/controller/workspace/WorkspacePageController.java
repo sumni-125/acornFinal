@@ -22,6 +22,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 // 페이지 렌더링 전용 컨트롤러 (HTML 응답)
 @Slf4j
@@ -158,18 +159,7 @@ public class WorkspacePageController {
         }
 
         WorkspaceMember member = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
-
-        if (member == null) {
-            log.warn("워크스페이스 참가 페이지 접근 - 사용자: {}, 워크스페이스 코드: {}, member == null", userPrincipal.getName(), workspaceCd);
-            return "redirect:/workspace/" + workspaceCd + "/set-profile";
-        }
-
-        log.info("워크스페이스 참가 페이지 접근 - 사용자: {}, 워크스페이스 코드: {}", userPrincipal.getName(), workspaceCd);
-        log.info("닉네임 값: '{}'", member.getUserNickname());
-        log.info("닉네임 null 여부: {}", member.getUserNickname() == null);
-        log.info("닉네임 isBlank 여부: {}", member.getUserNickname().isBlank());
-
-        if (member.getUserNickname() == null || member.getUserNickname().isBlank()) {
+        if (member == null || member.getUserNickname() == null || member.getUserNickname().isBlank()) {
             return "redirect:/workspace/" + workspaceCd + "/set-profile";
         }
 
@@ -183,22 +173,21 @@ public class WorkspacePageController {
 
         LocalDate endDate = LocalDate.ofInstant(workspace.getEndDate().toInstant(), ZoneId.systemDefault());
         LocalDate createdDate = LocalDate.ofInstant(workspace.getCreatedDate().toInstant(), ZoneId.systemDefault());
-
-        long dday = ChronoUnit.DAYS.between(LocalDate.now(), endDate);
-        dday = Math.max(dday, 0);
-
+        long dday = Math.max(ChronoUnit.DAYS.between(LocalDate.now(), endDate), 0);
         long totalDays = ChronoUnit.DAYS.between(createdDate, endDate);
         long passedDays = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
         int progressPercent = totalDays > 0 ? (int) ((double) passedDays / totalDays * 100) : 100;
+
+        Map<String, Object> eventSummary = workspaceService.getEventSummary(workspaceCd);
 
         model.addAttribute("workspace", workspace);
         model.addAttribute("members", members);
         model.addAttribute("dday", dday);
         model.addAttribute("progressPercent", progressPercent);
+        model.addAttribute("eventSummary", eventSummary);
 
         return "workspace/workspace-detail";
     }
-
 
     @GetMapping("/workspace/{workspaceCd}/set-profile")
     public String setProfilePageByPath(@PathVariable String workspaceCd,

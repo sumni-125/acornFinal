@@ -4,7 +4,10 @@ import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
 import com.example.ocean.mapper.WorkspaceMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -14,6 +17,9 @@ import java.util.Map;
 
 @Service
 public class WorkspaceService {
+
+    @Autowired
+    private JavaMailSender mailSender;
 
     private final WorkspaceMapper workspaceMapper;
 
@@ -164,4 +170,38 @@ public class WorkspaceService {
         workspaceMapper.updateUserState(param);
     }
 
+    public Map<String, Object> getEventSummary(String workspaceCd) {
+        Map<String, Object> summary = workspaceMapper.getEventSummaryByWorkspace(workspaceCd);
+        if (summary == null) summary = new HashMap<>();
+
+        int done = summary.get("doneCount") != null ? ((Number) summary.get("doneCount")).intValue() : 0;
+        int total = summary.get("totalCount") != null ? ((Number) summary.get("totalCount")).intValue() : 0;
+        int todo = summary.get("todoCount") != null ? ((Number) summary.get("todoCount")).intValue() : 0;
+        int ing = summary.get("ingCount") != null ? ((Number) summary.get("ingCount")).intValue() : 0;
+
+        double progressRate = total > 0 ? (done * 100.0 / total) : 0.0;
+
+        summary.put("doneCount", done);
+        summary.put("todoCount", todo);
+        summary.put("ingCount", ing);
+        summary.put("totalCount", total);
+        summary.put("progressRate", String.format("%.1f", progressRate));
+
+        return summary;
+    }
+
+    public void sendInviteEmail(String email, String inviteCode) {
+        String subject = "워크스페이스 초대코드 안내";
+        String content = String.format(
+                "아래 초대코드를 사용해 워크스페이스에 참여하세요!\n\n초대코드: %s\n참여 링크: localhost:8080\n",
+                inviteCode
+        );
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(content);
+
+        mailSender.send(message);
+    }
 }

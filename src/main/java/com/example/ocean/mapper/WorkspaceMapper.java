@@ -120,4 +120,8 @@ public interface WorkspaceMapper {
 
     // 사용자 상태 (USER_STATE) 업데이트 (예: 탈퇴 처리 등)
     void updateUserState(Map<String, Object> param);
+
+    // 진행 상태에 따른 일정 출력
+    Map<String, Object> getEventSummaryByWorkspace(String workspaceCd);
+
 }

@@ -281,4 +281,14 @@
         WHERE WM.WORKSPACE_CD = #{workspaceCd} AND WM.USER_ID = #{userId}
     </update>
 
+    <select id="getEventSummaryByWorkspace" resultType="map">
+        SELECT
+        SUM(CASE WHEN PROGRESS_STATUS = 'TODO' THEN 1 ELSE 0 END) AS todoCount,
+        SUM(CASE WHEN PROGRESS_STATUS = 'ING' THEN 1 ELSE 0 END) AS ingCount,
+        SUM(CASE WHEN PROGRESS_STATUS = 'DONE' THEN 1 ELSE 0 END) AS doneCount,
+        COUNT(*) AS totalCount
+        FROM EVENTS
+        WHERE WORKSPACE_CD = #{workspaceCd}
+    </select>
+
 </mapper>
