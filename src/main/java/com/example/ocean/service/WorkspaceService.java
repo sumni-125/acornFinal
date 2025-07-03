@@ -52,12 +52,6 @@ public class WorkspaceService {
         return true;
     }
 
-    public void insertUserProfileToWorkspace(String workspaceCd, String userId,
-                                             String userNickname, String statusMsg,
-                                             String email, String phoneNum, String role) {
-        workspaceMapper.insertUserProfile(workspaceCd, userId, userNickname, statusMsg, email, phoneNum, role);
-    }
-
     public Workspace findByInviteCode(String inviteCd) {
         return workspaceMapper.findByInviteCode(inviteCd);
     }
@@ -127,20 +121,38 @@ public class WorkspaceService {
     @Transactional
     public Workspace createWorkspace(
             UserPrincipal userPrincipal,
-            Workspace workspace, // Controller에서 @ModelAttribute로 받은 객체
+            Workspace workspace,
             List<String> departments,
             MultipartFile file
     ) throws IOException {
 
-        // 1. 파일 저장 로직 (이 부분은 새로 추가되어야 합니다)
+        log.info("워크스페이스 생성 시작 - 업로드 디렉토리: {}", uploadDir);
+
+        // 1. 파일 저장 로직
         String savedFilePath = null;
         if (file != null && !file.isEmpty()) {
+            log.info("파일 업로드 시작 - 파일명: {}, 크기: {} bytes",
+                    file.getOriginalFilename(), file.getSize());
             String originalFilename = file.getOriginalFilename();
             String savedFilename = UUID.randomUUID().toString() + "_" + originalFilename;
-            new File(uploadDir).mkdirs(); // 폴더가 없으면 생성
-            file.transferTo(new File(uploadDir + savedFilename));
+
+            // ⚠️ 수정된 부분: File 객체를 사용하여 경로 조합
+            File uploadDirectory = new File(uploadDir);
+            if (!uploadDirectory.exists()) {
+                log.warn("업로드 디렉토리가 존재하지 않습니다. 생성 시도: {}", uploadDir);
+                uploadDirectory.mkdirs();
+            }
+
+            // ⚠️ 중요: 경로와 파일명을 올바르게 조합
+            File destinationFile = new File(uploadDirectory, savedFilename);
+            log.info("파일 저장 경로: {}", destinationFile.getAbsolutePath());
+
+            file.transferTo(destinationFile);
             savedFilePath = "/images/workspace/" + savedFilename;
+
+            log.info("파일 업로드 완료 - 저장 경로: {}", savedFilePath);
         }
+
 
         // 2. ID, 초대코드, 날짜 등 DB 저장 전 값 설정
         workspace.setWorkspaceCd(UUID.randomUUID().toString());
@@ -192,47 +204,104 @@ public class WorkspaceService {
             String statusMsg,
             String email,
             String phoneNum,
-            String userRole
+            String userRole,
+            String userImg
     ) {
         try {
-            log.info("프로필 업데이트 시작");
-            log.info("워크스페이스: {}", workspaceCd);
-            log.info("사용자: {}", userId);
+            log.info("=== 프로필 업데이트 시작 ===");
+            log.info("워크스페이스 코드: {}", workspaceCd);
+            log.info("사용자 ID: {}", userId);
             log.info("닉네임: {}", userNickname);
             log.info("상태메시지: {}", statusMsg);
             log.info("이메일: {}", email);
             log.info("전화번호: {}", phoneNum);
             log.info("역할: {}", userRole);
+            log.info("이미지 경로: {}", userImg);  // ⭐ 이미지 경로 로그
 
-            workspaceMapper.updateUserProfile(
+            // ⭐ 매퍼 호출 (6개 파라미터)
+            workspaceMapper.updateWorkspaceProfile(
                     workspaceCd,
                     userId,
                     userNickname,
                     statusMsg,
                     email,
                     phoneNum,
-                    userRole
+                    userImg  // ⭐ 이미지 경로 포함
             );
-            log.info("프로필 업데이트 완료");
+
+            log.info("=== 프로필 업데이트 완료 ===");
+
         } catch (Exception e) {
-            log.error("프로필 업데이트 실패", e);
+            log.error("프로필 업데이트 실패 - workspaceCd: {}, userId: {}", workspaceCd, userId, e);
             throw new RuntimeException("프로필 업데이트 중 오류가 발생했습니다.", e);
         }
     }
 
+    /**
+     * 워크스페이스에 새 사용자 프로필 추가
+     * 이미지 경로를 포함한 모든 프로필 정보를 삽입
+     */
+    public void insertUserProfileToWorkspace(
+            String workspaceCd,
+            String userId,
+            String userNickname,
+            String statusMsg,
+            String email,
+            String phoneNum,
+            String role,
+            String userImg
+    ) {
+        try {
+            log.info("=== 사용자 프로필 추가 시작 ===");
+            log.info("워크스페이스 코드: {}", workspaceCd);
+            log.info("사용자 ID: {}", userId);
+            log.info("닉네임: {}", userNickname);
+            log.info("상태메시지: {}", statusMsg);
+            log.info("이메일: {}", email);
+            log.info("전화번호: {}", phoneNum);
+            log.info("역할: {}", role);
+            log.info("이미지 경로: {}", userImg);  // ⭐ 이미지 경로 로그
 
-    // 사용자 '이미지'만 업데이트 매서드
+            // ⭐ 매퍼 호출 (8개 파라미터)
+            workspaceMapper.insertUserProfile(
+                    workspaceCd,
+                    userId,
+                    userNickname,
+                    statusMsg,
+                    email,
+                    phoneNum,
+                    role,
+                    userImg  // ⭐ 이미지 경로 포함
+            );
+
+            log.info("=== 사용자 프로필 추가 완료 ===");
+
+        } catch (Exception e) {
+            log.error("사용자 프로필 추가 실패 - workspaceCd: {}, userId: {}", workspaceCd, userId, e);
+            throw new RuntimeException("사용자 프로필 추가 중 오류가 발생했습니다.", e);
+        }
+    }
+
+
+    /**
+     * 프로필 이미지만 업데이트하는 메서드
+     */
     public void updateProfileImage(String workspaceCd, String userId, String imageFileName) {
         try {
+            log.info("=== 프로필 이미지 업데이트 시작 ===");
+            log.info("워크스페이스 코드: {}", workspaceCd);
+            log.info("사용자 ID: {}", userId);
+            log.info("이미지 파일명: {}", imageFileName);
+
             workspaceMapper.updateProfileImageOnly(workspaceCd, userId, imageFileName);
+
+            log.info("=== 프로필 이미지 업데이트 완료 ===");
+
         } catch (Exception e) {
             log.error("프로필 이미지 업데이트 실패 - workspaceCd: {}, userId: {}", workspaceCd, userId, e);
             throw new RuntimeException("프로필 이미지 업데이트 중 오류가 발생했습니다.", e);
         }
     }
-
-
-
 
 
     public void updateDeptAndPosition(String workspaceCd, String userId,

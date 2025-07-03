@@ -901,9 +901,7 @@
 
                 <div class="form-group">
                     <label class="icon-user-detail">참가자 선택</label>
-                    <div class="checkbox-container" id="workspaceMembers">
-                        
-                    </div>
+                    <div class="checkbox-container" id="workspaceMembers"></div>
                 </div>
 
                 <div class="form-group">
@@ -1002,6 +1000,11 @@
             </div>
 
             <div class="info-item">
+                <span class="icon icon-user-detail"></span>
+                <div class="value" id="detailWorkspaceMembers">참가자</div>
+            </div>
+
+            <div class="info-item">
                 <span class="icon icon-location-detail"></span>
                 <div class="value" id="detailLocation"></div>
             </div>
@@ -1051,6 +1054,11 @@
                 <div class="form-group">
                     <label class="icon-clock">종료 일시</label>
                     <input type="datetime-local" id="update-endDatetime" name="endDatetime" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="icon-user-detail">참가자 선택</label>
+                    <div class="checkbox-container" id="update-workspaceMembers"></div>
                 </div>
 
                 <div class="form-group">
@@ -1116,8 +1124,29 @@
 
     <script th:inline="javascript">
         /*<![CDATA[*/
+        const currentUser = /*[[${currentUser}]]*/ '';
+        const workspaceCd = /*[[${workspaceCd}]]*/ '';
+
+        console.log("currentUser: "+currentUser.userId);
+        console.log("workspaceCd: "+workspaceCd);
         // 현재 로그인 사용자 ID는 백엔드에서 주입되어야 합니다. (더미값)
-        const currentUserId = '102049037194510417221'; // 실제로는 Thymeleaf 모델에서 가져와야 함: [[${currentUserId}]]
+        /*
+        fetch(`/api/user/profile`)
+            .then(res => {
+                if (!res.ok) throw new Error("유저 정보 조회 실패");
+                return res.json();
+            })
+            .then((data)=>{
+                //
+                const currentUserId = data.userId;
+            })
+            .catch(err => {
+                console.error(err);
+            });*/
+
+
+        const currentUserId = '102049037194510417221';
+         // 실제로는 Thymeleaf 모델에서 가져와야 함: [[${currentUserId}]]
 
         document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
