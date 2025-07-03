@@ -142,10 +142,7 @@ public interface WorkspaceMapper {
 
     // 사용자 상태 (USER_STATE) 업데이트 (예: 탈퇴 처리 등)
     void updateUserState(Map<String, Object> param);
-<<<<<<< HEAD
 
     String findWorkspaceNameByWorkspaceCd(@Param("workspaceCd") String workspaceCd);
 
-=======
->>>>>>> 41597bbd143e8b8beed86456717c17692d89e0a5
 }
