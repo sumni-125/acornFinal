@@ -46,18 +46,6 @@ public class GlobalExceptionHandler {
         
         return mav;
     }
-
-    // 👇 추가: 404 처리
-    @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNoResourceFound(NoResourceFoundException e, HttpServletRequest request, Model model) {
-        log.warn("리소스 없음 - URL: {}, 오류: {}", request.getRequestURL(), e.getMessage());
-
-        model.addAttribute("error", "404 Not Found");
-        model.addAttribute("errorMessage", e.getMessage());
-        model.addAttribute("exception", e.toString());
-        return "error";  // templates/error/404.html 있으면 이 뷰 사용
-    }
     
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
