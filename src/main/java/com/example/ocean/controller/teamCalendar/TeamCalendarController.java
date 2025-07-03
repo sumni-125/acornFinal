@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class TeamCalendarController {
 
-    @GetMapping("/teamCalendar")
+    @GetMapping("/calendar/team")
     public String hihi(){
         return "calendar";
     }
