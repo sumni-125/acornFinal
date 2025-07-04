@@ -1,5 +1,8 @@
 package com.example.ocean.service;
 
+import com.example.ocean.domain.Event;
+import com.example.ocean.domain.File;
+import com.example.ocean.domain.MentionNotification;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
 import com.example.ocean.repository.EventAttendencesRepository;
@@ -31,25 +34,25 @@ public class TeamCalendarService {
     private final MentionNotificationRepository mentionNotificationRepository;
     private final S3Uploader s3Uploader;
 
-    public List<TeamCalendarResponse> getTeamEvents(String workspaceCd){
+    public List<CalendarResponse> getTeamEvents(String workspaceCd){
         return teamEventRepository.selectTeamEvents(workspaceCd);
     }
 
     public EventDetailResponse selectTeamEventDetail(String eventCd){
         List<AttendeesInfo> attendences = eventAttendencesRepository.selectAttendeesInfo(eventCd);
-        TeamEventDetail event = teamEventRepository.selectTeamEventDetail(eventCd);
-        List<EventUploadedFiles> fileList = fileRepository.selectFileByEventCd(eventCd);
+        Event event = teamEventRepository.selectTeamEventDetail(eventCd);
+        List<File> fileList = fileRepository.selectFileByEventCd(eventCd);
 
         EventDetailResponse response = new EventDetailResponse(event, attendences, fileList);
 
         return response;
     }
 
-    public int insertTeamEvent(CreateTeamEventRequest request, List<String> attendenceIds, MultipartFile[] files){
+    public int insertTeamEvent(EventCreateRequest request, List<String> attendenceIds, MultipartFile[] files){
         String eventCd = "evnt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String userId = request.getUserId();
 
-        TeamEventDetail detail = new TeamEventDetail();
+        Event detail = new Event();
 
         detail.setEventCd(eventCd);
         detail.setUserId(userId);
@@ -83,10 +86,10 @@ public class TeamCalendarService {
         return events;
     }
 
-    public int updateTeamEvent(UpdateTeamEventRequest updateTeamEventRequest, List<String> deletedFileIds, MultipartFile[] insertedFiles){
-        int events = teamEventRepository.updateTeamEvent(updateTeamEventRequest);
-        String eventCd = updateTeamEventRequest.getEventCd();
-        String userId = updateTeamEventRequest.getUserId();
+    public int updateTeamEvent(EventUpdateRequest eventUpdateRequest, List<String> deletedFileIds, MultipartFile[] insertedFiles){
+        int events = teamEventRepository.updateTeamEvent(eventUpdateRequest);
+        String eventCd = eventUpdateRequest.getEventCd();
+        String userId = eventUpdateRequest.getUserId();
 
         //삭제된파일
         if (deletedFileIds != null && deletedFileIds.size() > 0) {
@@ -115,7 +118,7 @@ public class TeamCalendarService {
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
-                EventUploadedFiles insertFileRequest = EventUploadedFiles.builder()
+                File insertFileRequest = File.builder()
                         .fileId(UUID.randomUUID().toString())
                         .eventCd(eventCd)
                         .fileNm(file.getOriginalFilename())
@@ -132,7 +135,7 @@ public class TeamCalendarService {
     }
 
     public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
-        EventUploadedFiles file = fileRepository.selectFileByFileId(fileId);
+        File file = fileRepository.selectFileByFileId(fileId);
         String key = extractKeyFromUrl(file.getFilePath());
         byte[] bytes = s3Uploader.download(key);
 
@@ -154,7 +157,8 @@ public class TeamCalendarService {
         if (attendeesInfos != null && attendeesInfos.size() > 0) {
             for(AttendeesInfo info :attendeesInfos){
                 String attendId = info.getUserId();
-                MentionNotification noti = new MentionNotification(eventCd, attendId, notiState,"0" );
+                String notiCd="noti_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+                MentionNotification noti = new MentionNotification(notiCd, eventCd, attendId, notiState,"N" );
                 mentionNotificationRepository.insertMentionNotification(noti);
             }
         }

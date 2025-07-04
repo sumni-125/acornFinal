@@ -1,5 +1,8 @@
 package com.example.ocean.service;
 
+import com.example.ocean.domain.Event;
+import com.example.ocean.domain.File;
+import com.example.ocean.domain.MentionNotification;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
 import com.example.ocean.repository.CalendarEventRepository;
@@ -20,10 +23,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,12 +38,12 @@ public class PersonalCalendarService {
 
     // 일정 crud
 
-    public List<PersonalCalendarResponse> getPersonalEvents(String userId){
+    public List<CalendarResponse> getPersonalEvents(String userId){
         return calendarEventRepository.selectPersonalCalendar(userId);
     }
 
     @Transactional
-    public int createPersonalEvent(PersonalEventCreateRequest request, List<String> attendenceIds, MultipartFile[] files){
+    public int createPersonalEvent(EventCreateRequest request, List<String> attendenceIds, MultipartFile[] files){
 
         String eventCd = "evnt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String userId = request.getUserId();
@@ -80,22 +81,22 @@ public class PersonalCalendarService {
         return result;
     }
 
-    public PersonalEventDetailResponse getPersonalEventDetail(String eventCd){
+    public EventDetailResponse getPersonalEventDetail(String eventCd){
 
         Event event = calendarEventRepository.selectPersonalEvent(eventCd);
-        List<EventUploadedFiles> fileList = fileRepository.selectFileByEventCd(eventCd);
+        List<File> fileList = fileRepository.selectFileByEventCd(eventCd);
         List<AttendeesInfo> attendences = eventAttendencesRepository.selectAttendeesInfo(eventCd);
 
-        PersonalEventDetailResponse response = new PersonalEventDetailResponse(event, fileList, attendences);
+        EventDetailResponse response = new EventDetailResponse(event, attendences, fileList);
 
         return response;
     }
 
     @Transactional
-    public int updatePersonalEvent(PersonalEventUpdateRequest personalEventUpdateRequest, List<String> deletedFileIds, MultipartFile[] insertedFiles){
-        int events = calendarEventRepository.updatePersonalEvent(personalEventUpdateRequest);
-        String eventCd = personalEventUpdateRequest.getEventCd();
-        String userId = personalEventUpdateRequest.getUserId();
+    public int updatePersonalEvent(EventUpdateRequest eventUpdateRequest, List<String> deletedFileIds, MultipartFile[] insertedFiles){
+        int events = calendarEventRepository.updatePersonalEvent(eventUpdateRequest);
+        String eventCd = eventUpdateRequest.getEventCd();
+        String userId = eventUpdateRequest.getUserId();
 
         //삭제된파일
         if (deletedFileIds != null && !deletedFileIds.isEmpty()) {
@@ -126,7 +127,7 @@ public class PersonalCalendarService {
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 String filePath = s3Uploader.upload(file, "event-files"); // S3 업로드
-                EventUploadedFiles insertFileRequest = EventUploadedFiles.builder()
+                File insertFileRequest = File.builder()
                         .fileId(UUID.randomUUID().toString())
                         .eventCd(eventCd)
                         .fileNm(file.getOriginalFilename())
@@ -143,7 +144,7 @@ public class PersonalCalendarService {
     }
 
     public ResponseEntity<byte[]> downloadFile(String fileId) throws IOException {
-        EventUploadedFiles file = fileRepository.selectFileByFileId(fileId);
+        File file = fileRepository.selectFileByFileId(fileId);
         String key = extractKeyFromUrl(file.getFilePath());
         byte[] bytes = s3Uploader.download(key);
 
@@ -166,7 +167,8 @@ public class PersonalCalendarService {
         if (attendeesInfos != null && !attendeesInfos.isEmpty()) {
             for(AttendeesInfo info :attendeesInfos){
                 String attendId = info.getUserId();
-                MentionNotification noti = new MentionNotification(eventCd, attendId, notiState,"0" );
+                String notiCd="noti_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+                MentionNotification noti = new MentionNotification(notiCd, eventCd, attendId, notiState,"N" );
                 mentionNotificationRepository.insertMentionNotification(noti);
             }
         }

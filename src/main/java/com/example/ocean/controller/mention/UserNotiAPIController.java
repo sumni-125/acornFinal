@@ -1,7 +1,6 @@
 package com.example.ocean.controller.mention;
 
-import com.example.ocean.dto.request.MentionNotification;
-import com.example.ocean.dto.request.ReadNotiRequest;
+import com.example.ocean.domain.MentionNotification;
 import com.example.ocean.service.MentionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +28,10 @@ public class UserNotiAPIController {
         mentionService.updateAllUserNoti(userId);
     }
 
-    @PutMapping("/read")
+    @PutMapping("/{notiCd}")
     public void readNoti(
-            @RequestPart(required = false) List<ReadNotiRequest> request
+            @PathVariable String notiCd
     ){
-        mentionService.updateUserNoti(request);
+        mentionService.updateUserNoti(notiCd);
     }
 }

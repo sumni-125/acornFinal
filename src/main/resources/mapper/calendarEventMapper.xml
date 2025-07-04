@@ -6,7 +6,7 @@
 <mapper namespace="com.example.ocean.repository.CalendarEventRepository">
 
     <!-- 개인 일정 목록 불러오기 -->
-    <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.PersonalCalendarResponse">
+    <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.CalendarResponse">
         SELECT
                 EVENT_CD AS eventCd, TITLE, START_DATETIME AS startDatetime,
                 END_DATETIME AS endDatetime, COLOR
@@ -16,7 +16,7 @@
     </select>
 
     <!-- 개인일정 생성 -->
-    <insert id="insertPersonalEvent" parameterType="com.example.ocean.dto.response.Event">
+    <insert id="insertPersonalEvent" parameterType="com.example.ocean.domain.Event">
         INSERT
         INTO   `EVENTS`
         (
@@ -32,7 +32,7 @@
     </insert>
 
     <!-- 일정선택 -->
-    <select id="selectPersonalEvent" parameterType="String" resultType="com.example.ocean.dto.response.Event">
+    <select id="selectPersonalEvent" parameterType="String" resultType="com.example.ocean.domain.Event">
         SELECT
                 EVENT_CD AS eventCd, USER_ID AS userId, WORKSPACE_CD AS workspaceCd, TITLE,
                 DESCRIPTION, START_DATETIME AS startDatetime, END_DATETIME AS endDatetime,
@@ -49,7 +49,7 @@
     </select>
 
     <!-- 일정 수정 -->
-    <update id="updatePersonalEvent" parameterType="com.example.ocean.dto.request.PersonalEventUpdateRequest">
+    <update id="updatePersonalEvent" parameterType="com.example.ocean.dto.request.EventUpdateRequest">
         UPDATE `EVENTS`
         <set>
             <if test="title          != null">   TITLE           = #{title},</if>

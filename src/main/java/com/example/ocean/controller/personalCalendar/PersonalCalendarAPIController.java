@@ -1,10 +1,10 @@
 package com.example.ocean.controller.personalCalendar;
 
 
-import com.example.ocean.dto.request.PersonalEventCreateRequest;
-import com.example.ocean.dto.request.PersonalEventUpdateRequest;
-import com.example.ocean.dto.response.PersonalCalendarResponse;
-import com.example.ocean.dto.response.PersonalEventDetailResponse;
+import com.example.ocean.dto.request.EventCreateRequest;
+import com.example.ocean.dto.request.EventUpdateRequest;
+import com.example.ocean.dto.response.EventDetailResponse;
+import com.example.ocean.dto.response.CalendarResponse;
 
 import com.example.ocean.service.PersonalCalendarService;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +27,10 @@ public class PersonalCalendarAPIController {
 
 
     @GetMapping("")
-    public ResponseEntity<List<PersonalCalendarResponse>> personalCalendar(
+    public ResponseEntity<List<CalendarResponse>> personalCalendar(
             @RequestParam(required = false) String userId
     ) {
-        List<PersonalCalendarResponse> result = personalCalendarService.getPersonalEvents(userId);
+        List<CalendarResponse> result = personalCalendarService.getPersonalEvents(userId);
 
         if (result == null || result.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -39,8 +39,8 @@ public class PersonalCalendarAPIController {
     }
 
     @GetMapping("/events/{eventCd}")
-    public ResponseEntity<PersonalEventDetailResponse> getEventDetail(@PathVariable String eventCd) {
-        PersonalEventDetailResponse result = personalCalendarService.getPersonalEventDetail(eventCd);
+    public ResponseEntity<EventDetailResponse> getEventDetail(@PathVariable String eventCd) {
+        EventDetailResponse result = personalCalendarService.getPersonalEventDetail(eventCd);
         if (result == null) {
             return ResponseEntity.notFound().build();
         }
@@ -49,12 +49,12 @@ public class PersonalCalendarAPIController {
 
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createEvent(
-            @RequestPart("request") PersonalEventCreateRequest personalEventCreateRequest,
-            @RequestPart(required = false) List<String> attendenceIds,
+            @RequestPart("request") EventCreateRequest eventCreateRequest,
+            @RequestParam(value = "attendenceIds", required = false) List<String> attendenceIds,
             @RequestPart(value = "files", required = false) MultipartFile[] files
 
     ) {
-        int result = personalCalendarService.createPersonalEvent(personalEventCreateRequest, attendenceIds, files);
+        int result = personalCalendarService.createPersonalEvent(eventCreateRequest, attendenceIds, files);
 
         return result == 1
                 ? ResponseEntity.ok("일정 등록 성공")
@@ -64,7 +64,7 @@ public class PersonalCalendarAPIController {
     @PutMapping("/events/{eventCd}")
     public ResponseEntity<String> updateEventDetail(
             @PathVariable String eventCd,
-            @RequestPart("request") PersonalEventUpdateRequest request,
+            @RequestPart("request") EventUpdateRequest request,
             @RequestPart(required = false) MultipartFile[] files,
             @RequestPart(required = false) List<String> deletedFileIds,
             @RequestPart(required = false) List<String> updatedAttendees

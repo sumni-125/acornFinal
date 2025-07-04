@@ -1,4 +1,4 @@
-package com.example.ocean.dto.response;
+package com.example.ocean.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

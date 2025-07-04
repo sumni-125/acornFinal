@@ -3,9 +3,9 @@ package com.example.ocean.dto.request;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+
 @Data
-public class UpdateTeamEventRequest {
-    private String          eventCd;
+public class EventCreateRequest {
     private String          userId;
     private String          workspaceCd;
     private String          title;
@@ -16,5 +16,6 @@ public class UpdateTeamEventRequest {
     private String          isShared;
     private String          progressStatus;
     private String          priority;
+    private LocalDateTime   createdDate;
     private int             notifyTime;
 }

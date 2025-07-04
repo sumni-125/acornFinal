@@ -1,5 +1,6 @@
 package com.example.ocean.service;
 
+import com.example.ocean.EventAlarmMailScheduler;
 import com.example.ocean.dto.response.MailInfo;
 import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,6 @@ import org.springframework.context.annotation.ComponentScan;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @MapperScan({
         "com.example.ocean.mapper",

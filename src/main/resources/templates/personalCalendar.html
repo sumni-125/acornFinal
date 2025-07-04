@@ -1145,7 +1145,7 @@
             });*/
 
 
-        const currentUserId = '102049037194510417221';
+        const currentUserId = currentUser.userId;
          // 실제로는 Thymeleaf 모델에서 가져와야 함: [[${currentUserId}]]
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -1170,8 +1170,9 @@
                     document.getElementById('startDatetime').value = info.dateStr + 'T09:00';
                     document.getElementById('endDatetime').value = info.dateStr + 'T18:00';
                     document.getElementById('insertedFiles').innerHTML = ''; // 파일 목록 초기화
+                    document.getElementById('workspaceMembers').innerHTML='';
 
-                    const workspaceCd = '61e37b28-b4d9-4939-951d-52716ca9b89b';
+
                     fetch(`/api/getMembers?workspaceCd=${workspaceCd}`)
                         .then(res => {
                             if (!res.ok) throw new Error("멤버정보 조회 실패");
@@ -1400,11 +1401,12 @@
 
         function saveEvent() {
             const form = document.getElementById("eventForm");
+
             const formData = new FormData();
             // userId랑 workspaceCd는 임시로 지정해놨어요
             const requestBody = {
                 userId: currentUserId, // 전역 currentUserId 사용
-                workspaceCd: "61e37b28-b4d9-4939-951d-52716ca9b89b",
+                workspaceCd: workspaceCd,
                 title: form.title.value,
                 description: form.description.value,
                 startDatetime: form.startDatetime.value, // id 변경됨
@@ -1420,7 +1422,7 @@
 
             const attendenceIds = document.querySelectorAll('input[name="attendenceIds"]:checked');
             attendenceIds.forEach(cb => {
-                formData.append('attendenceIds', cb.value);
+                formData.append("attendenceIds", cb.value);
             });
 
             const files = form.fileUpload.files; // id 변경됨
@@ -1615,7 +1617,7 @@
                 progressStatus: document.getElementById('update-progressStatus').value,
                 isShared: document.getElementById('update-isShared').value,
                 userId: currentUserId, // 현재 유저 ID 사용 (작성자)
-                workspaceCd: '61e37b28-b4d9-4939-951d-52716ca9b89b', // 임시 워크스페이스 코드
+                workspaceCd: workspaceCd, // 임시 워크스페이스 코드
                 location: document.getElementById('update-location').value, // 위치 필드 추가
                 notifyTime: parseInt(document.getElementById('update-notification').value) // 숫자로 변환
             };

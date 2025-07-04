@@ -1,4 +1,4 @@
-package com.example.ocean.service;
+package com.example.ocean;
 
 import com.example.ocean.dto.response.MailInfo;
 import com.example.ocean.mapper.WorkspaceMapper;
@@ -8,7 +8,6 @@ import com.example.ocean.repository.EventAttendencesRepository;
 import com.example.ocean.repository.WorkspaceMemberRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -37,7 +36,7 @@ public class EventAlarmMailScheduler {
     private JavaMailSender  emailSender;
 
     // 초(0–59) 분(0–59) 시(0–23) 일(1–31) 월(1–12) 요일(0–7)(0과 7은 일요일)
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 44 6 * * *")
     public void alarm9am() throws MessagingException {
         getAlarmMessage();
     }

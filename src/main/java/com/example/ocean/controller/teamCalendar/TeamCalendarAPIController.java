@@ -1,9 +1,9 @@
 package com.example.ocean.controller.teamCalendar;
 
-import com.example.ocean.dto.request.CreateTeamEventRequest;
-import com.example.ocean.dto.request.UpdateTeamEventRequest;
+import com.example.ocean.dto.request.EventCreateRequest;
+import com.example.ocean.dto.request.EventUpdateRequest;
+import com.example.ocean.dto.response.CalendarResponse;
 import com.example.ocean.dto.response.EventDetailResponse;
-import com.example.ocean.dto.response.TeamCalendarResponse;
 import com.example.ocean.service.TeamCalendarService;
 import lombok.RequiredArgsConstructor;
 
@@ -23,10 +23,10 @@ public class TeamCalendarAPIController {
     private final TeamCalendarService teamCalendarService;
 
     @GetMapping("")
-    public ResponseEntity<List<TeamCalendarResponse>> personalCalendar(
+    public ResponseEntity<List<CalendarResponse>> personalCalendar(
             @RequestParam(required = false) String workspaceCd
     ) {
-        List<TeamCalendarResponse> result = teamCalendarService.getTeamEvents(workspaceCd);
+        List<CalendarResponse> result = teamCalendarService.getTeamEvents(workspaceCd);
         //List <Workspace
         if (result == null || result.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -45,7 +45,7 @@ public class TeamCalendarAPIController {
 
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createEvent(
-            @RequestPart("request") CreateTeamEventRequest request,
+            @RequestPart("request") EventCreateRequest request,
             @RequestPart(required = false) List<String> attendenceIds,
             @RequestPart(value = "files", required = false) MultipartFile[] files
 
@@ -60,7 +60,7 @@ public class TeamCalendarAPIController {
     @PutMapping("/events/{eventCd}")
     public ResponseEntity<String> updateEventDetail(
             @PathVariable String eventCd,
-            @RequestPart("request") UpdateTeamEventRequest request,
+            @RequestPart("request") EventUpdateRequest request,
             @RequestPart(required = false) MultipartFile[] files,
             @RequestPart(required = false) List<String> deletedFileIds
     ) {

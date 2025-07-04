@@ -6,7 +6,7 @@
 <mapper namespace="com.example.ocean.repository.FileRepository">
 
 
-    <insert id="insertFile" parameterType="com.example.ocean.dto.response.EventUploadedFiles">
+    <insert id="insertFile" parameterType="com.example.ocean.domain.File">
         INSERT INTO `FILE` (
             FILE_ID, EVENT_CD, FILE_NM, FILE_TYPE, FILE_PATH,
             FILE_SIZE, UPLOADED_BY, UPLOADED_DATE, ACTIVE_STATE
@@ -16,7 +16,7 @@
         )
     </insert>
 
-    <select id="selectFileByEventCd" parameterType="String" resultType="com.example.ocean.dto.response.EventUploadedFiles">
+    <select id="selectFileByEventCd" parameterType="String" resultType="com.example.ocean.domain.File">
         SELECT
                 FILE_ID AS fileId, EVENT_CD AS eventCd, FILE_NM AS fileNm,
                 FILE_TYPE AS fileType, FILE_PATH AS filePath, FILE_SIZE AS fileSize,
@@ -28,7 +28,7 @@
     </select>
 
 
-    <select id="selectFileByFileId" parameterType="String" resultType="com.example.ocean.dto.response.EventUploadedFiles">
+    <select id="selectFileByFileId" parameterType="String" resultType="com.example.ocean.domain.File">
         SELECT
                 FILE_ID AS fileId, EVENT_CD AS eventCd, FILE_NM AS fileNm,
                 FILE_TYPE AS fileType, FILE_PATH AS filePath, FILE_SIZE AS fileSize,

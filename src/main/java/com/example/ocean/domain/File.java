@@ -1,4 +1,4 @@
-package com.example.ocean.dto.response;
+package com.example.ocean.domain;
 
 import lombok.Builder;
 import lombok.Data;
@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class EventUploadedFiles {
+public class File {
     private String          fileId;
     private String          eventCd;
     private String          fileNm;
@@ -15,6 +15,6 @@ public class EventUploadedFiles {
     private String          filePath;
     private long            fileSize;
     private String          uploadedBy;
-    private LocalDateTime   uploadedDate;
+    private LocalDateTime uploadedDate;
     private String          activeState;
 }

@@ -46,18 +46,6 @@
         )
     </insert>
 
-    <!-- ⭐ 워크스페이스 사용자 프로필 업데이트 (이미지 포함) -->
-    <update id="updateWorkspaceProfile">
-        UPDATE WORKSPACE_MEMBERS
-        SET USER_NICKNAME = #{userNickname},
-        STATUS_MSG = #{statusMsg},
-        EMAIL = #{email},
-        PHONE_NUM = #{phoneNum},
-        USER_IMG = #{userImg}
-        WHERE WORKSPACE_CD = #{workspaceCd}
-        AND USER_ID = #{userId}
-    </update>
-
     <!-- 사용자 프로필 이미지만 업데이트 -->
     <update id="updateProfileImageOnly">
         UPDATE WORKSPACE_MEMBERS
@@ -239,7 +227,7 @@
         wm.USER_NICKNAME AS userNickname,
         wm.STATUS_MSG    AS statusMsg,
         wm.USER_IMG      AS userImg,
-        wm.USER_STATE    AS userState,
+        wm.ACTIVE_STATE    AS userState,
         wm.DEPT_CD       AS deptCd,
         d.DEPT_NM        AS deptNm,
         wm.POSITION      AS position,
@@ -268,14 +256,9 @@
         WHERE WORKSPACE_CD = #{workspaceCd} AND USER_ID = #{userId}
     </select>
 
-    <!-- 사용자 상태 업데이트 -->
-    <update id="updateUserState" parameterType="map">
-        UPDATE WORKSPACE_MEMBERS
-        SET USER_STATE = #{userState}
-        WHERE WORKSPACE_CD = #{workspaceCd} AND USER_ID = #{userId}
-    </update>
 
-<<<<<<< HEAD
+
+
     <!-- 사용자 프로필(닉네임, 상태메시지, 연락처 등) 업데이트 -->
     <update id="updateWorkspaceProfile" parameterType="map">
         UPDATE WORKSPACE_MEMBERS
@@ -291,7 +274,7 @@
     <!-- 사용자 상태 업데이트 -->
     <update id="updateUserState" parameterType="map">
         UPDATE WORKSPACE_MEMBERS WM
-        SET WM.USER_STATE = #{userState}
+        SET WM.ACTIVE_STATE = #{userState}
         WHERE WM.WORKSPACE_CD = #{workspaceCd} AND WM.USER_ID = #{userId}
     </update>
 
@@ -301,6 +284,5 @@
         FROM   `WORKSPACE`
         WHERE   WORKSPACE_CD = #{workspaceCd}
     </select>
-=======
->>>>>>> 06ad959b332acf219e5f642305f20e688bb45345
+
 </mapper>
