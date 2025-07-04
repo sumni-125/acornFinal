@@ -9,12 +9,6 @@
     <link rel="stylesheet" th:href="@{/css/rnb.css}">
     <link rel="stylesheet" th:href="@{/css/invite.css}">
 
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-        }
-    </style>
 </head>
 <body>
 
@@ -61,6 +55,18 @@
         </div>
     </div>
 
+    <div class="today-user-events">
+        <h3>나의 오늘 일정</h3>
+        <ul id="user-events-list">
+            <li>일정을 불러오는 중...</li>
+        </ul>
+    </div>
+
+    <div class="this-week-completed">
+        <h3>이번 주 완료 일정</h3>
+        <p id="completed-this-week">불러오는 중...</p>
+    </div>
+
 </div>
 
 <!-- 오른쪽 사이드바 (RNB) -->
@@ -79,6 +85,7 @@
 <script th:src="@{/js/rnb-toggle.js}" defer></script>
 <script th:src="@{/js/invite-modal.js}"></script>
 <script th:src="@{/js/token.js}"></script>
+<script th:src="@{/js/wsmain.js}"></script>
 <script th:inline="javascript">
     // 페이지 로드 시 즉시 실행되는 부분
     /*<![CDATA[*/
