@@ -13,12 +13,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-function toggleMiniProfile() {
-  const modal = document.getElementById("miniProfileModal");
-  if (modal.style.display === "block") {
-    modal.style.display = "none";
-  } else {
-    modal.style.display = "block";
-  }
-}
+
 

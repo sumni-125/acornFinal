@@ -1,0 +1,39 @@
+<div th:fragment="miniProfileFragment">
+    <div id="miniProfileModal" class="mini-profile-modal">
+        <!-- 상단: 내 정보 -->
+        <div class="profile-header">
+            <img src="/images/myinfo.png" class="icon-img" alt="내정보">
+            <img id="miniProfileImg" src="/profile-images/default.png" alt="프로필" class="profile-img">
+            <div class="profile-text">
+                <div id="miniProfileName">닉네임</div>
+                <div id="miniProfileRole">직급</div>
+            </div>
+        </div>
+
+        <!-- 상태 변경 영역 -->
+        <div class="status-section">
+            <div class="status-display" onclick="toggleStatusMenu()">
+                <img id="miniProfileStatus" src="/images/gray_circle.png" class="status-icon" alt="상태">
+                <span id="currentStatusLabel">오프라인</span>
+                <img src="/images/arrow-down.png" class="arrow-icon" alt="화살표">
+            </div>
+            <div id="statusOptions" class="status-options">
+                <div onclick="setStatus('ONLINE')">
+                    <img src="/images/green_circle.png"> 온라인
+                </div>
+                <div onclick="setStatus('AWAY')">
+                    <img src="/images/red_circle.png"> 자리비움
+                </div>
+                <div onclick="setStatus('OFFLINE')">
+                    <img src="/images/gray_circle.png"> 오프라인
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그아웃 -->
+        <div class="logout-section">
+            <img src="/images/logout.png" class="icon-img" alt="로그아웃">
+            <span>로그아웃</span>
+        </div>
+    </div>
+</div>

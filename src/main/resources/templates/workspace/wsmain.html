@@ -8,6 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/wsmain.css}">
     <link rel="stylesheet" th:href="@{/css/rnb.css}">
     <link rel="stylesheet" th:href="@{/css/invite.css}">
+    <link rel="stylesheet" th:href="@{/css/profile-modal.css}">
 
     <style>
         body {
@@ -71,13 +72,16 @@
 <!-- 초대 모달 -->
 <div th:replace="~{fragments/invite-modal :: inviteModalFragment}"></div>
 
-<div th:replace="~{fragments/miniProfileFragment :: miniProfileFragment}"></div>
 
+<div th:replace="~{fragments/mini-profile :: miniProfileFragment}"></div>
+
+<div th:replace="fragments/profile-modal :: profileModalFragment"></div>
 
 
 <!-- RNB 토글 버튼용 스크립트 -->
 <script th:src="@{/js/rnb-toggle.js}" defer></script>
 <script th:src="@{/js/invite-modal.js}"></script>
+<script th:src="@{/js/profile-modal.js}"></script>
 <script th:src="@{/js/token.js}"></script>
 <script th:inline="javascript">
     // 페이지 로드 시 즉시 실행되는 부분

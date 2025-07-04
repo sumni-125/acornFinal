@@ -48,7 +48,6 @@ body.rnb-closed .rnb-toggle-btn {
   transition: transform 0.3s ease;
 }
 
-
 /* 유저 정보 영역 */
 .user-box {
   display: flex;
@@ -188,49 +187,96 @@ body.rnb-closed .rnb-toggle-btn {
   font-weight: bold;
 }
 
+/* --------------------- 미니 프로필 --------------------- */
+
 .mini-profile-modal {
   position: absolute;
-  top: 70px;
-  left: -220px;
-  width: 200px;
-  background-color: #1c1c1c;
-  color: white;
+  top: 100px;
+  left: -300px;
+  width: 240px;
+  background: #1e1e1e;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  padding: 15px;
-  display: none;
+  padding: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: all 0.3s ease;
   z-index: 1000;
+  color: white;
 }
 
-
-.profile-header {
+.mini-profile-modal .profile-header {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.profile-image {
-  width: 40px;
-  height: 40px;
+.mini-profile-modal .profile-img {
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  margin-right: 10px;
 }
 
-.profile-options .option {
-  padding: 6px 0;
+.profile-text {
+  flex-grow: 1;
+}
+
+.profile-text div {
+  font-weight: bold;
   font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.status-section {
+  margin: 10px 0;
+}
+
+.status-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.status-display img.status-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.status-options {
+  margin-top: 8px;
+  padding-left: 22px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-options div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #ccc;
   cursor: pointer;
 }
 
-.dot.green {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background-color: limegreen;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-.logout {
-  color: #ff4d4d;
+.arrow-icon {
+  width: 10px;
+  height: 10px;
 }
 
+.logout-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-section .icon-img {
+  width: 16px;
+  height: 16px;
+}
