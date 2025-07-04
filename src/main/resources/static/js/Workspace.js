@@ -12,6 +12,74 @@
                 location.href = `/workspace/${workspaceCd}`;
             }
         };
+        // 워크스페이스 상세 페이지로 이동 + 입장 시간 기록
+        window.goToDetail = function(element) {
+            const workspaceCd = element.getAttribute('data-id');
+            console.log("✅ 선택된 workspaceCd:", workspaceCd);
+
+            if (workspaceCd) {
+                fetch(`/api/workspaces/${workspaceCd}/enter`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('accessToken')  // 토큰 필요시
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // ▶️ 워크스페이스 코드 sessionStorage에 저장
+                        sessionStorage.setItem('currentWorkspaceCd', workspaceCd);
+                        // ✅ 상세 페이지로 이동 (기억할 경로!)
+                        window.location.href = "/workspace/" + workspaceCd;
+                    } else {
+                        alert("입장 시간 업데이트 실패");
+                    }
+                })
+                .catch(error => {
+                    console.error('입장 시간 요청 실패:', error);
+                    alert("네트워크 오류로 입장 시간이 업데이트되지 않았습니다.");
+                });
+            }
+        };
+
+        // 워크스페이스 리스트(/workspace)로 돌아올 때 퇴장 처리
+        window.addEventListener("pageshow", function () {
+            if (window.location.pathname === "/workspace") {
+                sendQuitRequest(false);  // 일반 fetch 사용
+                sessionStorage.removeItem('currentWorkspaceCd');  // ✔️ 퇴장 후 초기화
+            }
+        });
+
+        function sendQuitRequest(useBeacon = false) {
+            const workspaceCd = sessionStorage.getItem('currentWorkspaceCd');
+            if (!workspaceCd) return;
+
+            const url = `/api/workspaces/${workspaceCd}/exit`;
+            const token = localStorage.getItem('accessToken');
+
+            if (useBeacon && navigator.sendBeacon) {
+                const blob = new Blob([], { type: 'application/json' });
+                navigator.sendBeacon(url, blob);
+            } else {
+                fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    credentials: 'include'
+                }).catch(error => {
+                    console.error("퇴장 시간 업데이트 실패:", error);
+                });
+            }
+        }
+
+
+        // 브라우저 탭 닫기 또는 새로고침 시 퇴장 처리
+        window.addEventListener("beforeunload", function () {
+            sendQuitRequest(true);  // sendBeacon 사용
+        });
+
 
         // 임시로 타임리프에서 받은 사용자 정보 사용
         const userPrincipal = /*[[${#authentication?.principal}]]*/ null;
@@ -19,6 +87,106 @@
             displayUserInfo(userPrincipal);
         }
     });
+
+// 워크스페이스 코드 저장 (예: 전역에서 쓰도록)
+const currentWorkspaceCd = extractWorkspaceCdFromUrl();  // 아래 함수 참조
+
+// 1. 워크스페이스 리스트로 돌아왔을 때 퇴장 시간 업데이트
+window.addEventListener("pageshow", function () {
+    if (window.location.pathname === "/workspace") {
+        sendQuitRequest(false);
+    }
+});
+
+// 2. 탭 닫기, 새로고침 시에도 퇴장 시간 업데이트 (sendBeacon 사용)
+window.addEventListener("beforeunload", function () {
+    sendQuitRequest(true);
+});
+
+// 퇴장 요청 보내는 함수
+function sendQuitRequest(useBeacon = false) {
+    if (!currentWorkspaceCd) return;
+
+    const url = `/api/workspaces/${currentWorkspaceCd}/exit`;
+    const token = localStorage.getItem('accessToken');
+
+    if (useBeacon && navigator.sendBeacon) {
+        const blob = new Blob([], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
+    } else {
+        fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            credentials: 'include'
+        }).catch(error => {
+            console.error("퇴장 시간 업데이트 실패:", error);
+        });
+    }
+}
+
+// 현재 워크스페이스 코드 추출 (예: /workspace/abcd1234/main → abcd1234)
+function extractWorkspaceCdFromUrl() {
+    const path = window.location.pathname;  // ex: /workspace/abcd1234/main
+    const match = path.match(/^\/workspace\/([^/]+)/);
+    return match ? match[1] : null;
+}
+
+
+    // 찜 기능
+    document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('input[name="selectedWorkspaces"]').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const isChecked = e.target.checked;
+                        const workspaceCd = e.target.value;
+                    });
+                });
+
+                // 찜/찜 해제 버튼 이벤트 등록
+                document.querySelector(".btn-favorite").addEventListener("click", () => {
+                    updateFavorites(true);
+                });
+
+                document.querySelector(".btn-unfavorite").addEventListener("click", () => {
+                    updateFavorites(false);
+                });
+
+                function updateFavorites(isFavorite) {
+                    const selectedCheckboxes = document.querySelectorAll('input[name="selectedWorkspaces"]:checked');
+
+                    if (selectedCheckboxes.length === 0) {
+                        alert("워크스페이스를 선택해주세요.");
+                        return;
+                    }
+
+                    selectedCheckboxes.forEach((checkbox) => {
+                        const workspaceCd = checkbox.value;
+
+                        console.log("요청 URL:", `/api/workspaces/${workspaceCd}/favorite`);
+
+                        fetch(`/api/workspaces/${workspaceCd}/favorite`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ favorite: isFavorite })
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("서버 오류 발생");
+                        })
+                        .then(() => {
+                            alert(isFavorite ? "찜 완료!" : "찜 해제 완료!");
+                            location.reload(); // 상태 반영 위해 새로고침
+                        })
+                        .catch(error => {
+                            console.error("에러 발생:", error);
+                            alert("처리 중 에러가 발생했습니다.");
+                        });
+                    });
+                }
+            });
 
     function updateAuthUI() {
         const accessToken = localStorage.getItem('accessToken');
