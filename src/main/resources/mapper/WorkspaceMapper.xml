@@ -269,25 +269,6 @@
         WHERE WORKSPACE_CD = #{workspaceCd} AND USER_ID = #{userId}
     </select>
 
-    <!-- 부서 및 직책 정보 업데이트 -->
-    <update id="updateDeptAndPosition" parameterType="map">
-        UPDATE WORKSPACE_MEMBERS
-        SET DEPT_CD = #{deptCd}, POSITION = #{position}
-        WHERE WORKSPACE_CD = #{workspaceCd} AND USER_ID = #{userId}
-    </update>
-
-    <!-- 사용자 프로필(닉네임, 상태메시지, 연락처 등) 업데이트 -->
-    <update id="updateWorkspaceProfile" parameterType="map">
-        UPDATE WORKSPACE_MEMBERS
-        SET USER_NICKNAME = #{userNickname},
-        STATUS_MSG = #{statusMsg},
-        EMAIL = #{email},
-        PHONE_NUM = #{phoneNum},
-        USER_IMG = #{userImg}
-        WHERE WORKSPACE_CD = #{workspaceCd}
-        AND USER_ID = #{userId}
-    </update>
-
     <!-- 사용자 상태 업데이트 -->
     <update id="updateUserState" parameterType="map">
         UPDATE WORKSPACE_MEMBERS
