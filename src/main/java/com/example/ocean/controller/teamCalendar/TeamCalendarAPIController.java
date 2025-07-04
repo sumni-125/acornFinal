@@ -46,11 +46,11 @@ public class TeamCalendarAPIController {
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createEvent(
             @RequestPart("request") EventCreateRequest request,
-            @RequestPart(required = false) List<String> attendenceIds,
+            //@RequestPart(required = false) List<String> attendenceIds,
             @RequestPart(value = "files", required = false) MultipartFile[] files
 
     ) {
-        int result = teamCalendarService.insertTeamEvent(request, attendenceIds, files);
+        int result = teamCalendarService.insertTeamEvent(request, files);
 
         return result == 1
                 ? ResponseEntity.ok("일정 등록 성공")

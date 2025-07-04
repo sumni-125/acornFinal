@@ -1,6 +1,7 @@
 package com.example.ocean.repository;
 
 
+import com.example.ocean.domain.Place;
 import com.example.ocean.dto.request.EventUpdateRequest;
 import com.example.ocean.domain.Event;
 import com.example.ocean.dto.response.MailInfo;
@@ -20,4 +21,8 @@ public interface CalendarEventRepository {
 
     List<String> selectTodayAlarm();
     MailInfo selectMailInfo(@Param("eventCd") String eventCd);
+
+
+    //
+    List<Place>  findAll2 ();
 }

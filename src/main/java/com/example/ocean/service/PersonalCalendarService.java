@@ -3,6 +3,7 @@ package com.example.ocean.service;
 import com.example.ocean.domain.Event;
 import com.example.ocean.domain.File;
 import com.example.ocean.domain.MentionNotification;
+import com.example.ocean.domain.Place;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
 import com.example.ocean.repository.CalendarEventRepository;
@@ -172,6 +173,10 @@ public class PersonalCalendarService {
                 mentionNotificationRepository.insertMentionNotification(noti);
             }
         }
+
+
+        //
+
 
     }
 

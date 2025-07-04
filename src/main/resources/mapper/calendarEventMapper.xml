@@ -5,14 +5,16 @@
 
 <mapper namespace="com.example.ocean.repository.CalendarEventRepository">
 
-    <!-- 개인 일정 목록 불러오기 -->
+    <!-- 개인 일정(참석하는 공개일정 포함) 목록 불러오기 -->
     <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.CalendarResponse">
         SELECT
-                EVENT_CD AS eventCd, TITLE, START_DATETIME AS startDatetime,
-                END_DATETIME AS endDatetime, COLOR
-        FROM   `EVENTS`
-        WHERE   user_id = #{userID}
-        ORDER BY PRIORITY
+                E.EVENT_CD AS eventCd, E.TITLE, E.START_DATETIME AS startDatetime,
+                E.END_DATETIME AS endDatetime, E.COLOR
+        FROM   `EVENT_ATTENDENCES` EA
+        JOIN   `EVENTS` E
+        ON      EA.EVENT_CD = E.EVENT_CD
+        WHERE   EA.user_id = #{userID}
+
     </select>
 
     <!-- 개인일정 생성 -->
@@ -28,7 +30,6 @@
                 #{startDatetime}, #{endDatetime}, #{color}, #{isShared},
                 #{progressStatus}, #{priority}, #{notifyTime}, #{createdDate}
         )
-
     </insert>
 
     <!-- 일정선택 -->

@@ -10,4 +10,10 @@
         WHERE WORKSPACE_CD=#{workspaceCd}
         AND USER_ID = #{userId}
     </select>
+
+    <select id="getWorkspaceMemberId" parameterType="String" resultType="String">
+        SELECT  USER_ID
+        FROM    WORKSPACE_MEMBERS
+        WHERE   WORKSPACE_CD=#{workspaceCd}
+    </select>
 </mapper>

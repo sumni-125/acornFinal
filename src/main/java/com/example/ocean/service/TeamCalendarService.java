@@ -5,10 +5,8 @@ import com.example.ocean.domain.File;
 import com.example.ocean.domain.MentionNotification;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
-import com.example.ocean.repository.EventAttendencesRepository;
-import com.example.ocean.repository.FileRepository;
-import com.example.ocean.repository.MentionNotificationRepository;
-import com.example.ocean.repository.TeamEventRepository;
+import com.example.ocean.mapper.WorkspaceMapper;
+import com.example.ocean.repository.*;
 import com.example.ocean.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +31,7 @@ public class TeamCalendarService {
     private final FileRepository fileRepository;
     private final MentionNotificationRepository mentionNotificationRepository;
     private final S3Uploader s3Uploader;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     public List<CalendarResponse> getTeamEvents(String workspaceCd){
         return teamEventRepository.selectTeamEvents(workspaceCd);
@@ -48,7 +47,7 @@ public class TeamCalendarService {
         return response;
     }
 
-    public int insertTeamEvent(EventCreateRequest request, List<String> attendenceIds, MultipartFile[] files){
+    public int insertTeamEvent(EventCreateRequest request, MultipartFile[] files){
         String eventCd = "evnt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String userId = request.getUserId();
 
@@ -69,12 +68,11 @@ public class TeamCalendarService {
         detail.setNotifyTime(request.getNotifyTime());
 
         int events = teamEventRepository.insertTeamEvent(detail);
-
+        List<String> attendenceIds = workspaceMemberRepository.getWorkspaceMemberId(request.getWorkspaceCd());
         // 참가자 삽입
-        int attendences=0;
         if (attendenceIds != null && attendenceIds.size() > 0) {
             for(String attendId : attendenceIds){
-                attendences+=eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
+                eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
             }
 
         }

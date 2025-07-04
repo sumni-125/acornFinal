@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>개인 캘린더</title>
+    <title>팀 캘린더</title>
     <link th:href="@{/css/lnb.css}" rel='stylesheet' />
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
@@ -869,13 +869,17 @@
             <div id='calendar'></div>
         </div>
 
-        <div class="sidebar-right"></div>
+        <div class="sidebar-right">
+            <!--nav>
+            <div th:replace="~{fragments/rnb :: lnbFragment}"></div>
+        </nav-->
+        </div>
     </div>
 
     <div id="createEventModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>개인 일정 추가</h3>
+                <h3>팀 일정 추가</h3>
                 <button type="button" class="modal-close-button" onclick="closeCreateEventModal()">&times;</button>
             </div>
             <form id="eventForm" onsubmit="event.preventDefault(); saveEvent();">
@@ -892,16 +896,16 @@
                         <input type="datetime-local" id="endDatetime" name="endDatetime" required>
                     </div>
                     <div class="checkbox-container">
-                        <label for="allDay">종일</label>
                         <input type="checkbox" id="allDay" name="allDay">
+                        <label for="allDay">종일</label>
                     </div>
                 </div>
-
+<!--
                 <div class="form-group">
                     <label class="icon-user-detail">참가자 선택</label>
                     <div class="checkbox-container" id="workspaceMembers"></div>
                 </div>
-
+-->
                 <div class="form-group">
                     <label for="description" class="icon-description">설명 추가</label>
                     <textarea id="description" name="description" rows="4" placeholder="자세한 설명을 입력하세요."></textarea>
@@ -950,7 +954,6 @@
                         <option value="1">공유</option>
                     </select>
                 </div>
-
 
                 <div class="submit-button-wrapper">
                     <button type="submit">등록하기</button>
@@ -1157,8 +1160,7 @@
 
 
         const currentUserId = currentUser.userId;
-        const currentUserName = currentUser.userName;
-        console.log("currentUserName: " + currentUserName);
+        // 실제로는 Thymeleaf 모델에서 가져와야 함: [[${currentUserId}]]
 
         document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
@@ -1183,53 +1185,12 @@
                     document.getElementById('endDatetime').value = info.dateStr + 'T18:00';
                     selectedFiles = [];
                     document.getElementById('insertedFiles').innerHTML = ''; // 파일 목록 초기화
-                    document.getElementById('workspaceMembers').innerHTML = '';
-
-
-                    fetch(`/api/getMembers?workspaceCd=${workspaceCd}`)
-                        .then(res => {
-                            if (!res.ok) throw new Error("멤버정보 조회 실패");
-                            return res.json();
-                        })
-                        .then(data => {
-                            const membersData = data;
-                            const container = document.getElementById('workspaceMembers');
-
-                            for (let i = 0; i < membersData.length; i++) {
-                                const member = membersData[i];
-
-                                const checkbox = document.createElement('input');
-                                checkbox.type = 'checkbox';
-
-                                checkbox.name = 'attendenceIds';
-
-                                const uniqueId = 'userId' + member.userId;
-                                checkbox.id = uniqueId;
-                                checkbox.value = member.userId;
-
-                                const label = document.createElement('label');
-                                label.htmlFor = uniqueId; // id랑 연결
-                                label.textContent = member.userNickname;
-
-                                 // 현재 로그인한 사용자라면 체크 + 숨기기
-                                if (member.userId === currentUserId) {
-                                    checkbox.checked = true;
-                                    checkbox.style.display = 'none';
-                                    label.style.display = 'none';
-                                }
-
-                                container.appendChild(checkbox);
-                                container.appendChild(label);
-                                container.appendChild(document.createElement('br'));
-                            }
-
-                        });
                     document.getElementById('createEventModal').style.display = 'flex'; // 모달 표시
                 },
                 // 개인일정 리스트 풀캘린더에 뿌려주는 부분
                 events: function (fetchInfo, successCallback, failureCallback) {
                     // userId는 currentUserId를 사용하거나, 백엔드에서 인증 정보로 자동 처리
-                    fetch(`/api/calendar/personal?userId=${currentUserId}`)
+                    fetch(`/api/calendar/team?workspaceCd=${workspaceCd}`)
                         .then(response => {
                             if (!response.ok) throw new Error("불러오기 실패!");
                             return response.json();
@@ -1255,17 +1216,19 @@
                     closeUpdateModal(); // 혹시 열려있는 수정 모달 닫기
 
                     const eventCd = info.event.id;
-                    fetch(`/api/calendar/personal/events/${eventCd}`)
+                    fetch(`/api/calendar/team/events/${eventCd}`)
                         .then(res => {
-                            console.log("응답 상태코드:", res.status);
                             if (!res.ok) throw new Error("상세정보 조회 실패");
                             return res.json();
                         })
                         .then(data => {
+                            // 상세 모달에 데이터 채우기
                             const event = data.event;
 
                             console.log("event", event);
                             console.log("currentUserId", currentUserId);
+
+                            console.log("attend", data.attendences);
 
                             document.getElementById('detailTitle').innerText = event.title || '제목 없음';
                             document.getElementById('detailAuthor').innerText = event.userName || event.userId || '알 수 없음';
@@ -1326,7 +1289,7 @@
                             document.getElementById('detailLocation').innerText = data.location || '위치 정보 없음';
 
                             // 첨부파일 목록
-                            /*const detailFilesUl = document.getElementById('detailFiles');
+                            const detailFilesUl = document.getElementById('detailFiles');
                             detailFilesUl.innerHTML = ''; // 기존 목록 초기화
                             if (data.fileList && data.fileList.length > 0) {
                                 data.fileList.forEach(file => {
@@ -1336,7 +1299,7 @@
                                       <span class="file-icon icon-file-doc"></span>
                                       <span>${file.fileNm}</span>
                                   </a>
-                                  <a href="/api/calendar/personal/events/${eventCd}/files?fileId=${file.fileId}" title="다운로드" class="download-icon">
+                                  <a href="/api/calendar/team/events/${eventCd}/files?fileId=${file.fileId}" title="다운로드" class="download-icon">
                                       ⬇️
                                   </a>
                               `;
@@ -1346,31 +1309,7 @@
                                 const li = document.createElement('li');
                                 li.innerText = '첨부파일 없음';
                                 detailFilesUl.appendChild(li);
-                            }*/
-
-                            const detailFilesUl = document.getElementById('detailFiles');
-                            detailFilesUl.innerHTML = '';
-                            if (data.fileList && data.fileList.length > 0) {
-                              data.fileList.forEach(file => {
-                                const li = document.createElement('li');
-                                li.innerHTML = `
-                                  <a href="/api/calendar/personal/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank">
-                                    <span class="file-icon icon-file-doc"></span>
-                                    <span>${file.fileNm}</span>
-                                  </a>
-                                  <a href="/api/calendar/personal/events/${event.eventCd}/files?fileId=${file.fileId}" title="다운로드" class="download-icon">⬇️</a>
-                                `;
-                                detailFilesUl.appendChild(li);
-                              });
-                            } else {
-                              const li = document.createElement('li');
-                              li.innerText = '첨부파일 없음';
-                              detailFilesUl.appendChild(li);
                             }
-
-
-
-
 
                             // 작성자 본인인 경우에만 수정/삭제 버튼 보이기
                             // currentUserId는 위에서 정의된 전역변수
@@ -1389,7 +1328,6 @@
                             // 수정 모달 띄울 때 이 정보 활용할 수 있게 전역 변수 저장
                             window.selectedEventData = data;
                             document.getElementById('eventDetailModal').style.display = 'flex'; // 모달 표시
-
                         })
                         .catch(err => {
                             console.error(err);
@@ -1471,7 +1409,7 @@
                 startDatetime: form.startDatetime.value, // id 변경됨
                 endDatetime: form.endDatetime.value,     // id 변경됨
                 color: form.color.value,
-                isShared: form.isShared ? form.isShared.value : '0',
+                isShared: '1',
                 progressStatus: "TODO", // 새 일정은 기본 TODO로 가정 (폼에 없음)
                 priority: form.priority.value,
                 notifyTime: parseInt(form.notification.value) // 숫자로 변환
@@ -1479,16 +1417,11 @@
 
             formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
 
-            const attendenceIds = document.querySelectorAll('input[name="attendenceIds"]:checked');
-            attendenceIds.forEach(cb => {
-                formData.append("attendenceIds", cb.value);
-            });
-
             selectedFiles.forEach(file => {
                 formData.append("files", file);
             });
 
-            fetch('/api/calendar/personal', {
+            fetch('/api/calendar/team', {
                 method: 'POST',
                 body: formData
             })
@@ -1534,7 +1467,6 @@
             const minutes = date.getMinutes().toString().padStart(2, '0');
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-
 
         let selectedFiles = [];
 
@@ -1585,7 +1517,6 @@
                 insertedFilesUl.appendChild(li);
             });
         }
-
 
         // ====== 일정 상세 모달 함수 (기존 calendar.html 스크립트에서 가져옴) ======
         function closeDetailModal() {
@@ -1656,51 +1587,6 @@
                 notificationSelect.value = '0';
             }
 
-            // 참가자 체크박스 채우기
-              const membersContainer = document.getElementById('update-workspaceMembers');
-              membersContainer.innerHTML = '';
-
-              fetch(`/api/getMembers?workspaceCd=${workspaceCd}`)
-                .then(res => {
-                  if (!res.ok) throw new Error("멤버정보 조회 실패");
-                  return res.json();
-                })
-                .then(membersData => {
-                  // 이미 참가중인 사람들
-                  const attendenceIds = (data.attendences || []).map(m => m.userId);
-
-                  membersData.forEach(member => {
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.name = 'attendenceIds';
-                    checkbox.value = member.userId;
-                    checkbox.id = 'update-' + member.userId;
-
-                    // 이미 체크된 사람 표시
-                    if (attendenceIds.includes(member.userId)) {
-                      checkbox.checked = true;
-                    }
-
-                    // 본인은 숨김
-                    if (member.userId === currentUserId) {
-                      checkbox.checked = true;
-                      checkbox.style.display = 'none';
-                    }
-
-                    const label = document.createElement('label');
-                    label.htmlFor = checkbox.id;
-                    label.textContent = member.userNickname;
-
-                    if (member.userId === currentUserId) {
-                      label.style.display = 'none';
-                    }
-
-                    membersContainer.appendChild(checkbox);
-                    membersContainer.appendChild(label);
-                    membersContainer.appendChild(document.createElement('br'));
-                  });
-                });
-
 
             // 기존 파일 목록 불러오기 및 삭제 버튼
             const updateFilesUl = document.getElementById('updateFiles');
@@ -1748,25 +1634,20 @@
 
             const requestBody = {
                 eventCd: eventCd, // 이미 히든 필드에서 가져옴
-                title: form.title.value,
-                description: form.description.value,
-                startDatetime: form.startDatetime.value, // id 변경됨
-                endDatetime: form.endDatetime.value,     // id 변경됨
-                color: form.color.value,
-                priority: form.priority.value,
+                title: document.getElementById('update-title').value,
+                description: document.getElementById('update-description').value,
+                startDatetime: document.getElementById('update-startDatetime').value,
+                endDatetime: document.getElementById('update-endDatetime').value,
+                color: document.getElementById('update-color').value,
+                priority: document.getElementById('update-priority').value,
                 progressStatus: document.getElementById('update-progressStatus').value,
-                isShared: form.isShared ? form.isShared.value : '0',
+                isShared: document.getElementById('update-isShared').value,
                 userId: currentUserId, // 현재 유저 ID 사용 (작성자)
                 workspaceCd: workspaceCd, // 임시 워크스페이스 코드
                 location: document.getElementById('update-location').value, // 위치 필드 추가
-                notifyTime: parseInt(form.notification.value) // 숫자로 변환
+                notifyTime: parseInt(document.getElementById('update-notification').value) // 숫자로 변환
             };
 
-            // 참가자 체크박스 값 추가
-            const attendenceIds = document.querySelectorAll('#update-workspaceMembers input[name="attendenceIds"]:checked');
-            attendenceIds.forEach(cb => {
-              formData.append("attendenceIds", cb.value);
-            });
 
             formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
             formData.append("deletedFileIds", new Blob([JSON.stringify(deletedFileIds)], { type: "application/json" }));
@@ -1779,7 +1660,7 @@
                 }
             }
 
-            fetch(`/api/calendar/personal/events/${eventCd}`, {
+            fetch(`/api/calendar/team/events/${eventCd}`, {
                 method: 'PUT',
                 body: formData
             })
@@ -1808,7 +1689,7 @@
                     return;
                 }
 
-                fetch(`/api/calendar/personal/events/${eventCd}`, {
+                fetch(`/api/calendar/team/events/${eventCd}`, {
                     method: 'DELETE'
                 })
                     .then(res => {

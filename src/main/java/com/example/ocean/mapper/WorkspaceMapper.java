@@ -130,5 +130,7 @@ public interface WorkspaceMapper {
 
     // ⭐ 워크스페이스 멤버 조회
     List<WorkspaceMember> findMembersByWorkspaceCd(@Param("workspaceCd") String workspaceCd);
+
+
 }
 

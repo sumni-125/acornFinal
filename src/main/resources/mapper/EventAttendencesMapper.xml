@@ -28,7 +28,7 @@
                 wm.USER_NICKNAME AS userNickName
         FROM   `EVENT_ATTENDENCES` ea
         JOIN
-                WORKSPACE_MEMBERS wm
+               `WORKSPACE_MEMBERS` wm
                 ON  ea.USER_ID = wm.USER_ID
                 AND wm.WORKSPACE_CD = (
                     SELECT  WORKSPACE_CD

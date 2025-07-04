@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.ocean.mapper.PlaceMapper">
+
+    <!-- 워크스페이스별 장소 조회 -->
+    <select id="findByWorkspaceCd" parameterType="String" resultType="com.example.ocean.domain.Place">
+        SELECT
+                PLACE_CD AS placeCd, P.EVENT_CD AS eventCd, PLACE_NM AS placeNm, PLACE_ID AS placeId,
+                ADDRESS AS address, LAT AS lat, LNG AS lng, CREATED_AT AS createdAt, MODIFY AS modify
+        FROM   `PLACE`  P
+        JOIN   `EVENTS` E
+        ON      P.EVENT_CD = E.EVENT_CD
+        WHERE   E.WORKSPACE_CD = #{workspaceCd}
+        ORDER BY CREATED_AT DESC
+    </select>
+
+    <!-- 장소 저장 -->
+    <insert id="insertPlace" parameterType="com.example.ocean.domain.Place">
+        INSERT INTO `PLACE` (
+            PLACE_CD, EVENT_CD, PLACE_NM, PLACE_ID,
+            ADDRESS, LAT, LNG, CREATED_AT
+        ) VALUES (
+            #{plaveCd},#{eventCd},#{placeNm},#{placeId},
+            #{address},#{lat}, #{lng}, NOW()
+        )
+    </insert>
+
+</mapper>
