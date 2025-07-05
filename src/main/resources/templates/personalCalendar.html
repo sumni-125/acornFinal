@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <title>개인 캘린더</title>
     <link th:href="@{/css/lnb.css}" rel='stylesheet' />
+    <link rel="stylesheet" th:href="@{/css/add-event.css}">
+    <link rel="stylesheet" th:href="@{/css/event-detail.css}">
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <style>
@@ -852,11 +854,9 @@
 
 <body>
     <div class="app-container">
-        <div class="sidebar-left">
             <nav>
                 <div th:replace="~{fragments/lnb :: lnbFragment}"></div>
             </nav>
-        </div>
 
         <div class="main-content">
             <div class="calendar-header">
