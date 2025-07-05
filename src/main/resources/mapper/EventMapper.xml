@@ -37,4 +37,23 @@
         AND DATE_ADD(CURDATE(), INTERVAL (6 - WEEKDAY(CURDATE())) DAY)
     </select>
 
+    <select id="countUpcomingEventsThisWeekByWorkspace" resultType="int">
+        SELECT COUNT(*) AS count
+        FROM EVENTS
+        WHERE WORKSPACE_CD = #{workspaceCd}
+        AND PROGRESS_STATUS != 'Done'
+        AND DATE(START_DATETIME) BETWEEN CURDATE()
+        AND DATE_ADD(CURDATE(), INTERVAL (6 - WEEKDAY(CURDATE())) DAY)
+    </select>
+
+    <select id="countCreatedEventsThisWeekByWorkspace" resultType="int">
+        SELECT COUNT(*) AS count
+        FROM EVENTS
+        WHERE WORKSPACE_CD = #{workspaceCd}
+        AND DATE(CREATED_DATE) BETWEEN
+        DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+        AND DATE_ADD(CURDATE(), INTERVAL (6 - WEEKDAY(CURDATE())) DAY)
+    </select>
+
+
 </mapper>

@@ -53,21 +53,38 @@
             대부분의 프로젝트는 기술이 아니라<br>인적 자원과 프로젝트 관리의 문제로 실패한다.<br>
             <b>- R. Thomsett</b>
         </div>
+        <div class="today-user-events">
+            <h3>나의 오늘 일정</h3>
+            <ul id="user-events-list">
+                <li>일정을 불러오는 중...</li>
+            </ul>
+        </div>
+
+        <div class="this-week-completed">
+            <h3>이번 주 완료 일정</h3>
+            <p id="completed-this-week">불러오는 중...</p>
+        </div>
+
+        <div class="this-week-upcoming">
+            <h3>이번 주 다가오는 일정</h3>
+            <p id="upcoming-this-week">불러오는 중...</p>
+        </div>
+
+        <div class="this-week-created">
+            <h3>이번 주 생성된 일정</h3>
+            <p id="created-this-week">불러오는 중...</p>
+        </div>
+
+        <div id="usage-time-box">
+            이번 주 누적 사용 시간: <span id="usage-time">계산 중...</span>
+        </div>
+
     </div>
 
-    <div class="today-user-events">
-        <h3>나의 오늘 일정</h3>
-        <ul id="user-events-list">
-            <li>일정을 불러오는 중...</li>
-        </ul>
-    </div>
-
-    <div class="this-week-completed">
-        <h3>이번 주 완료 일정</h3>
-        <p id="completed-this-week">불러오는 중...</p>
-    </div>
 
 </div>
+
+<script th:src="@{/js/wsmain.js}"></script>
 
 <!-- 오른쪽 사이드바 (RNB) -->
 <div id="rnbContainer"></div>
@@ -85,16 +102,19 @@
 <script th:src="@{/js/rnb-toggle.js}" defer></script>
 <script th:src="@{/js/invite-modal.js}"></script>
 <script th:src="@{/js/token.js}"></script>
-<script th:src="@{/js/wsmain.js}"></script>
 <script th:inline="javascript">
     // 페이지 로드 시 즉시 실행되는 부분
     /*<![CDATA[*/
     const userId = /*[[${userId}]]*/ '';
     const userName = /*[[${userName}]]*/ '';
+    const workspaceCd = /*[[${workspaceCd}]]*/ '';
 
-    // localStorage에 저장 (페이지 로드 시)
+    // ✅ localStorage에 저장
     if (userId) {
         localStorage.setItem('userId', userId);
+    }
+    if (workspaceCd) {
+        localStorage.setItem('workspaceCd', workspaceCd);
     }
     /*]]>*/
 

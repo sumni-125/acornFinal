@@ -12,5 +12,9 @@ public interface EventMapper {
 
     int countCompletedEventsThisWeekByWorkspace(@Param("workspaceCd") String workspaceCd);
 
+    int countUpcomingEventsThisWeekByWorkspace(String workspaceCd);
+
+    int countCreatedEventsThisWeekByWorkspace(String workspaceCd);
+
 }
 

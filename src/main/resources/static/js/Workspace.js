@@ -2,45 +2,28 @@
     document.addEventListener('DOMContentLoaded', function() {
         updateAuthUI();
 
-
-        // 워크스페이스 상세 페이지로 이동
-        window.goToDetail = function(element) {
-            const workspaceCd = element.getAttribute('data-id');
-            if (workspaceCd) {
-                // ✅ 수정된 부분: /wsmain 으로 직접 가지 않고,
-                // 서버의 컨트롤러 주소(/workspace/{workspaceCd})를 호출합니다.
-                location.href = `/workspace/${workspaceCd}`;
-            }
-        };
         // 워크스페이스 상세 페이지로 이동 + 입장 시간 기록
         window.goToDetail = function(element) {
             const workspaceCd = element.getAttribute('data-id');
-            console.log("✅ 선택된 workspaceCd:", workspaceCd);
-
-            if (workspaceCd) {
-                fetch(`/api/workspaces/${workspaceCd}/enter`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('accessToken')  // 토큰 필요시
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // ▶️ 워크스페이스 코드 sessionStorage에 저장
-                        sessionStorage.setItem('currentWorkspaceCd', workspaceCd);
-                        // ✅ 상세 페이지로 이동 (기억할 경로!)
-                        window.location.href = "/workspace/" + workspaceCd;
-                    } else {
-                        alert("입장 시간 업데이트 실패");
-                    }
-                })
-                .catch(error => {
-                    console.error('입장 시간 요청 실패:', error);
-                    alert("네트워크 오류로 입장 시간이 업데이트되지 않았습니다.");
-                });
-            }
+            // 워크스페이스 입장 시간 기록 후 이동
+            fetch(`/api/workspaces/${workspaceCd}/enter`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+                }
+            }).then(response => {
+                if (response.ok) {
+                    sessionStorage.setItem('currentWorkspaceCd', workspaceCd);
+                    window.location.href = "/workspace/" + workspaceCd;
+                } else {
+                    alert("입장 실패");
+                }
+            }).catch(error => {
+                console.error("입장 요청 실패:", error);
+            });
         };
+
 
         // 워크스페이스 리스트(/workspace)로 돌아올 때 퇴장 처리
         window.addEventListener("pageshow", function () {
@@ -74,12 +57,10 @@
             }
         }
 
-
         // 브라우저 탭 닫기 또는 새로고침 시 퇴장 처리
         window.addEventListener("beforeunload", function () {
             sendQuitRequest(true);  // sendBeacon 사용
         });
-
 
         // 임시로 타임리프에서 받은 사용자 정보 사용
         const userPrincipal = /*[[${#authentication?.principal}]]*/ null;

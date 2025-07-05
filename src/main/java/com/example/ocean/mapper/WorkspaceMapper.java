@@ -129,4 +129,5 @@ public interface WorkspaceMapper {
     // 진행 상태에 따른 일정 출력
     Map<String, Object> getEventSummaryByWorkspace(String workspaceCd);
 
+
 }

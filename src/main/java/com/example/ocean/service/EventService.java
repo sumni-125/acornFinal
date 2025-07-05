@@ -21,4 +21,12 @@ public class EventService {
         return eventMapper.countCompletedEventsThisWeekByWorkspace(workspaceCd);
     }
 
+    public int countUpcomingEventsThisWeekByWorkspace(String workspaceCd) {
+        return eventMapper.countUpcomingEventsThisWeekByWorkspace(workspaceCd);
+    }
+
+    public int countCreatedEventsThisWeekByWorkspace(String workspaceCd) {
+        return eventMapper.countCreatedEventsThisWeekByWorkspace(workspaceCd);
+    }
+
 }
