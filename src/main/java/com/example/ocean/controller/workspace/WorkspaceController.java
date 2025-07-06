@@ -246,13 +246,4 @@ public class WorkspaceController {
     // ⚠️ 불필요한 별도 이미지 업로드 엔드포인트 제거됨
     // 이제 프로필 설정은 WorkspacePageController의 handleSetProfile 메서드에서 통합 처리
 
-    @GetMapping("/{workspaceCd}/usage-time")
-    @ResponseBody
-    public ResponseEntity<Long> getUserUsageTime(
-            @PathVariable String workspaceCd,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        Long seconds = workspaceService.getAccumulatedTime(workspaceCd, userPrincipal.getId());
-        return ResponseEntity.ok(seconds);
-    }
-
 }

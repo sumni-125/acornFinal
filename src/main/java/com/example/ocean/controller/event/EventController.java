@@ -4,8 +4,10 @@ import com.example.ocean.domain.Event;
 import com.example.ocean.mapper.MemberTransactionMapper;
 import com.example.ocean.security.oauth.UserPrincipal;
 import com.example.ocean.service.EventService;
+import com.example.ocean.service.WorkspaceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,9 @@ public class EventController {
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private WorkspaceService workspaceService;
 
     @GetMapping("/today")
     public List<Event> getTodayEvents(@RequestParam("userId") String userId) {
@@ -43,6 +48,12 @@ public class EventController {
         return count;
     }
 
-
-
+    @GetMapping("/{workspaceCd}/usage-time")
+    @ResponseBody
+    public ResponseEntity<Long> getUserUsageTime(
+            @PathVariable String workspaceCd,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Long seconds = workspaceService.getAccumulatedTime(workspaceCd, userPrincipal.getId());
+        return ResponseEntity.ok(seconds);
+    }
 }
