@@ -398,4 +398,12 @@ public class WorkspaceService {
         return time != null ? time : 0L;
     }
 
+    public WorkspaceMember getMemberDetail(String workspaceCd, String userId) {
+        return workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, userId);
+    }
+
+    public String getUserStatus(String workspaceCd, String userId) {
+        return workspaceMapper.getUserStatus(workspaceCd, userId);
+    }
+
 }

@@ -9,6 +9,104 @@
     <link rel="stylesheet" th:href="@{/css/rnb.css}">
     <link rel="stylesheet" th:href="@{/css/invite.css}">
 
+    <style>
+        .modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 320px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.close-button {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.mini-profile-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 10px 20px;
+}
+
+.mini-profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.mini-profile-summary img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.mini-profile-info {
+    font-size: 14px;
+}
+
+.mini-profile-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 8px 0;
+    width: 150px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.mini-profile-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mini-profile-menu li {
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.mini-profile-menu li:hover {
+    background-color: #f0f0f0;
+}
+
+        .status-modal {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 6px 0;
+    width: 120px;
+    z-index: 1000; /* 중요! */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+</style>
 </head>
 <body>
 
@@ -79,7 +177,107 @@
             이번 주 누적 사용 시간: <span id="usage-time">계산 중...</span>
         </div>
 
+        <div class="workspace-members-box">
+            <h3>참여 중인 사용자</h3>
+            <ul id="workspace-members" style="list-style: none; padding-left: 0;">
+                <li>불러오는 중...</li>
+            </ul>
+        </div>
     </div>
+
+    <div class="mini-profile-container">
+        <div class="mini-profile-summary">
+            <img id="mini-profile-img" src="/images/default-profile.png" alt="내 프로필" />
+            <div class="mini-profile-info">
+                <div id="mini-profile-name">이름</div>
+                <div id="mini-profile-role">역할</div>
+            </div>
+
+            <!-- ✅ 접속 상태 표시 (서버에서 가져온 값으로 JS가 덮어씀) -->
+            <div class="user-status-display" onclick="toggleStatusMenu()">상태 로딩중...</div>
+        </div>
+
+        <!-- ✅ 접속 상태 변경 모달 (슬라이드로 열리는 박스) -->
+        <div class="status-modal" id="status-modal" style="display:none;">
+            <ul>
+                <li onclick="changeStatus('online')">🟢 온라인</li>
+                <li onclick="changeStatus('away')">🟡 자리비움</li>
+                <li onclick="changeStatus('offline')">🔴 오프라인</li>
+            </ul>
+        </div>
+
+        <!-- ✅ 미니 메뉴 (hover 시 열리는 메뉴) -->
+        <div class="mini-profile-menu" style="display: none;">
+            <ul>
+                <li onclick="goToMyPage()">내 정보</li>
+                <li onclick="showStatus()">접속 상태</li>
+                <li onclick="logout()">로그아웃</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ✅ 내 정보 보기 모달 -->
+    <div id="my-info-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('my-info-modal')">&times;</span>
+            <button onclick="openEditModal()" style="position:absolute; top:15px; left:15px;">수정</button>
+            <img id="my-img" src="" alt="프로필 이미지" style="width:100px; border-radius:50%; margin-bottom:10px;">
+            <h3 id="my-name"></h3>
+            <p><strong>이메일:</strong> <span id="my-email"></span></p>
+            <p><strong>전화번호:</strong> <span id="my-phone"></span></p>
+            <p><strong>부서:</strong> <span id="my-dept"></span></p>
+            <p><strong>직급:</strong> <span id="my-position"></span></p>
+            <p><strong>상태 메시지:</strong> <span id="my-status"></span></p>
+        </div>
+    </div>
+
+    <!-- ✅ 내 정보 수정 모달 -->
+    <div id="edit-info-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('edit-info-modal')">&times;</span>
+            <h3>내 정보 수정</h3>
+
+            <div class="form-group">
+                <label for="edit-img">프로필 이미지</label>
+                <input type="file" id="edit-img" accept="image/*" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-nickname">닉네임</label>
+                <input id="edit-nickname" placeholder="닉네임" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-email">이메일</label>
+                <input id="edit-email" placeholder="이메일" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-phone">전화번호</label>
+                <input id="edit-phone" placeholder="전화번호" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-dept">부서</label>
+                <select id="edit-dept">
+                    <!-- JS에서 부서 옵션 동적 추가 -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-position">직급</label>
+                <input id="edit-position" placeholder="직급" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-status">상태 메시지</label>
+                <input id="edit-status" placeholder="상태 메시지" />
+            </div>
+
+            <button onclick="submitEdit()">저장</button>
+        </div>
+    </div>
+
 
 
 </div>
@@ -96,6 +294,19 @@
 
 <div th:replace="~{fragments/miniProfileFragment :: miniProfileFragment}"></div>
 
+<!-- 사용자 상세 정보 모달 -->
+<div id="user-detail-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <img id="detail-img" src="" alt="프로필 이미지" style="width:100px; border-radius:50%; margin-bottom:10px;">
+        <h3 id="detail-name"></h3>
+        <p><strong>이메일:</strong> <span id="detail-email"></span></p>
+        <p><strong>전화번호:</strong> <span id="detail-phone"></span></p>
+        <p><strong>부서:</strong> <span id="detail-dept"></span></p>
+        <p><strong>직급:</strong> <span id="detail-position"></span></p>
+        <p><strong>상태 메시지:</strong> <span id="detail-status"></span></p>
+    </div>
+</div>
 
 
 <!-- RNB 토글 버튼용 스크립트 -->
