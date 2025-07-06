@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
         },
     });
 
+    const workspaceForm = document.getElementById('workspaceForm');
+    const nameInput = document.getElementById('workspaceNm');
+
     // 다음 버튼 클릭 이벤트
     document.querySelector('.btn-next').addEventListener('click', function() {
         validateFirstSlide();
@@ -25,20 +28,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function validateFirstSlide() {
-        function validateFirstSlide() {
-            const nameInput = document.getElementById('workspaceNm');
             // reportValidity()는 유효하면 true를 반환하고, 유효하지 않으면 false를 반환하며 사용자에게 유효성 메시지를 표시합니다.
             if (nameInput.reportValidity()) {
                 swiper.slideNext(); // 유효할 때만 다음 슬라이드로 이동합니다.
             }
         }
-    }
 
     // 폼 제출 이벤트 처리
     document.getElementById('workspaceForm').addEventListener('submit', function(e) {
         e.preventDefault(); // 기본 폼 제출 방지
 
-        const nameInput = document.getElementById('workspaceNm');
 
         // 워크스페이스 이름이 유효한지 먼저 확인합니다.
         if (!nameInput.checkValidity()) {
