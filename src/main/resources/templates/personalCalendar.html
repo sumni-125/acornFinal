@@ -10,8 +10,7 @@
 
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-    <style>
-    </style>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=1a9ca55e1cb213f15176c2b99a62db20&libraries=services"></script>
 </head>
 
 <body>
@@ -92,11 +91,20 @@
 
                 <div class="form-group">
                     <label for="location" class="icon-location">위치 추가</label>
-                    <input type="text" id="location" name="location" placeholder="위치를 입력하거나 지도에서 선택하세요.">
-                    <div class="map-placeholder">
-                        <p>지도 API가 표시될 공간</p>
+                    <div class="search-wrapper">
+                        <input type="text" id="location" name="location" placeholder="장소명으로 검색하세요">
+                        <button type="button" id="searchBtn">검색</button>
                     </div>
+                    <div id="map" style="width:100%;height:200px;margin-top:10px;"></div>
+                    <ul id="placesList"></ul>
+
+                    <input type="hidden" id="placeName" name="placeName">
+                    <input type="hidden" id="placeAddress" name="placeAddress">
+                    <input type="hidden" id="placeId" name="placeId">
+                    <input type="hidden" id="placeLat" name="placeLat">
+                    <input type="hidden" id="placeLng" name="placeLng">
                 </div>
+
 
                 <div class="form-group">
                     <label for="priority" class="icon-priority">중요도</label>
@@ -261,7 +269,18 @@
 
                 <div class="form-group">
                     <label for="update-location" class="icon-location">위치</label>
-                    <input type="text" id="update-location" name="location" placeholder="위치">
+                    <div class="search-wrapper">
+                        <input type="text" id="update-location" name="location" placeholder="장소명으로 검색하세요">
+                        <button type="button" id="update-searchBtn">검색</button>
+                    </div>
+                    <div id="update-map" style="width:100%;height:200px;margin-top:10px;"></div>
+                    <ul id="update-placesList"></ul>
+
+                    <input type="hidden" id="update-placeName" name="placeName">
+                    <input type="hidden" id="update-placeAddress" name="placeAddress">
+                    <input type="hidden" id="update-placeId" name="placeId">
+                    <input type="hidden" id="update-placeLat" name="placeLat">
+                    <input type="hidden" id="update-placeLng" name="placeLng">
                 </div>
 
                 <div class="form-group">
@@ -303,6 +322,10 @@
         /*<![CDATA[*/
         const currentUser = /*[[${currentUser}]]*/ '';
         const workspaceCd = /*[[${workspaceCd}]]*/ '';
+        let map;
+        let marker;
+        let infowindow;
+        let ps;
 
         console.log("currentUser: " + currentUser.userId);
         console.log("workspaceCd: " + workspaceCd);
@@ -351,6 +374,12 @@
                     document.getElementById('insertedFiles').innerHTML = ''; // 파일 목록 초기화
                     document.getElementById('workspaceMembers').innerHTML = '';
 
+                    initMap(
+                        'map', 'location', 'searchBtn', 'placesList',
+                        { name: 'placeName', address: 'placeAddress', id: 'placeId', lat: 'placeLat', lng: 'placeLng' }
+                    );
+
+                    document.getElementById('createEventModal').style.display = 'flex'; // 모달 표시
 
                     fetch(`/api/getMembers?workspaceCd=${workspaceCd}`)
                         .then(res => {
@@ -640,7 +669,13 @@
                 isShared: form.isShared ? form.isShared.value : '0',
                 progressStatus: "TODO", // 새 일정은 기본 TODO로 가정 (폼에 없음)
                 priority: form.priority.value,
-                notifyTime: parseInt(form.notification.value) // 숫자로 변환
+                notifyTime: parseInt(form.notification.value), // 숫자로 변환
+                // 장소 정보
+                placeName: document.getElementById('placeName').value,
+                address: document.getElementById('placeAddress').value,
+                placeId: document.getElementById('placeId').value,
+                lat: parseFloat(document.getElementById('placeLat').value),
+                lng: parseFloat(document.getElementById('placeLng').value)
             };
 
             formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
@@ -793,6 +828,7 @@
             }
 
             const eventData = data.event;
+            const placeData = data.place;
 
             // 수정 폼에 기존 값 불러오기
             document.getElementById('update-eventCd').value = eventData.eventCd;
@@ -805,6 +841,16 @@
             document.getElementById('update-progressStatus').value = eventData.progressStatus || 'TODO';
             document.getElementById('update-isShared').value = eventData.isShared === "1" ? '1' : '0'; // '1' 또는 '0'으로 설정
             document.getElementById('update-location').value = data.location || ''; // 위치 필드 추가
+
+            // ▼▼▼ 지도 초기화 로직 추가 ▼▼▼
+            initMap(
+                'update-map', 'update-location', 'update-searchBtn', 'update-placesList',
+                { name: 'update-placeName', address: 'update-placeAddress', id: 'update-placeId', lat: 'update-placeLat', lng: 'update-placeLng' }
+            );
+            // 만약 기존 장소 정보가 있다면, 해당 정보로 검색창과 숨겨진 필드를 채워주는 로직이 추가될 수 있습니다.
+
+            document.getElementById('updateEventModal').style.display = 'flex'; // 모달 표시
+             }
 
             // 알림 시간 설정 (notification 매핑)
             let notifyTimeVal = eventData.notifyTime;
@@ -992,6 +1038,96 @@
                     });
             } else {
                 console.log("삭제 취소됨");
+            }
+        }
+        /** 지도와 장소 검색 서비스 초기화 함수 */
+        function initMap(mapContainerId, searchInputId, searchBtnId, listId, hiddenFields) {
+            const mapContainer = document.getElementById(mapContainerId);
+            const mapOption = {
+                center: new kakao.maps.LatLng(37.566826, 126.9786567), // 서울 시청
+                level: 3
+            };
+
+            // 지도와 마커, 장소 검색 객체 생성
+            map = new kakao.maps.Map(mapContainer, mapOption);
+            marker = new kakao.maps.Marker({ position: map.getCenter() });
+            marker.setMap(map);
+            ps = new kakao.maps.services.Places();
+
+            // 검색 버튼 이벤트
+            document.getElementById(searchBtnId).addEventListener('click', function () {
+                const keyword = document.getElementById(searchInputId).value;
+                if (!keyword.replace(/^\s+|\s+$/g, '')) {
+                    alert('키워드를 입력해주세요!');
+                    return false;
+                }
+                ps.keywordSearch(keyword, (data, status, pagination) => {
+                    placesSearchCB(data, status, pagination, listId, hiddenFields);
+                });
+            });
+        }
+
+        /** 장소 검색 콜백 함수 */
+        function placesSearchCB(data, status, pagination, listId, hiddenFields) {
+            if (status === kakao.maps.services.Status.OK) {
+                displayPlaces(data, listId, hiddenFields);
+            } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+                alert('검색 결과가 존재하지 않습니다.');
+                return;
+            } else if (status === kakao.maps.services.Status.ERROR) {
+                alert('검색 결과 중 오류가 발생했습니다.');
+                return;
+            }
+        }
+
+        /** 검색 결과를 목록에 출력하는 함수 */
+        function displayPlaces(places, listId, hiddenFields) {
+            const listEl = document.getElementById(listId);
+            removeAllChildNods(listEl); // 기존 목록 제거
+
+            for (let i = 0; i < places.length; i++) {
+                const itemEl = getListItem(i, places[i], hiddenFields);
+                listEl.appendChild(itemEl);
+            }
+        }
+
+        /** 검색 결과 항목(li)을 생성하는 함수 */
+        function getListItem(index, place, hiddenFields) {
+            const el = document.createElement('li');
+            el.className = 'item';
+
+            let itemStr = `<h5>${place.place_name}</h5>` +
+                `<div class="info"><span>${place.road_address_name}</span>` +
+                `<span class="jibun">지번: ${place.address_name}</span></div>`;
+
+            el.innerHTML = itemStr;
+
+            el.onclick = function() {
+                // 지도 이동
+                const placePosition = new kakao.maps.LatLng(place.y, place.x);
+                map.setCenter(placePosition);
+                marker.setPosition(placePosition);
+
+                // 숨겨진 필드에 값 채우기
+                document.getElementById(hiddenFields.name).value = place.place_name;
+                document.getElementById(hiddenFields.address).value = place.road_address_name || place.address_name;
+                document.getElementById(hiddenFields.id).value = place.id;
+                document.getElementById(hiddenFields.lat).value = place.y;
+                document.getElementById(hiddenFields.lng).value = place.x;
+
+                // 검색창에도 장소명 반영
+                const searchInputId = listId.replace('placesList', 'location'); // 'placesList' -> 'location', 'update-placesList' -> 'update-location'
+                document.getElementById(searchInputId).value = place.place_name;
+
+                removeAllChildNods(document.getElementById(listId)); // 선택 후 목록 숨기기
+            };
+            return el;
+        }
+
+        /** 목록의 모든 자식 노드를 제거하는 함수 */
+        function removeAllChildNods(el) {
+            while (el.hasChildNodes()) {
+                el.removeChild(el.lastChild);
             }
         }
         /*]]>*/
