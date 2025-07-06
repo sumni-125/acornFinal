@@ -69,6 +69,8 @@ dependencies {
 	// 이메일
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+	// 정적 CSS 자동적용
+	developmentOnly("org.springframework.boot:spring-boot-devtools")
 }
 
 tasks.named('test') {

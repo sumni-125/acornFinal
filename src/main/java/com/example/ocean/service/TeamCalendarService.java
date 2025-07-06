@@ -3,6 +3,7 @@ package com.example.ocean.service;
 import com.example.ocean.domain.Event;
 import com.example.ocean.domain.File;
 import com.example.ocean.domain.MentionNotification;
+import com.example.ocean.domain.Place;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
 import com.example.ocean.mapper.WorkspaceMapper;
@@ -32,19 +33,22 @@ public class TeamCalendarService {
     private final MentionNotificationRepository mentionNotificationRepository;
     private final S3Uploader s3Uploader;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final PlaceRepository placeRepository;
 
     public List<CalendarResponse> getTeamEvents(String workspaceCd){
         return teamEventRepository.selectTeamEvents(workspaceCd);
     }
 
     public EventDetailResponse selectTeamEventDetail(String eventCd){
-        List<AttendeesInfo> attendences = eventAttendencesRepository.selectAttendeesInfo(eventCd);
         Event event = teamEventRepository.selectTeamEventDetail(eventCd);
+        if (event == null) {
+            return null;
+        }
+        List<AttendeesInfo> attendences = eventAttendencesRepository.selectAttendeesInfo(eventCd);
         List<File> fileList = fileRepository.selectFileByEventCd(eventCd);
+        Place place = event.getPlace();
 
-        EventDetailResponse response = new EventDetailResponse(event, attendences, fileList);
-
-        return response;
+        return new EventDetailResponse(event, attendences, fileList, place);
     }
 
     public int insertTeamEvent(EventCreateRequest request, MultipartFile[] files){
@@ -68,6 +72,20 @@ public class TeamCalendarService {
         detail.setNotifyTime(request.getNotifyTime());
 
         int events = teamEventRepository.insertTeamEvent(detail);
+
+        // 장소 정보 저장
+        if (request.getPlaceName() != null && !request.getPlaceName().isBlank() && request.getLat() != null) {
+            Place place = new Place();
+            place.setEvent_cd(eventCd);
+            place.setWorkspace_cd(request.getWorkspaceCd());
+            place.setPlace_nm(request.getPlaceName());
+            place.setAddress(request.getAddress());
+            place.setPlace_id(request.getPlaceId());
+            place.setLat(request.getLat());
+            place.setLng(request.getLng());
+            placeRepository.insertPlace(place);
+        }
+
         List<String> attendenceIds = workspaceMemberRepository.getWorkspaceMemberId(request.getWorkspaceCd());
         // 참가자 삽입
         if (attendenceIds != null && attendenceIds.size() > 0) {
@@ -88,6 +106,27 @@ public class TeamCalendarService {
         int events = teamEventRepository.updateTeamEvent(eventUpdateRequest);
         String eventCd = eventUpdateRequest.getEventCd();
         String userId = eventUpdateRequest.getUserId();
+
+        boolean placeExists = placeRepository.checkPlaceExistsByEventCd(eventCd) > 0;
+        boolean newPlaceDataExists = eventUpdateRequest.getPlaceName() != null && !eventUpdateRequest.getPlaceName().isBlank() && eventUpdateRequest.getLat() != null;
+
+        if (newPlaceDataExists) {
+            Place place = new Place();
+            place.setEvent_cd(eventCd);
+            place.setWorkspace_cd(eventUpdateRequest.getWorkspaceCd());
+            place.setPlace_nm(eventUpdateRequest.getPlaceName());
+            place.setAddress(eventUpdateRequest.getAddress());
+            place.setPlace_id(eventUpdateRequest.getPlaceId());
+            place.setLat(eventUpdateRequest.getLat());
+            place.setLng(eventUpdateRequest.getLng());
+            if (placeExists) {
+                placeRepository.updatePlace(place);
+            } else {
+                placeRepository.insertPlace(place);
+            }
+        } else if (placeExists) {
+            placeRepository.deletePlaceByEventCd(eventCd);
+        }
 
         //삭제된파일
         if (deletedFileIds != null && deletedFileIds.size() > 0) {

@@ -11,8 +11,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 

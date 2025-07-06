@@ -62,10 +62,7 @@ public interface WorkspaceMapper {
     // 사용자 상태 업데이트
     void updateUserState(Map<String, Object> param);
 
-
     String findWorkspaceNameByWorkspaceCd(@Param("workspaceCd") String workspaceCd);
-
-
 
     // 워크스페이스 생성
     void insertWorkspace(Workspace workspace);
@@ -132,5 +129,5 @@ public interface WorkspaceMapper {
     List<WorkspaceMember> findMembersByWorkspaceCd(@Param("workspaceCd") String workspaceCd);
 
 
-}
 
+}

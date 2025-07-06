@@ -5,19 +5,45 @@
 
 <mapper namespace="com.example.ocean.repository.CalendarEventRepository">
 
-    <!-- 개인 일정(참석하는 공개일정 포함) 목록 불러오기 -->
-    <select id="selectPersonalCalendar" parameterType="String" resultType="com.example.ocean.dto.response.CalendarResponse">
+    <resultMap id="eventWithPlaceResultMap" type="com.example.ocean.domain.Event">
+        <id property="eventCd" column="event_cd"/>
+        <result property="userId" column="user_id"/>
+        <result property="workspaceCd" column="workspace_cd"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="startDatetime" column="start_datetime"/>
+        <result property="endDatetime" column="end_datetime"/>
+        <result property="color" column="color"/>
+        <result property="isShared" column="is_shared"/>
+        <result property="progressStatus" column="progress_status"/>
+        <result property="priority" column="priority"/>
+        <result property="notifyTime" column="notify_time"/>
+        <result property="createdDate" column="created_date"/>
+        <result property="userName" column="user_nickname"/>
+
+        <association property="place" javaType="com.example.ocean.domain.Place">
+            <id property="place_cd" column="p_place_cd"/>
+            <result property="event_cd" column="p_event_cd"/>
+            <result property="place_nm" column="p_place_nm"/>
+            <result property="place_id" column="p_place_id"/>
+            <result property="address" column="p_address"/>
+            <result property="lat" column="p_lat"/>
+            <result property="lng" column="p_lng"/>
+        </association>
+    </resultMap>
+
+    <select id="selectPersonalCalendar" resultType="com.example.ocean.dto.response.CalendarResponse">
         SELECT
                 E.EVENT_CD AS eventCd, E.TITLE, E.START_DATETIME AS startDatetime,
                 E.END_DATETIME AS endDatetime, E.COLOR
         FROM   `EVENT_ATTENDENCES` EA
         JOIN   `EVENTS` E
         ON      EA.EVENT_CD = E.EVENT_CD
-        WHERE   EA.user_id = #{userID}
-
+        WHERE   EA.USER_ID = #{userId}
+        AND     E.WORKSPACE_CD = #{workspaceCd}
+        OR     E.IS_SHARED = 0
     </select>
 
-    <!-- 개인일정 생성 -->
     <insert id="insertPersonalEvent" parameterType="com.example.ocean.domain.Event">
         INSERT
         INTO   `EVENTS`
@@ -32,16 +58,41 @@
         )
     </insert>
 
-    <!-- 일정선택 -->
-    <select id="selectPersonalEvent" parameterType="String" resultType="com.example.ocean.domain.Event">
+    <select id="selectPersonalEvent" parameterType="String" resultMap="eventWithPlaceResultMap">
         SELECT
-                EVENT_CD AS eventCd, USER_ID AS userId, WORKSPACE_CD AS workspaceCd, TITLE,
-                DESCRIPTION, START_DATETIME AS startDatetime, END_DATETIME AS endDatetime,
-                COLOR, IS_SHARED AS isShared, PROGRESS_STATUS AS progressStatus, PRIORITY AS priority,
-                NOTIFY_TIME AS notifyTime, CREATED_DATE AS createdDate
-        FROM   `EVENTS`
-        WHERE   EVENT_CD = #{eventCd}
+                e.EVENT_CD          AS event_cd,
+                e.USER_ID           AS user_id,
+                e.WORKSPACE_CD      AS workspace_cd,
+                e.TITLE             AS title,
+                e.DESCRIPTION       AS description,
+                e.START_DATETIME    AS start_datetime,
+                e.END_DATETIME      AS end_datetime,
+                e.COLOR             AS color,
+                e.IS_SHARED         AS is_shared,
+                e.PROGRESS_STATUS   AS progress_status,
+                e.PRIORITY          AS priority,
+                e.NOTIFY_TIME       AS notify_time,
+                e.CREATED_DATE      AS created_date,
+
+                p.PLACE_CD          AS p_place_cd,
+                p.EVENT_CD          AS p_event_cd,
+                p.PLACE_NM          AS p_place_nm,
+                p.ADDRESS           AS p_address,
+                p.PLACE_ID          AS p_place_id,
+                p.LAT               AS p_lat,
+                p.LNG               AS p_lng,
+
+                wm.USER_NICKNAME    AS user_nickname
+        FROM
+                `EVENTS` e
+        LEFT JOIN
+                `PLACE` p ON e.EVENT_CD = p.EVENT_CD
+        LEFT JOIN
+                `WORKSPACE_MEMBERS` wm ON e.USER_ID = wm.USER_ID AND e.WORKSPACE_CD = wm.WORKSPACE_CD
+        WHERE
+            e.EVENT_CD = #{eventCd}
     </select>
+
     <select id="selectMailInfo" parameterType="String" resultType="com.example.ocean.dto.response.MailInfo">
         SELECT
                 EVENT_CD AS eventCd,WORKSPACE_CD AS workspaceCd, TITLE, DESCRIPTION
@@ -49,41 +100,38 @@
         WHERE   EVENT_CD = #{eventCd}
     </select>
 
-    <!-- 일정 수정 -->
     <update id="updatePersonalEvent" parameterType="com.example.ocean.dto.request.EventUpdateRequest">
         UPDATE `EVENTS`
         <set>
-            <if test="title          != null">   TITLE           = #{title},</if>
-            <if test="description    != null">   DESCRIPTION     = #{description},</if>
-            <if test="startDatetime  != null">   START_DATETIME  = #{startDatetime},</if>
-            <if test="endDatetime    != null">   END_DATETIME    = #{endDatetime},</if>
-            <if test="color          != null">   COLOR           = #{color},</if>
-            <if test="isShared       != null">   IS_SHARED       = #{isShared},</if>
-            <if test="progressStatus != null">   PROGRESS_STATUS = #{progressStatus},</if>
-            <if test="priority       != null">   PRIORITY        = #{priority},</if>
-            <if test="notifyTime     != null">   NOTIFY_TIME     = #{notifyTime},</if>
+            <if test="title          != null">   TITLE           = #{title},          </if>
+            <if test="description    != null">   DESCRIPTION     = #{description},    </if>
+            <if test="startDatetime  != null">   START_DATETIME  = #{startDatetime},  </if>
+            <if test="endDatetime    != null">   END_DATETIME    = #{endDatetime},    </if>
+            <if test="color          != null">   COLOR           = #{color},          </if>
+            <if test="isShared       != null">   IS_SHARED       = #{isShared},       </if>
+            <if test="progressStatus != null">   PROGRESS_STATUS = #{progressStatus}, </if>
+            <if test="priority       != null">   PRIORITY        = #{priority},       </if>
+            <if test="notifyTime     != null">   NOTIFY_TIME     = #{notifyTime},     </if>
         </set>
         WHERE   EVENT_CD = #{eventCd}
         AND     USER_ID  = #{userId}
     </update>
 
-    <!-- 일정 삭제 -->
     <delete id="deletePersonalEvent" parameterType="String">
         DELETE
-        FROM   `EVENTS`
-        WHERE   EVENT_CD = #{eventCd}
+        FROM        `EVENTS`
+        WHERE       EVENT_CD = #{eventCd}
     </delete>
 
-    <!-- 9시 알림 조회 -->
     <select id="selectTodayAlarm" resultType="String">
-        SELECT  EVENT_CD AS eventCd
-        FROM   `EVENTS`
+        SELECT      EVENT_CD AS eventCd
+        FROM        `EVENTS`
         WHERE (
-                NOTIFY_TIME = 540
-            AND DATE(START_DATETIME) = CURDATE()
+                    NOTIFY_TIME = 540
+                    AND DATE(START_DATETIME) = CURDATE()
         ) OR (
-                NOTIFY_TIME = 1440
-            AND DATE(START_DATETIME) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    NOTIFY_TIME = 1440
+        AND DATE    (START_DATETIME) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
         )
     </select>
 

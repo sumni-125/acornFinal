@@ -13,7 +13,7 @@ import java.util.List;
 
 @Mapper
 public interface CalendarEventRepository {
-    List <CalendarResponse> selectPersonalCalendar(@Param("userID")String userID);
+    List<CalendarResponse> selectPersonalCalendar(@Param("userId") String userId, @Param("workspaceCd") String workspaceCd);
     int insertPersonalEvent(Event event);
     Event selectPersonalEvent(@Param("eventCd")String eventCd);
     int updatePersonalEvent(EventUpdateRequest event);

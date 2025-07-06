@@ -178,8 +178,10 @@
 
             <div class="info-item">
                 <span class="icon icon-location-detail"></span>
-                <div class="value" id="detailLocation"></div>
+                <div class="value" id="detailLocation">위치 정보 없음</div>
             </div>
+
+            <div id="detail-map" style="width:100%; height:200px; margin-top:10px; display:none;"></div>
 
             <div class="info-item description">
                 <span class="icon icon-description-detail"></span>
@@ -324,6 +326,8 @@
         const workspaceCd = /*[[${workspaceCd}]]*/ '';
         let map;
         let marker;
+        let detailMap;
+        let detailMarker;
         let infowindow;
         let ps;
 
@@ -381,6 +385,10 @@
 
                     document.getElementById('createEventModal').style.display = 'flex'; // 모달 표시
 
+                    setTimeout(function() {
+                        map.relayout();
+                    }, 0);
+
                     fetch(`/api/getMembers?workspaceCd=${workspaceCd}`)
                         .then(res => {
                             if (!res.ok) throw new Error("멤버정보 조회 실패");
@@ -419,12 +427,11 @@
                             }
 
                         });
-                    document.getElementById('createEventModal').style.display = 'flex'; // 모달 표시
                 },
                 // 개인일정 리스트 풀캘린더에 뿌려주는 부분
                 events: function (fetchInfo, successCallback, failureCallback) {
                     // userId는 currentUserId를 사용하거나, 백엔드에서 인증 정보로 자동 처리
-                    fetch(`/api/calendar/personal?userId=${currentUserId}`)
+                    fetch(`/api/calendar/personal?userId=${currentUserId}&workspaceCd=${workspaceCd}`)
                         .then(response => {
                             if (!response.ok) throw new Error("불러오기 실패!");
                             return response.json();
@@ -457,19 +464,20 @@
                             return res.json();
                         })
                         .then(data => {
+
                             const event = data.event;
+                            const place = data.place;
 
                             console.log("event", event);
                             console.log("currentUserId", currentUserId);
 
                             document.getElementById('detailTitle').innerText = event.title || '제목 없음';
                             document.getElementById('detailAuthor').innerText = event.userName || event.userId || '알 수 없음';
-
                             document.getElementById('detailDescriptionDisplay').innerText = event.description || '설명 없음';
                             document.getElementById('detailPriority').innerText = event.priority;
                             document.getElementById('detailShared').innerText = event.isShared === '1' ? '예' : '아니오';
-                            // 알림 시간 포맷팅
-                            const notifyTimeMinutes = event.notifyTime; // 가정: notifyTime은 분 단위 숫자
+
+                            const notifyTimeMinutes = event.notifyTime;
                             let notificationText = '알림 없음';
                             if (notifyTimeMinutes > 0) {
                                 if (notifyTimeMinutes === 1440) notificationText = '전날 9시';
@@ -479,112 +487,80 @@
 
                             const membersContainer = document.getElementById('detailWorkspaceMembers');
                             if (data.attendences && data.attendences.length > 0) {
-                                const names = data.attendences
-                                    .map(m => m.userNickName || m.userId)
-                                    .join(", ");
-                                membersContainer.innerText = names;
+                                membersContainer.innerText = data.attendences.map(m => m.userNickName || m.userId).join(", ");
                             } else {
                                 membersContainer.innerText = '참가자 없음';
                             }
 
-                            // 날짜 및 시간 포맷팅 (FullCalendar 날짜 형식에 따라 조정)
-                            // ISO 문자열을 Date 객체로 변환하여 포맷팅
+                            // --- 날짜 및 시간 포맷팅 ---
                             const startDateTime = event.startDatetime ? new Date(event.startDatetime) : null;
                             const endDateTime = event.endDatetime ? new Date(event.endDatetime) : null;
-
                             let dateTimeDisplay = '';
                             if (startDateTime && endDateTime) {
                                 const startDateFormatted = formatDate(startDateTime, 'M월 d일 (E)');
-                                const startTimeFormatted = formatDate(startDateTime, 'a h:mm');
-                                const endDateFormatted = formatDate(endDateTime, 'M월 d일 (E)');
-                                const endTimeFormatted = formatDate(endDateTime, 'a h:mm');
-
-                                // 종일 이벤트 확인 (00:00 - 23:59:59)
-                                const isAllDay = startDateTime.getHours() === 0 && startDateTime.getMinutes() === 0 &&
-                                    endDateTime.getHours() === 23 && endDateTime.getMinutes() === 59; // 초, 밀리초는 무시
-
-                                if (isAllDay && startDateFormatted === formatDate(endDateTime, 'M월 d일 (E)')) {
+                                if (startDateTime.getHours() === 0 && endDateTime.getHours() === 23) { // 종일 이벤트로 간주
                                     dateTimeDisplay = `${startDateFormatted} 종일`;
                                 } else {
-                                    dateTimeDisplay = `${startDateFormatted} ${startTimeFormatted} - ${endDateFormatted} ${endTimeFormatted}`;
+                                    dateTimeDisplay = `${formatDate(startDateTime, 'M월 d일 (E) a h:mm')} - ${formatDate(endDateTime, 'M월 d일 (E) a h:mm')}`;
                                 }
-                            } else {
-                                dateTimeDisplay = '일시 정보 없음';
                             }
                             document.querySelector('#eventDetailModal .sub-text').innerText = dateTimeDisplay;
-
-
-                            // 이벤트 색상 표시 업데이트
                             document.querySelector('#eventDetailModal .color-dot').style.backgroundColor = event.color || '#007bff';
 
-                            // 위치 연결 필요
-                            document.getElementById('detailLocation').innerText = data.location || '위치 정보 없음';
+                            // --- 지도 및 위치 정보 처리 ---
+                            const detailMapContainer = document.getElementById('detail-map');
+                            const detailLocationText = document.getElementById('detailLocation');
 
-                            // 첨부파일 목록
-                            /*const detailFilesUl = document.getElementById('detailFiles');
-                            detailFilesUl.innerHTML = ''; // 기존 목록 초기화
-                            if (data.fileList && data.fileList.length > 0) {
-                                data.fileList.forEach(file => {
-                                    const li = document.createElement('li');
-                                    li.innerHTML = `
-                                  <a href="/api/calendar/personal/events/${eventCd}/files?fileId=${file.fileId}" target="_blank">
-                                      <span class="file-icon icon-file-doc"></span>
-                                      <span>${file.fileNm}</span>
-                                  </a>
-                                  <a href="/api/calendar/personal/events/${eventCd}/files?fileId=${file.fileId}" title="다운로드" class="download-icon">
-                                      ⬇️
-                                  </a>
-                              `;
-                                    detailFilesUl.appendChild(li);
+                            if (place && place.lat && place.lng) {
+                                detailLocationText.innerText = place.address || '주소 정보 없음';
+                                detailMapContainer.style.display = 'block';
+
+                                const mapOption = {
+                                    center: new kakao.maps.LatLng(place.lat, place.lng),
+                                    level: 3
+                                };
+                                detailMap = new kakao.maps.Map(detailMapContainer, mapOption);
+                                detailMarker = new kakao.maps.Marker({
+                                    position: mapOption.center
                                 });
+                                detailMarker.setMap(detailMap);
                             } else {
-                                const li = document.createElement('li');
-                                li.innerText = '첨부파일 없음';
-                                detailFilesUl.appendChild(li);
-                            }*/
+                                detailLocationText.innerText = '위치 정보 없음';
+                                detailMapContainer.style.display = 'none';
+                            }
 
+                            // --- 파일 목록 및 버튼 표시 ---
                             const detailFilesUl = document.getElementById('detailFiles');
                             detailFilesUl.innerHTML = '';
                             if (data.fileList && data.fileList.length > 0) {
-                              data.fileList.forEach(file => {
-                                const li = document.createElement('li');
-                                li.innerHTML = `
-                                  <a href="/api/calendar/personal/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank">
-                                    <span class="file-icon icon-file-doc"></span>
-                                    <span>${file.fileNm}</span>
-                                  </a>
-                                  <a href="/api/calendar/personal/events/${event.eventCd}/files?fileId=${file.fileId}" title="다운로드" class="download-icon">⬇️</a>
-                                `;
-                                detailFilesUl.appendChild(li);
-                              });
+                                data.fileList.forEach(file => {
+                                    const li = document.createElement('li');
+                                    li.innerHTML = `<a href="/api/calendar/personal/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span>${file.fileNm}</span></a>`;
+                                    detailFilesUl.appendChild(li);
+                                });
                             } else {
-                              const li = document.createElement('li');
-                              li.innerText = '첨부파일 없음';
-                              detailFilesUl.appendChild(li);
+                                detailFilesUl.innerHTML = '<li>첨부파일 없음</li>';
                             }
 
-
-
-
-
-                            // 작성자 본인인 경우에만 수정/삭제 버튼 보이기
-                            // currentUserId는 위에서 정의된 전역변수
                             const detailButtonsContainer = document.querySelector('#eventDetailModal .header-actions');
                             const editBtn = detailButtonsContainer.querySelector('.edit-button');
                             const deleteBtn = detailButtonsContainer.querySelector('.delete-button');
 
                             if (event.userId === currentUserId) {
-                                if (editBtn) editBtn.style.display = 'block';
-                                if (deleteBtn) deleteBtn.style.display = 'block';
+                                if(editBtn) editBtn.style.display = 'inline-block';
+                                if(deleteBtn) deleteBtn.style.display = 'inline-block';
                             } else {
-                                if (editBtn) editBtn.style.display = 'none';
-                                if (deleteBtn) deleteBtn.style.display = 'none';
+                                if(editBtn) editBtn.style.display = 'none';
+                                if(deleteBtn) deleteBtn.style.display = 'none';
                             }
 
-                            // 수정 모달 띄울 때 이 정보 활용할 수 있게 전역 변수 저장
+                            // --- 최종 모달 표시 및 지도 리레이아웃 ---
                             window.selectedEventData = data;
-                            document.getElementById('eventDetailModal').style.display = 'flex'; // 모달 표시
+                            document.getElementById('eventDetailModal').style.display = 'flex';
 
+                            if (detailMap) {
+                                setTimeout(() => detailMap.relayout(), 0);
+                            }
                         })
                         .catch(err => {
                             console.error(err);
@@ -619,6 +595,22 @@
                 center: '', // 기본 타이틀 숨김
                 right: '' // 기본 view 버튼 숨김
             });
+
+            // 엔터키로 게시물 작성 / 수정 비 활성화
+            function preventSubmitOnEnter(formId) {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.querySelectorAll('input[type="text"], input[type="datetime-local"]').forEach(input => {
+                        input.addEventListener('keydown', function(event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                            }
+                        });
+                    });
+                }
+            }
+            preventSubmitOnEnter('eventForm');          // '일정 추가' 폼에 적용
+            preventSubmitOnEnter('updateEventForm');    // '일정 수정' 폼에 적용
         });
 
         // Date 객체를 원하는 형식의 문자열로 포맷하는 헬퍼 함수
@@ -847,10 +839,23 @@
                 'update-map', 'update-location', 'update-searchBtn', 'update-placesList',
                 { name: 'update-placeName', address: 'update-placeAddress', id: 'update-placeId', lat: 'update-placeLat', lng: 'update-placeLng' }
             );
-            // 만약 기존 장소 정보가 있다면, 해당 정보로 검색창과 숨겨진 필드를 채워주는 로직이 추가될 수 있습니다.
 
-            document.getElementById('updateEventModal').style.display = 'flex'; // 모달 표시
-             }
+            // 기존 장소 정보가 있으면 검색창과 숨겨진 필드를 채워주는 로직
+            if (placeData && placeData.lat && placeData.lng) {
+                // 1. 검색창 및 숨겨진 필드 값 설정
+                document.getElementById('update-location').value = placeData.placeName || '';
+                document.getElementById('update-placeName').value = placeData.placeName || '';
+                document.getElementById('update-placeAddress').value = placeData.address || '';
+                document.getElementById('update-placeId').value = placeData.placeId || '';
+                document.getElementById('update-placeLat').value = placeData.lat;
+                document.getElementById('update-placeLng').value = placeData.lng;
+
+                // 2. 해당 위치로 지도 이동 및 마커 표시
+                const existingPosition = new kakao.maps.LatLng(placeData.lat, placeData.lng);
+                map.setCenter(existingPosition);
+                marker.setPosition(existingPosition);
+            }
+
 
             // 알림 시간 설정 (notification 매핑)
             let notifyTimeVal = eventData.notifyTime;
@@ -933,6 +938,11 @@
             }
 
             document.getElementById('updateEventModal').style.display = 'flex'; // 모달 표시
+
+            setTimeout(function() {
+                map.relayout();
+            }, 0);
+
         }
 
         // 파일 삭제 버튼 눌렀을 때 삭제할 파일 아이디 임시로 저장
@@ -970,8 +980,13 @@
                 isShared: form.isShared ? form.isShared.value : '0',
                 userId: currentUserId, // 현재 유저 ID 사용 (작성자)
                 workspaceCd: workspaceCd, // 임시 워크스페이스 코드
-                location: document.getElementById('update-location').value, // 위치 필드 추가
-                notifyTime: parseInt(form.notification.value) // 숫자로 변환
+                notifyTime: parseInt(form.notification.value), // 숫자로 변환
+                // 장소정보 추가
+                placeName: document.getElementById('update-placeName').value,
+                address: document.getElementById('update-placeAddress').value,
+                placeId: document.getElementById('update-placeId').value,
+                lat: parseFloat(document.getElementById('update-placeLat').value),
+                lng: parseFloat(document.getElementById('update-placeLng').value)
             };
 
             // 참가자 체크박스 값 추가
@@ -1040,7 +1055,8 @@
                 console.log("삭제 취소됨");
             }
         }
-        /** 지도와 장소 검색 서비스 초기화 함수 */
+
+        // 지도와 장소 검색 서비스 초기화 함수
         function initMap(mapContainerId, searchInputId, searchBtnId, listId, hiddenFields) {
             const mapContainer = document.getElementById(mapContainerId);
             const mapOption = {
@@ -1053,6 +1069,29 @@
             marker = new kakao.maps.Marker({ position: map.getCenter() });
             marker.setMap(map);
             ps = new kakao.maps.services.Places();
+
+            // [추가] 좌표를 주소로 변환하기 위한 지오코더 객체 생성
+            const geocoder = new kakao.maps.services.Geocoder();
+
+            // [추가] 지도 클릭 이벤트를 등록합니다
+            kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                // 1. 클릭한 위치에 마커를 표시합니다
+                marker.setPosition(mouseEvent.latLng);
+
+                // 2. 클릭한 위치의 좌표로 주소를 검색합니다 (지오코딩)
+                geocoder.coord2Address(mouseEvent.latLng.getLng(), mouseEvent.latLng.getLat(), function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const address = result[0]?.road_address?.address_name || result[0]?.address?.address_name;
+                        // 3. 검색된 주소로 숨겨진 필드와 검색창의 값을 채웁니다
+                        document.getElementById(searchInputId).value = address;
+                        document.getElementById(hiddenFields.name).value = address; // 장소명도 주소로 채움
+                        document.getElementById(hiddenFields.address).value = address;
+                        document.getElementById(hiddenFields.lat).value = mouseEvent.latLng.getLat();
+                        document.getElementById(hiddenFields.lng).value = mouseEvent.latLng.getLng();
+                        document.getElementById(hiddenFields.id).value = ''; // 장소 ID는 없으므로 비움
+                    }
+                });
+            });
 
             // 검색 버튼 이벤트
             document.getElementById(searchBtnId).addEventListener('click', function () {

@@ -18,4 +18,11 @@ public class EventUpdateRequest {
     private String          progressStatus; //진행도(진행전 진행중 종료됨)
     private String          priority;       //중요도
     private int             notifyTime;     // 알림시간( 당일 오전 9시 / 전날 오전 9시 / 알림없음 )
+
+    // 장소 정보 필드 추가
+    private String          placeName;      // 장소 명
+    private String          address;        // 장소 주소
+    private String          placeId;        // 장소 ID
+    private Double          lat;            // 위도
+    private Double          lng;            // 경도
 }

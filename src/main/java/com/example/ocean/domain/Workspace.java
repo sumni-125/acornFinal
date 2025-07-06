@@ -1,10 +1,8 @@
 package com.example.ocean.domain;
 
-import lombok.Builder;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 @Data
 public class Workspace {
@@ -17,6 +15,4 @@ public class Workspace {
     private Timestamp endDate;
     private Integer favorite;
     private Timestamp entranceDate;
-
-
 }

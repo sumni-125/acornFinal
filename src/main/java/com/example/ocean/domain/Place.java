@@ -12,14 +12,15 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Data
 public class Place {
-    private String          placeCd;
-    private String          eventCd;
-    private String          placeNm;
-    private String          placeId;
-    private String          address;
-    private double          lat;
-    private double          lng;
-    private LocalDateTime   createdAt;
-    private LocalDateTime   modify;
+    private Integer place_cd;
+    private String event_cd;
+    private String place_nm;
+    private String place_id;
+    private String workspace_cd;
+    private String address;
+    private Double lat;
+    private Double lng;
+    private LocalDateTime created_at;
+    private String created_by;
 
 }

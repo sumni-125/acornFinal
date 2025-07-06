@@ -18,4 +18,10 @@ public class EventCreateRequest {
     private String          priority;
     private LocalDateTime   createdDate;
     private int             notifyTime;
+    // 장소 정보 필드 추가
+    private String          placeName;
+    private String          address;
+    private String          placeId;
+    private Double          lat;
+    private Double          lng;
 }

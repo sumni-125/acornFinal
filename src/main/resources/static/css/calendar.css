@@ -110,6 +110,18 @@ body {
     /* 빨간색으로 변경 */
 }
 
+.fc .fc-col-header-cell.fc-day-sat {
+    /* 토요일 헤더 */
+    color: #6b84ff;
+    /* 파란 계열 색 변경 */
+}
+
+/* 토요일 날짜 텍스트 색상 변경 */
+.fc .fc-daygrid-day.fc-day-sat .fc-daygrid-day-number {
+    color: #6b84ff;
+    /* 파란 계열 색 변경 */
+}
+
 .fc .fc-daygrid-day {
     border: 1px solid var(--border-color);
     background-color: var(--bg-medium);
@@ -399,7 +411,7 @@ body {
     justify-content: center;
     align-items: flex-start; /* [수정] 중앙 정렬에서 상단 정렬로 변경 */
     overflow-y: auto; /* [추가] 오버레이 자체에 스크롤 추가 (모바일 등 작은 화면 대응) */
-    padding: 60px 20px; /* [추가] 상단 및 좌우 여백 확보 */
+    padding: 30px 20px; /* [추가] 상단 및 좌우 여백 확보 */
 }
 
 .modal-content {
@@ -410,7 +422,7 @@ body {
     width: 100%;
     max-width: 500px;
     position: relative;
-    max-height: 100%; /* [추가] 콘텐츠 최대 높이를 부모에 맞춤 */
+    max-height: calc(100vh - 120px); /* 높이를 뷰포트 기준으로 직접 계산 */
     overflow-y: auto; /* [추가] 내용이 길어지면 수직 스크롤바 생성 */
 }
 
@@ -903,3 +915,115 @@ body {
     margin-left: 5px;
     color: var(--text-dark);
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.header-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.header-actions button:hover {
+    background-color: #f0f0f0;
+}
+
+.header-actions .icon {
+    font-size: 18px; /* Adjust icon size */
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.text-content .main-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.text-content .sub-text {
+    font-size: 14px;
+    color: #777;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item .icon {
+    font-size: 16px;
+    color: #555;
+    margin-right: 10px;
+    width: 20px; /* Adjust width for consistent icon spacing /
+text-align: center;
+line-height: 1.5; / Vertically align the icon */
+}
+
+.info-item .value {
+    flex-grow: 1;
+    line-height: 1.5;
+    word-break: break-word; /* Prevent long words from breaking layout */
+}
+
+.info-item.description .icon {
+    margin-top: 5px; /* Align with the top of the text */
+}
+
+.attachments-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.attachments-list li {
+    padding: 5px 0;
+}
+
+.modal-footer {
+    padding-top: 20px;
+    text-align: right;
+}
+
+.modal-footer button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff; /* Example button color */
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+

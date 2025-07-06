@@ -28,9 +28,10 @@ public class PersonalCalendarAPIController {
 
     @GetMapping("")
     public ResponseEntity<List<CalendarResponse>> personalCalendar(
-            @RequestParam(required = false) String userId
+            @RequestParam(required = false) String userId,
+            @RequestParam String workspaceCd
     ) {
-        List<CalendarResponse> result = personalCalendarService.getPersonalEvents(userId);
+        List<CalendarResponse> result = personalCalendarService.getPersonalEvents(userId, workspaceCd);
 
         if (result == null || result.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -67,10 +68,10 @@ public class PersonalCalendarAPIController {
             @RequestPart("request") EventUpdateRequest request,
             @RequestPart(required = false) MultipartFile[] files,
             @RequestPart(required = false) List<String> deletedFileIds,
-            @RequestPart(required = false) List<String> updatedAttendees
+            @RequestParam(value = "attendenceIds", required = false) List<String> attendenceIds
     ) {
 
-        int result = personalCalendarService.updatePersonalEvent(request, deletedFileIds, files);
+        int result = personalCalendarService.updatePersonalEvent(request, attendenceIds, deletedFileIds, files);
 
         return result == 1
                 ? ResponseEntity.ok("일정 수정 성공")
