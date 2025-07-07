@@ -1,5 +1,3 @@
-// profile-modal.js
-
 document.addEventListener('DOMContentLoaded', function () {
   const workspaceCd = new URLSearchParams(location.search).get("workspaceCd");
   const editBtn = document.getElementById('editProfileBtn');
@@ -8,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const selectedDept = document.getElementById('selectedDept');
   const deptList = document.getElementById('deptList');
 
-  // 열기 함수 (외부에서 호출)
   window.openProfileModal = async function () {
     const res = await fetch(`/api/workspaces/${workspaceCd}/profile`);
     const profile = await res.json();
@@ -18,12 +15,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('viewEmail').value = profile.email || '';
     document.getElementById('viewPosition').value = profile.position || '';
     document.getElementById('viewStatusMsg').value = profile.statusMsg || '';
-    document.getElementById('selectedDept').dataset.deptcd = profile.deptCd || '';
-    document.getElementById('selectedDept').querySelector('span').textContent = profile.deptNm || '부서를 선택하세요';
+    selectedDept.dataset.deptcd = profile.deptCd || '';
+    selectedDept.querySelector('span').textContent = profile.deptNm || '부서를 선택하세요';
 
-    // 소셜 로그인 표시
     const socialInfo = document.getElementById('socialInfo');
-    socialInfo.innerHTML = profile.platform === 'kakao'
+    socialInfo.innerHTML = profile.socialPlatform === 'kakao'
       ? '<img src="/images/kakao_logo.png"> Kakao'
       : '<img src="/images/google_logo.png"> Google';
 
@@ -62,8 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
       email: document.getElementById('viewEmail').value,
       position: document.getElementById('viewPosition').value,
       statusMsg: document.getElementById('viewStatusMsg').value,
-      deptCd: selectedDept.dataset.deptcd,
-      userRole: 'MEMBER'
+      deptCd: selectedDept.dataset.deptcd
     };
 
     const res = await fetch(`/api/workspaces/${workspaceCd}/profile`, {
@@ -80,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // 부서 목록 조회
   async function fetchDepts() {
     const res = await fetch(`/api/workspaces/${workspaceCd}/departments`);
     const depts = await res.json();

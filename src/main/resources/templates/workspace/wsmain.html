@@ -12,25 +12,22 @@
 
     <style>
         body {
-            margin: 0;
-            display: flex;
+          margin: 0;
+          display: flex;
         }
     </style>
 </head>
 <body>
 
-<!-- 왼쪽 사이드바 (LNB) -->
+<!-- ✅ 왼쪽 사이드바 (Thymeleaf fragment 유지) -->
 <div th:replace="~{fragments/lnb :: lnbFragment}"></div>
 
 <!-- 메인 콘텐츠 -->
 <div class="main">
-
     <div class="top-banner">
         <div class="title">프로젝트 마감까지</div>
         <div class="d-day">D-21</div>
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
         <div class="date">6월 10일 화요일</div>
     </div>
 
@@ -61,86 +58,61 @@
             <b>- R. Thomsett</b>
         </div>
     </div>
-
 </div>
 
-<!-- 오른쪽 사이드바 (RNB) -->
-<div id="rnbContainer"></div>
-<script th:src="@{/js/rnb-fetch.js}"></script>
+<!-- ✅ 오른쪽 사이드바: static + fetch 방식 -->
+<div id="rnbContainer" th:data-workspace-cd="${workspaceCd}"></div>
 
+<!-- ✅ 모달들을 static HTML로 fetch 로딩 -->
+<div id="miniProfileContainer"></div>
+<div id="profileModalContainer"></div>
+<div id="inviteModalContainer"></div>
 
-<!-- 초대 모달 -->
-<div th:replace="~{fragments/invite-modal :: inviteModalFragment}"></div>
+<!-- ✅ JS: fetch 로딩 및 동작 처리 -->
+<script th:src="@{/js/rnb-fetch.js}" defer></script>
+<script th:src="@{/js/profile-modal.js}" defer></script>
+<script th:src="@{/js/mini-profile.js}" defer></script>
+<script th:src="@{/js/token.js}" defer></script>
 
-
-<div th:replace="~{fragments/mini-profile :: miniProfileFragment}"></div>
-
-<div th:replace="fragments/profile-modal :: profileModalFragment"></div>
-
-
-<!-- RNB 토글 버튼용 스크립트 -->
-<script th:src="@{/js/rnb-toggle.js}" defer></script>
-<script th:src="@{/js/invite-modal.js}"></script>
-<script th:src="@{/js/profile-modal.js}"></script>
-<script th:src="@{/js/token.js}"></script>
+<!-- ✅ 사용자 정보 Thymeleaf에서 JavaScript로 넘기기 -->
 <script th:inline="javascript">
-    // 페이지 로드 시 즉시 실행되는 부분
     /*<![CDATA[*/
     const userId = /*[[${userId}]]*/ '';
     const userName = /*[[${userName}]]*/ '';
+    const workspaceCd = /*[[${workspaceCd}]]*/ '';
 
-    // localStorage에 저장 (페이지 로드 시)
     if (userId) {
-        localStorage.setItem('userId', userId);
+      localStorage.setItem('userId', userId);
     }
-    /*]]>*/
 
     function openSketchMeeting() {
-        // 사용자 정보 가져오기
-        const user = {
-            id: userId,    // 위에서 정의한 변수 사용
-            name: userName  // 위에서 정의한 변수 사용
-        };
+      const user = { id: userId, name: userName };
+      const roomId = 'sketch-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8);
+      const mediaServerUrl = /*[[${@environment.getProperty('media.server.url')}]]*/ 'https://localhost:3001';
+      const params = new URLSearchParams({
+        roomId,
+        workspaceId: workspaceCd,
+        peerId: user.id,
+        displayName: user.name,
+        meetingType: 'sketch'
+      });
+      const meetingUrl = `${mediaServerUrl}/ocean-video-chat-complete.html?${params}`;
+      const windowFeatures = 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no';
+      const meetingWindow = window.open(meetingUrl, 'SketchMeeting', windowFeatures);
 
-        const workspaceCd = /*[[${workspaceCd}]]*/ '';
-
-        // 룸 ID 생성
-        const roomId = 'sketch-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8);
-
-        // 미디어 서버 URL
-        const mediaServerUrl = /*[[${@environment.getProperty('media.server.url')}]]*/ 'https://localhost:3001';
-
-        // URL 파라미터 구성
-        const params = new URLSearchParams({
-            roomId: roomId,
-            workspaceId: workspaceCd,
-            peerId: user.id,
-            displayName: user.name,
-            meetingType: 'sketch'
-        });
-
-        // 새 창에서 열기
-        const meetingUrl = `${mediaServerUrl}/ocean-video-chat-complete.html?${params}`;
-
-        // 팝업 창 옵션
-        const windowFeatures = 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no';
-        const meetingWindow = window.open(meetingUrl, 'SketchMeeting', windowFeatures);
-
-        if (!meetingWindow) {
-            alert('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
-            // 팝업이 차단된 경우 현재 창에서 열기
-            window.location.href = meetingUrl;
-        }
+      if (!meetingWindow) {
+        alert('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
+        window.location.href = meetingUrl;
+      }
     }
 
-    // 초대 링크 생성 함수
     function getSketchMeetingInviteLink(roomId) {
-        const baseUrl = window.location.origin;
-        return `${baseUrl}/sketch/join?roomId=${roomId}`;
+      const baseUrl = window.location.origin;
+      return `${baseUrl}/sketch/join?roomId=${roomId}`;
     }
 
-    // 다른 스크립트에서 사용할 수 있도록 window 객체에 저장
     window.currentWorkspaceCd = workspaceCd;
+    /*]]>*/
 </script>
 
 </body>

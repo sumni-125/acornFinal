@@ -6,31 +6,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!workspaceCd || !profileBtn || !modal) return;
 
   const statusMap = {
-    "ONLINE": {
-      icon: "green_circle.png",
-      label: "온라인"
-    },
-    "AWAY": {
-      icon: "red_circle.png",
-      label: "자리비움"
-    },
-    "OFFLINE": {
-      icon: "gray_circle.png",
-      label: "오프라인"
-    }
+    "ONLINE": { icon: "green_circle.png", label: "온라인" },
+    "AWAY": { icon: "red_circle.png", label: "자리비움" },
+    "OFFLINE": { icon: "gray_circle.png", label: "오프라인" }
   };
 
-  // 프로필 버튼 클릭 시 모달 열기
   profileBtn.addEventListener("click", async () => {
     try {
       const res = await fetch(`/api/workspaces/${workspaceCd}/profile`);
       const profile = await res.json();
 
-      document.getElementById("miniProfileImg").src = "/profile-images/" + (profile.image || "default.png");
+      document.getElementById("miniProfileImg").src = profile.userImg || "/images/default.png";
       document.getElementById("miniProfileName").textContent = profile.userNickname || "";
       document.getElementById("miniProfileRole").textContent = profile.position || "";
 
-      const status = (profile.userState || "OFFLINE").toUpperCase();
+      const status = (profile.status || "OFFLINE").toUpperCase();
       setStatus(status);
 
       modal.style.left = "60px";
@@ -40,7 +30,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // 바깥 클릭 시 닫기
   window.addEventListener("click", (e) => {
     if (!modal.contains(e.target) && !profileBtn.contains(e.target)) {
       modal.style.left = "-300px";
