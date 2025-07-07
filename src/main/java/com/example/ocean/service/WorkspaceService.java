@@ -3,6 +3,7 @@ package com.example.ocean.service;
 import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
+import com.example.ocean.mapper.MemberTransactionMapper;
 import com.example.ocean.mapper.WorkspaceMapper;
 import com.example.ocean.security.oauth.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,12 @@ public class WorkspaceService {
 
     private final WorkspaceMapper workspaceMapper;
 
-    public WorkspaceService(WorkspaceMapper workspaceMapper) {
+    private final MemberTransactionMapper transactionMapper;
+
+    public WorkspaceService(WorkspaceMapper workspaceMapper,
+                            MemberTransactionMapper transactionMapper) {
         this.workspaceMapper = workspaceMapper;
+        this.transactionMapper = transactionMapper;
     }
 
     public List<Workspace> getWorkspacesByUserId(String userId) {
@@ -196,8 +201,28 @@ public class WorkspaceService {
     }
 
     public void updateQuitTime(String workspaceCd, String userId) {
-        workspaceMapper.updateQuitTime(workspaceCd, userId, Timestamp.valueOf(LocalDateTime.now()));
+        Timestamp quitTime = Timestamp.valueOf(LocalDateTime.now());
+
+        // 1. 퇴장 시간 업데이트
+        workspaceMapper.updateQuitTime(workspaceCd, userId, quitTime);
+
+        // 2. 입장 시간 조회
+        Timestamp entranceTime = transactionMapper.getEntranceTime(workspaceCd, userId);
+        if (entranceTime != null) {
+            long durationInSeconds = (quitTime.getTime() - entranceTime.getTime()) / 1000;
+
+            // 3. MEMBERS_TRANSACTION에 누적
+            Long currentTime = transactionMapper.getAccumulatedTime(workspaceCd, userId);
+            if (currentTime == null) {
+                // 최초 insert
+                transactionMapper.insertAccumulatedTime(workspaceCd, userId, durationInSeconds);
+            } else {
+                // 누적 update
+                transactionMapper.updateAccumulatedTime(workspaceCd, userId, durationInSeconds);
+            }
+        }
     }
+
 
     public List<WorkspaceMember> getWorkspaceMembers(String workspaceCd) {
         return workspaceMapper.findMembersByWorkspaceCd(workspaceCd);
@@ -367,4 +392,18 @@ public class WorkspaceService {
 
         mailSender.send(message);
     }
+
+    public Long getAccumulatedTime(String workspaceCd, String userId) {
+        Long time = transactionMapper.getAccumulatedTime(workspaceCd, userId);
+        return time != null ? time : 0L;
+    }
+
+    public WorkspaceMember getMemberDetail(String workspaceCd, String userId) {
+        return workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, userId);
+    }
+
+    public String getUserStatus(String workspaceCd, String userId) {
+        return workspaceMapper.getUserStatus(workspaceCd, userId);
+    }
+
 }

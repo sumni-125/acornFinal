@@ -191,7 +191,7 @@ public class WorkspacePageController {
                         email,
                         phoneNum,
                         "MEMBER",
-                        userImgPath  // ⭐ 이미지 경로 추가
+                        userImgPath != null ? userImgPath : existingMember.getUserImg() // ⭐ 기존 이미지 유지
                 );
             }
 

@@ -3,6 +3,7 @@ package com.example.ocean.controller.workspace;
 import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
+import com.example.ocean.mapper.MemberTransactionMapper;
 import com.example.ocean.service.WorkspaceService;
 import com.example.ocean.security.oauth.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -187,7 +188,6 @@ public class WorkspaceController {
     @GetMapping("/{workspaceCd}/departments")
     public ResponseEntity<List<WorkspaceDept>> getDepartments(
             @PathVariable String workspaceCd) {
-
         List<WorkspaceDept> departments = workspaceService.getDepartments(workspaceCd);
         return ResponseEntity.ok(departments);
     }
@@ -242,6 +242,32 @@ public class WorkspaceController {
         return ResponseEntity.ok().build();
     }
 
-    // ⚠️ 불필요한 별도 이미지 업로드 엔드포인트 제거됨
-    // 이제 프로필 설정은 WorkspacePageController의 handleSetProfile 메서드에서 통합 처리
+    // 특정사용자 정보 상세조회
+    @GetMapping("/{workspaceCd}/member/{userId}")
+    public ResponseEntity<WorkspaceMember> getWorkspaceMemberDetail(
+            @PathVariable String workspaceCd,
+            @PathVariable String userId) {
+        WorkspaceMember member = workspaceService.getMemberDetail(workspaceCd, userId);
+        return ResponseEntity.ok(member);
+    }
+
+    // 로그인한 사용자 상태 가져오기
+    @GetMapping("/{workspaceCd}/member/{userId}/status")
+    public ResponseEntity<String> getUserStatus(@PathVariable String workspaceCd,
+                                                @PathVariable String userId) {
+        String status = workspaceService.getUserStatus(workspaceCd, userId);
+        return ResponseEntity.ok(status);
+    }
+
+    // 사용자 상태 변경 (온라인,오프라인,자리비움)
+    @PatchMapping("/{workspaceCd}/member/{userId}/status")
+    public ResponseEntity<String> updateUserStatus(
+            @PathVariable String workspaceCd,
+            @PathVariable String userId,
+            @RequestBody String userState) {
+
+        workspaceService.updateUserState(workspaceCd, userId, userState);
+        return ResponseEntity.ok("상태가 업데이트되었습니다: " + userState);
+    }
+
 }
