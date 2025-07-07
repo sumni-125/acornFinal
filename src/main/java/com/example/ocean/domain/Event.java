@@ -1,11 +1,17 @@
 package com.example.ocean.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import com.example.ocean.domain.Place;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
+@Builder // 빌더 패턴 사용을 위해 추가
 public class Event {
     private String          eventCd;            // EVENT_CD (PK)
     private String          workspaceCd;        // WORKSPACE_CD (FK)

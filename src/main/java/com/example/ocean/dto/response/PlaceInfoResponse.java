@@ -18,6 +18,7 @@ public class PlaceInfoResponse {
     private Double lng;
 
     // EVENTS 테이블 정보
+    private String eventCd;
     private String title;
     private String description;
     private LocalDateTime startDatetime;

@@ -41,7 +41,7 @@ public class ViewController {
             Model model) {
 
         // 1. 서비스에서 DTO 목록을 가져옵니다.
-        List<PlaceInfoResponse> places = placeService.findPlaceInfoByWorkspace(workspaceCd);
+        List<PlaceInfoResponse> places = placeService.findPlaceInfoByWorkspace(workspaceCd, userPrincipal.getId());
 
         // 2. DTO 목록을 JSON 문자열 목록으로 직접 변환합니다.
         List<String> placesJson = places.stream()

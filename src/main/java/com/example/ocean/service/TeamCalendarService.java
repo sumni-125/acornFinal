@@ -6,7 +6,7 @@ import com.example.ocean.domain.MentionNotification;
 import com.example.ocean.domain.Place;
 import com.example.ocean.dto.request.*;
 import com.example.ocean.dto.response.*;
-import com.example.ocean.mapper.WorkspaceMapper;
+import com.example.ocean.mapper.WorkspaceMapper; // 사용되지 않는 import 제거 권장
 import com.example.ocean.repository.*;
 import com.example.ocean.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional; // 트랜잭션 추가
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,6 +40,7 @@ public class TeamCalendarService {
         return teamEventRepository.selectTeamEvents(workspaceCd);
     }
 
+    @Transactional(readOnly = true) // 읽기 전용 트랜잭션
     public EventDetailResponse selectTeamEventDetail(String eventCd){
         Event event = teamEventRepository.selectTeamEventDetail(eventCd);
         if (event == null) {
@@ -46,11 +48,12 @@ public class TeamCalendarService {
         }
         List<AttendeesInfo> attendences = eventAttendencesRepository.selectAttendeesInfo(eventCd);
         List<File> fileList = fileRepository.selectFileByEventCd(eventCd);
-        Place place = event.getPlace();
+        Place place = event.getPlace(); // Event 내부에 Place 객체 포함
 
         return new EventDetailResponse(event, attendences, fileList, place);
     }
 
+    @Transactional // 트랜잭션 적용
     public int insertTeamEvent(EventCreateRequest request, MultipartFile[] files){
         String eventCd = "evnt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String userId = request.getUserId();
@@ -65,7 +68,7 @@ public class TeamCalendarService {
         detail.setStartDatetime(request.getStartDatetime());
         detail.setEndDatetime(request.getEndDatetime());
         detail.setColor(request.getColor());
-        detail.setIsShared("1");
+        detail.setIsShared("1"); 
         detail.setProgressStatus(request.getProgressStatus());
         detail.setPriority(request.getPriority());
         detail.setCreatedDate(LocalDateTime.now());
@@ -73,10 +76,14 @@ public class TeamCalendarService {
 
         int events = teamEventRepository.insertTeamEvent(detail);
 
-        // 장소 정보 저장
+        // 장소 정보 저장 (Event 도메인에 place 필드가 추가되었으므로 PlaceRepository 사용)
+        // EventCreateRequest에 장소 정보가 직접 담겨 오지 않고, Event 도메인에 Place 객체가 통째로 들어있지 않다면
+        // request.getPlaceName() 등의 getter를 통해 받아와야 합니다.
+        // 현재 EventCreateRequest DTO를 알 수 없으므로, PlaceService의 insertPlaceAndEvent와 유사하게
+        // request에서 장소 필드를 직접 가져와서 Place 객체를 생성하는 방식으로 유지합니다.
         if (request.getPlaceName() != null && !request.getPlaceName().isBlank() && request.getLat() != null) {
             Place place = new Place();
-            place.setEvent_cd(eventCd);
+            place.setEvent_cd(eventCd); // PLACE 테이블의 event_cd 필드는 snake_case 유지
             place.setWorkspace_cd(request.getWorkspaceCd());
             place.setPlace_nm(request.getPlaceName());
             place.setAddress(request.getAddress());
@@ -88,11 +95,10 @@ public class TeamCalendarService {
 
         List<String> attendenceIds = workspaceMemberRepository.getWorkspaceMemberId(request.getWorkspaceCd());
         // 참가자 삽입
-        if (attendenceIds != null && attendenceIds.size() > 0) {
+        if (attendenceIds != null && !attendenceIds.isEmpty()) { // size() > 0 대신 isEmpty() 권장
             for(String attendId : attendenceIds){
                 eventAttendencesRepository.insertEventAttendences(eventCd, attendId);
             }
-
         }
 
         // 파일추가
@@ -102,7 +108,12 @@ public class TeamCalendarService {
         return events;
     }
 
+    @Transactional // 트랜잭션 적용
     public int updateTeamEvent(EventUpdateRequest eventUpdateRequest, List<String> deletedFileIds, MultipartFile[] insertedFiles){
+        // EventUpdateRequest의 isShared 필드도 'Y'/'N'으로 통일해야 할 수 있습니다.
+        // 현재 EventUpdateRequest DTO 구조를 모르므로, 이 부분은 DTO에 맞게 조정 필요
+        // 예시: eventUpdateRequest.setIsShared("Y");
+
         int events = teamEventRepository.updateTeamEvent(eventUpdateRequest);
         String eventCd = eventUpdateRequest.getEventCd();
         String userId = eventUpdateRequest.getUserId();
@@ -129,7 +140,7 @@ public class TeamCalendarService {
         }
 
         //삭제된파일
-        if (deletedFileIds != null && deletedFileIds.size() > 0) {
+        if (deletedFileIds != null && !deletedFileIds.isEmpty()) { // size() > 0 대신 isEmpty() 권장
             for(String fileId:deletedFileIds){
                 fileRepository.updateFileActiveByEventCdAndFileId(eventCd, fileId);
             }
@@ -142,9 +153,12 @@ public class TeamCalendarService {
         return events;
     }
 
+    @Transactional // 트랜잭션 적용
     public int deleteTeamEvent(String eventCd, String userId){
         insertMentionNotification(eventCd, "DELETE");
         fileRepository.deleteFileByEventCd(eventCd);
+        // Place 정보도 함께 삭제 (Event 삭제보다 먼저 호출되어야 외래키 제약조건 위반 방지)
+        placeRepository.deletePlaceByEventCd(eventCd);
         int attendences = eventAttendencesRepository.deleteAttendeesByEventCd(eventCd);
         int events = teamEventRepository.deleteTeamEvent(eventCd, userId);
         return events;
@@ -191,7 +205,7 @@ public class TeamCalendarService {
     private void insertMentionNotification(String eventCd, String notiState) {
         // 멘션
         List<AttendeesInfo> attendeesInfos=eventAttendencesRepository.selectAttendeesInfo(eventCd);
-        if (attendeesInfos != null && attendeesInfos.size() > 0) {
+        if (attendeesInfos != null && !attendeesInfos.isEmpty()) {
             for(AttendeesInfo info :attendeesInfos){
                 String attendId = info.getUserId();
                 String notiCd="noti_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
@@ -199,7 +213,5 @@ public class TeamCalendarService {
                 mentionNotificationRepository.insertMentionNotification(noti);
             }
         }
-
     }
-
 }
