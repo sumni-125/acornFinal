@@ -473,6 +473,7 @@
                     });
             },
             // 일정 클릭 이벤트 : 일정 상세 모달창 띄움
+            // 일정 클릭 이벤트 : 일정 상세 모달창 띄움
             eventClick: function (info) {
                 closeCreateEventModal();
                 closeUpdateModal();
@@ -485,9 +486,11 @@
                         return res.json();
                     })
                     .then(data => {
+                        // [추가] 수정 모달을 위해 현재 이벤트 데이터 저장
+                        window.selectedEventData = data;
 
                         const event = data.event;
-                        const place = data.place; // 팀 캘린더의 상세 응답에 Place 객체가 직접 포함되는지 확인
+                        const place = data.place; // Place 객체
 
                         console.log("event", event);
                         console.log("currentUserId", currentUserId);
@@ -532,22 +535,37 @@
                         const detailMapContainer = document.getElementById('detail-map');
                         const detailLocationText = document.getElementById('detailLocation');
 
-                        if (place && place.lat && place.lng) { // place 객체 사용
+                        if (place && place.lat && place.lng) {
                             detailLocationText.innerText = place.address || '주소 정보 없음';
                             detailMapContainer.style.display = 'block';
 
+                            // 지도가 생성될 위치 (마커의 중심 위치)
+                            const mapCenter = new kakao.maps.LatLng(place.lat, place.lng);
+
                             const mapOption = {
-                                center: new kakao.maps.LatLng(place.lat, place.lng),
+                                center: mapCenter, // 지도의 중심 설정
                                 level: 3
                             };
+                            // 지도 인스턴스 생성
                             detailMap = new kakao.maps.Map(detailMapContainer, mapOption);
+                            // 마커 인스턴스 생성 및 지도에 추가
                             detailMarker = new kakao.maps.Marker({
-                                position: mapOption.center
+                                position: mapCenter // 마커 위치도 지도의 중심과 동일하게 설정
                             });
                             detailMarker.setMap(detailMap);
+
+                            // 지도를 표시하기 전에 모달을 보이게 한 후, 약간의 지연을 주고 relayout 호출
+                            document.getElementById('eventDetailModal').style.display = 'flex';
+                            setTimeout(() => {
+                                detailMap.relayout(); // 지도 크기 및 중심 재설정
+                                detailMap.setCenter(mapCenter); // 확실하게 중심 재설정 (만약 relayout만으로 안될 경우 대비)
+                            }, 50); // 0ms 대신 50ms 정도의 작은 지연을 줍니다.
+
                         } else {
                             detailLocationText.innerText = '위치 정보 없음';
                             detailMapContainer.style.display = 'none';
+                            // 지도가 표시되지 않을 경우 모달만 보이기
+                            document.getElementById('eventDetailModal').style.display = 'flex';
                         }
 
                         // --- 파일 목록 및 버튼 표시 ---
@@ -556,7 +574,7 @@
                         if (data.fileList && data.fileList.length > 0) {
                             data.fileList.forEach(file => {
                                 const li = document.createElement('li');
-                                li.innerHTML = `<a href="/api/calendar/team/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span class="file-name-display">${file.fileNm}</span></a>`; // [변경] personal -> team API, class 추가
+                                li.innerHTML = `<a href="/api/calendar/team/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span class="file-name-display">${file.fileNm}</span></a>`;
                                 detailFilesUl.appendChild(li);
                             });
                         } else {
@@ -573,14 +591,6 @@
                         } else {
                             if(editBtn) editBtn.style.display = 'none';
                             if(deleteBtn) deleteBtn.style.display = 'none';
-                        }
-
-                        // --- 최종 모달 표시 및 지도 리레이아웃 ---
-                        window.selectedEventData = data;
-                        document.getElementById('eventDetailModal').style.display = 'flex';
-
-                        if (detailMap) {
-                            setTimeout(() => detailMap.relayout(), 0);
                         }
                     })
                     .catch(err => {
@@ -1148,12 +1158,11 @@
 
         // 새 파일 추가 로직
         const validNewFiles = newUpdateFiles.filter(file => file instanceof File && file.size > 0);
-        if (validNewFiles.length > 0) {
+
+        if (validNewFiles.length > 0) { // [수정] validNewFiles가 있을 때만 files 파트를 추가합니다.
             validNewFiles.forEach(file => {
                 formData.append("files", file);
             });
-        } else {
-            formData.append("files", new Blob([], { type: "application/octet-stream" }));
         }
 
         formData.append("deletedFileIds", new Blob([JSON.stringify(deletedFileIds)], { type: "application/json" }));
