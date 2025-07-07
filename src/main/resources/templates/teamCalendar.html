@@ -31,6 +31,7 @@
     </div>
 
     <div class="sidebar-right"></div>
+
 </div>
 
 <div id="createEventModal" class="modal-overlay">
@@ -168,46 +169,60 @@
 
         <div class="info-item">
             <span class="icon icon-user-detail"></span>
-            <div class="value" id="detailAuthor"></div>
+            <div class="value-wrapper"> <label>작성자</label>
+                <div class="value" id="detailAuthor"></div>
+            </div>
         </div>
 
         <div class="info-item">
             <span class="icon icon-user-detail"></span>
-            <div class="value" id="detailWorkspaceMembers">참가자</div>
+            <div class="value-wrapper"> <label>참가자</label>
+                <div class="value" id="detailWorkspaceMembers"></div>
+            </div>
         </div>
 
         <div class="info-item">
             <span class="icon icon-location-detail"></span>
-            <div class="value" id="detailLocation">위치 정보 없음</div>
+            <div class="value-wrapper"> <label>위치</label>
+                <div class="value" id="detailLocation"></div>
+            </div>
         </div>
 
         <div id="detail-map" style="width:100%; height:200px; margin-top:10px; display:none;"></div>
 
         <div class="info-item description">
-            <span class="icon icon-description-detail"></span>
-            <div class="value" id="detailDescriptionDisplay"></div>
+            <div class="value-wrapper">
+                <span class="icon icon-description-detail"><label>설명</label></span>
+                <div class="value" id="detailDescriptionDisplay"></div>
+            </div>
         </div>
 
         <div class="info-item">
             <span class="icon icon-bell-detail"></span>
-            <div class="value" id="detailNotification"></div>
+            <div class="value-wrapper"> <label>알림</label>
+                <div class="value" id="detailNotification"></div>
+            </div>
         </div>
 
         <div class="info-item">
-            <span class="icon icon-attachment-detail"></span>
-            <div class="value">
+            <div class="value-wrapper">
+                <span class="icon icon-attachment-detail"><label>첨부파일</label></span>
                 <ul id="detailFiles" class="attachments-list"></ul>
             </div>
         </div>
 
         <div class="info-item">
             <span class="icon icon-priority"></span>
-            <div class="value" id="detailPriority"></div>
+            <div class="value-wrapper"> <label>중요도</label>
+                <div class="value" id="detailPriority"></div>
+            </div>
         </div>
 
         <div class="info-item">
             <span class="icon icon-user-detail"></span>
-            <div class="value" id="detailShared"></div>
+            <div class="value-wrapper"> <label>공유 여부</label>
+                <div class="value" id="detailShared"></div>
+            </div>
         </div>
 
 
@@ -221,16 +236,21 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3>일정 수정</h3>
-            <button type="button" class="modal-close-button" onclick="closeUpdateModal()">&times;</button>
+            <button type="button" class="modal-close-button" onclick="closeUpdateModal()">
+                <span class="icon icon-close"></span>
+            </button>
         </div>
         <form id="updateEventForm">
             <input type="hidden" id="update-eventCd" name="eventCd" />
 
-            <div class="form-group flex-container">
-                <input type="text" id="update-title" name="title" placeholder="제목" required
-                       oninvalid="this.setCustomValidity('제목은 필수 입력 사항입니다.')"
-                       oninput="this.setCustomValidity('')">
-                <input type="color" id="update-color" name="color" value="#0066CC">
+            <div class="form-group">
+                <label for="update-title" class="icon-description">제목</label>
+                <div class="flex-container">
+                    <input type="text" id="update-title" name="title" placeholder="제목" required
+                           oninvalid="this.setCustomValidity('제목은 필수 입력 사항입니다.')"
+                           oninput="this.setCustomValidity('')">
+                    <input type="color" id="update-color" name="color" value="#0066CC">
+                </div>
             </div>
 
             <div class="form-group">
@@ -256,8 +276,8 @@
             <div class="form-group">
                 <label class="icon-attach">기존 파일</label>
                 <ul id="updateFiles" class="current-files-list"></ul>
-                <label class="icon-attach" style="margin-top: 15px;">새 파일 첨부:</label>
-                <input type="file" id="update-fileUpload" name="files" multiple>
+                <label class="icon-attach file-attach-label">새 파일 첨부</label> <div id="update-new-files-container">
+            </div>
             </div>
 
             <div class="form-group">
@@ -306,7 +326,7 @@
             <div class="form-group">
                 <label for="update-isShared">공유 여부</label>
                 <select id="update-isShared" name="isShared">
-                    <option value="1" selected>공유</option>
+                    <option value="1">공유</option>
                     <option value="0">비공유</option>
                 </select>
             </div>
@@ -319,7 +339,6 @@
     </div>
 </div>
 
-<!--<script th:src="@{/js/teamCalendar.js}"></script>-->
 <script th:inline="javascript">
     /*<![CDATA[*/
     const currentUser = /*[[${currentUser}]]*/ '';
@@ -333,25 +352,13 @@
 
     console.log("currentUser: " + currentUser.userId);
     console.log("workspaceCd: " + workspaceCd);
-    // 현재 로그인 사용자 ID는 백엔드에서 주입되어야 합니다. (더미값)
-    /*
-    fetch(`/api/user/profile`)
-        .then(res => {
-            if (!res.ok) throw new Error("유저 정보 조회 실패");
-            return res.json();
-        })
-        .then((data)=>{
-            //
-            const currentUserId = data.userId;
-        })
-        .catch(err => {
-            console.error(err);
-        });*/
-
 
     const currentUserId = currentUser.userId;
     const currentUserName = currentUser.userName;
     console.log("currentUserName: " + currentUserName);
+
+    // 파일명 최대 길이 정의
+    const MAX_FILENAME_LENGTH = 100;
 
     document.addEventListener('DOMContentLoaded', function () {
         const calendarEl = document.getElementById('calendar');
@@ -363,19 +370,17 @@
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            height: 'auto', // 캘린더 높이 자동 조절
+            height: 'auto',
             initialDate: new Date(),
-            // 날짜 클릭시 : 일정 추가하는 함수 (createEventModal 띄움)
             dateClick: async function (info) {
-                closeDetailModal(); // 혹시 열려있는 상세 모달 닫기
-                closeUpdateModal(); // 혹시 열려있는 수정 모달 닫기
+                closeDetailModal();
+                closeUpdateModal();
 
-                document.getElementById('eventForm').reset(); // 폼 초기화
-                // 클릭된 날짜로 시작/종료 일시 기본값 설정
+                document.getElementById('eventForm').reset();
                 document.getElementById('startDatetime').value = info.dateStr + 'T09:00';
                 document.getElementById('endDatetime').value = info.dateStr + 'T18:00';
                 selectedFiles = [];
-                document.getElementById('insertedFiles').innerHTML = ''; // 파일 목록 초기화
+                document.getElementById('insertedFiles').innerHTML = '';
                 document.getElementById('workspaceMembers').innerHTML = '';
 
                 initMap(
@@ -383,7 +388,7 @@
                     { name: 'placeName', address: 'placeAddress', id: 'placeId', lat: 'placeLat', lng: 'placeLng' }
                 );
 
-                document.getElementById('createEventModal').style.display = 'flex'; // 모달 표시
+                document.getElementById('createEventModal').style.display = 'flex';
 
                 setTimeout(function() {
                     map.relayout();
@@ -403,18 +408,15 @@
 
                             const checkbox = document.createElement('input');
                             checkbox.type = 'checkbox';
-
                             checkbox.name = 'attendenceIds';
-
                             const uniqueId = 'userId' + member.userId;
                             checkbox.id = uniqueId;
                             checkbox.value = member.userId;
 
                             const label = document.createElement('label');
-                            label.htmlFor = uniqueId; // id랑 연결
+                            label.htmlFor = uniqueId;
                             label.textContent = member.userNickname;
 
-                            // 현재 로그인한 사용자라면 체크 + 숨기기
                             if (member.userId === currentUserId) {
                                 checkbox.checked = true;
                                 checkbox.style.display = 'none';
@@ -428,12 +430,31 @@
 
                     });
             },
-            // 팀 일정 리스트 풀캘린더에 뿌려주는 부분 (IS_SHARED=1인 이벤트만 조회)
+            // 팀 일정 리스트 (IS_SHARED=1인 이벤트만 조회)
             events: function (fetchInfo, successCallback, failureCallback) {
                 fetch(`/api/calendar/team?workspaceCd=${workspaceCd}`)
                     .then(response => {
-                        if (!response.ok) throw new Error("불러오기 실패!");
-                        return response.json();
+                        if (!response.ok) {
+                            // HTTP 상태 코드가 2xx가 아닌 경우 (예: 500, 400 등)
+                            return response.text().then(text => { // 응답 본문을 텍스트로 읽어 오류 메시지에 포함
+                                console.error("서버 응답 오류 (events fetch):", text);
+                                throw new Error("일정 불러오기 실패: " + text);
+                            });
+                        }
+                        // 응답 본문이 비어있을 수 있는 경우 (204 No Content 등)
+                        // response.json() 대신 response.text()로 먼저 본문 확인
+                        return response.text().then(text => {
+                            if (text.length === 0) { // 응답 텍스트가 비어있으면 빈 배열 반환
+                                return [];
+                            }
+                            try {
+                                return JSON.parse(text); // 텍스트를 JSON으로 파싱
+                            } catch (e) {
+                                console.error("JSON 파싱 오류:", e);
+                                console.error("수신된 텍스트:", text);
+                                throw new Error("일정 데이터 파싱 실패: 유효하지 않은 JSON");
+                            }
+                        });
                     })
                     .then(data => {
                         const events = data.map(item => ({
@@ -447,13 +468,14 @@
                     })
                     .catch(err => {
                         console.error(err);
-                        failureCallback(err);
+                        alert("캘린더 일정 불러오기 중 오류가 발생했습니다. 콘솔을 확인해주세요."); // 사용자에게 더 유용한 메시지
+                        failureCallback(err); // FullCalendar에 오류 전달
                     });
             },
             // 일정 클릭 이벤트 : 일정 상세 모달창 띄움
             eventClick: function (info) {
-                closeCreateEventModal(); // 혹시 열려있는 생성 모달 닫기
-                closeUpdateModal(); // 혹시 열려있는 수정 모달 닫기
+                closeCreateEventModal();
+                closeUpdateModal();
 
                 const eventCd = info.event.id;
                 fetch(`/api/calendar/team/events/${eventCd}`)
@@ -465,7 +487,7 @@
                     .then(data => {
 
                         const event = data.event;
-                        const place = data.place;
+                        const place = data.place; // 팀 캘린더의 상세 응답에 Place 객체가 직접 포함되는지 확인
 
                         console.log("event", event);
                         console.log("currentUserId", currentUserId);
@@ -510,7 +532,7 @@
                         const detailMapContainer = document.getElementById('detail-map');
                         const detailLocationText = document.getElementById('detailLocation');
 
-                        if (place && place.lat && place.lng) {
+                        if (place && place.lat && place.lng) { // place 객체 사용
                             detailLocationText.innerText = place.address || '주소 정보 없음';
                             detailMapContainer.style.display = 'block';
 
@@ -534,7 +556,7 @@
                         if (data.fileList && data.fileList.length > 0) {
                             data.fileList.forEach(file => {
                                 const li = document.createElement('li');
-                                li.innerHTML = `<a href="/api/calendar/team/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span>${file.fileNm}</span></a>`;
+                                li.innerHTML = `<a href="/api/calendar/team/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span class="file-name-display">${file.fileNm}</span></a>`; // [변경] personal -> team API, class 추가
                                 detailFilesUl.appendChild(li);
                             });
                         } else {
@@ -608,14 +630,14 @@
                 });
             }
         }
-        preventSubmitOnEnter('eventForm');          // '일정 추가' 폼에 적용
-        preventSubmitOnEnter('updateEventForm');    // '일정 수정' 폼에 적용
+        preventSubmitOnEnter('eventForm');
+        preventSubmitOnEnter('updateEventForm');
     });
 
     // Date 객체를 원하는 형식의 문자열로 포맷하는 헬퍼 함수
     function formatDate(date, format) {
         const year = date.getFullYear();
-        const month = date.getMonth() + 1;
+        const month = (date.getMonth() + 1);
         const day = date.getDate();
         const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
         let hours24 = date.getHours();
@@ -647,21 +669,27 @@
     function saveEvent() {
         const form = document.getElementById("eventForm");
 
+        // 파일명 길이 검증
+        for (const file of selectedFiles) {
+            if (file.name.length > MAX_FILENAME_LENGTH) {
+                alert(`첨부하신 파일 '${file.name}'의 이름이 너무 길어 업로드가 불가능합니다.`);
+                return;
+            }
+        }
+
         const formData = new FormData();
-        // userId랑 workspaceCd는 임시로 지정해놨어요
         const requestBody = {
-            userId: currentUserId, // 전역 currentUserId 사용
+            userId: currentUserId,
             workspaceCd: workspaceCd,
             title: form.title.value,
             description: form.description.value,
-            startDatetime: form.startDatetime.value, // id 변경됨
-            endDatetime: form.endDatetime.value,     // id 변경됨
+            startDatetime: form.startDatetime.value,
+            endDatetime: form.endDatetime.value,
             color: form.color.value,
-            isShared: form.isShared ? form.isShared.value : '1', // 팀 캘린더는 기본적으로 공유
-            progressStatus: "TODO", // 새 일정은 기본 TODO로 가정 (폼에 없음)
+            isShared: form.isShared ? form.isShared.value : '1', // 팀 캘린더는 기본적으로 '1' (공유)
+            progressStatus: "TODO",
             priority: form.priority.value,
-            notifyTime: parseInt(form.notification.value), // 숫자로 변환
-            // 장소 정보
+            notifyTime: parseInt(form.notification.value),
             placeName: document.getElementById('placeName').value,
             address: document.getElementById('placeAddress').value,
             placeId: document.getElementById('placeId').value,
@@ -671,10 +699,11 @@
 
         formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
 
-        const attendenceIds = document.querySelectorAll('input[name="attendenceIds"]:checked');
-        attendenceIds.forEach(cb => {
-            formData.append("attendenceIds", cb.value);
-        });
+        const checkedCheckboxes = document.querySelectorAll('#workspaceMembers input[name="attendenceIds"]:checked');
+        const attendenceIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+        if (attendenceIds.length > 0) { // [수정] attendenceIds가 있을 때만 Blob으로 변환
+            formData.append("attendenceIds", new Blob([JSON.stringify(attendenceIds)], { type: "application/json" }));
+        }
 
         selectedFiles.forEach(file => {
             formData.append("files", file);
@@ -690,7 +719,7 @@
             })
             .then(data => {
                 alert("일정 등록 성공!");
-                location.reload(); // 캘린더 새로고침
+                location.reload();
             })
             .catch(err => {
                 console.error(err);
@@ -728,33 +757,41 @@
     }
 
 
-    let selectedFiles = [];
+    let selectedFiles = []; // 새 일정 추가 모달용 파일 배열
 
     document.getElementById('fileUpload').addEventListener('change', function() {
         const insertedFilesUl = document.getElementById('insertedFiles');
 
-        // 새로 선택한 파일들을 배열에 추가
         for (let i = 0; i < this.files.length; i++) {
+            if (this.files[i].name.length > MAX_FILENAME_LENGTH) {
+                alert(`첨부하신 파일 '${this.files[i].name}'의 이름이 너무 길어 업로드가 불가능합니다.`);
+                this.value = '';
+                return;
+            }
             selectedFiles.push(this.files[i]);
         }
-
-        updateFileListUI();
-
-        // input 초기화해서 같은 파일 다시 선택 가능하게 함
+        updateFileListUI(insertedFilesUl, selectedFiles);
         this.value = '';
     });
 
-    function updateFileListUI() {
-        const insertedFilesUl = document.getElementById('insertedFiles');
-        insertedFilesUl.innerHTML = '';
+    function updateFileListUI(targetUlElement, fileArray) {
+        targetUlElement.innerHTML = '';
 
-        selectedFiles.forEach((file, index) => {
+        if (fileArray.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = '첨부파일 없음';
+            targetUlElement.appendChild(li);
+            return;
+        }
+
+        fileArray.forEach((file, index) => {
             const li = document.createElement('li');
             li.style.display = 'flex';
             li.style.justifyContent = 'space-between';
             li.style.alignItems = 'center';
 
             const span = document.createElement('span');
+            span.className = 'file-name-display';
             span.textContent = file.name;
 
             const removeButton = document.createElement('button');
@@ -766,15 +803,14 @@
             removeButton.style.color = '#ff6b6b';
             removeButton.style.cursor = 'pointer';
 
-            // 클릭하면 배열에서 삭제
             removeButton.addEventListener('click', () => {
-                selectedFiles.splice(index, 1);
-                updateFileListUI(); // 리스트 다시 그리기
+                fileArray.splice(index, 1);
+                updateFileListUI(targetUlElement, fileArray);
             });
 
             li.appendChild(span);
             li.appendChild(removeButton);
-            insertedFilesUl.appendChild(li);
+            targetUlElement.appendChild(li);
         });
     }
 
@@ -807,6 +843,7 @@
 
     // ====== 일정 수정 모달 함수 ======
     let deletedFileIds = []; // 전역 변수로 관리
+    let newUpdateFiles = []; // 동적 파일 입력 필드에 선택된 파일들을 저장할 배열
 
     function openUpdateModal() {
         closeCreateEventModal();
@@ -819,7 +856,7 @@
         }
 
         const eventData = data.event;
-        const placeData = data.place;
+        const placeData = data.place; // [변경] placeData로 직접 참조 (개인 캘린더 DTO와 통일)
 
         // 수정 폼에 기존 값 불러오기
         document.getElementById('update-eventCd').value = eventData.eventCd;
@@ -830,7 +867,7 @@
         document.getElementById('update-color').value = eventData.color || '#0066CC';
         document.getElementById('update-priority').value = eventData.priority || 'NORMAL';
         document.getElementById('update-progressStatus').value = eventData.progressStatus || 'TODO';
-        document.getElementById('update-isShared').value = eventData.isShared === "1" ? '1' : '0'; // '1' 또는 '0'으로 설정
+        document.getElementById('update-isShared').value = eventData.isShared === "1" ? '1' : '0';
 
         // ▼▼▼ 지도 초기화 로직 추가 ▼▼▼
         initMap(
@@ -840,7 +877,6 @@
 
         // 기존 장소 정보가 있으면 검색창과 숨겨진 필드를 채워주는 로직
         if (placeData && placeData.lat && placeData.lng) {
-            // 1. 검색창 및 숨겨진 필드 값 설정
             document.getElementById('update-location').value = placeData.placeName || '';
             document.getElementById('update-placeName').value = placeData.placeName || '';
             document.getElementById('update-placeAddress').value = placeData.address || '';
@@ -848,26 +884,23 @@
             document.getElementById('update-placeLat').value = placeData.lat;
             document.getElementById('update-placeLng').value = placeData.lng;
 
-            // 2. 해당 위치로 지도 이동 및 마커 표시
             const existingPosition = new kakao.maps.LatLng(placeData.lat, placeData.lng);
             map.setCenter(existingPosition);
             marker.setPosition(existingPosition);
+        } else {
+            document.getElementById('update-location').value = '';
+            document.getElementById('update-placeName').value = '';
+            document.getElementById('update-placeAddress').value = '';
+            document.getElementById('update-placeId').value = '';
+            document.getElementById('update-placeLat').value = '';
+            document.getElementById('update-placeLng').value = '';
         }
 
-
-        // 알림 시간 설정 (notification 매핑)
-        let notifyTimeVal = eventData.notifyTime;
-        // 캘린더에서 넘어온 notifyTime (분 단위 숫자)을 select 옵션의 value와 매칭
+        // 알림 시간 설정
         let notificationSelect = document.getElementById('update-notification');
-        let foundOption = false;
-        for (let i = 0; i < notificationSelect.options.length; i++) {
-            if (notificationSelect.options[i].value == notifyTimeVal) {
-                notificationSelect.value = notifyTimeVal;
-                foundOption = true;
-                break;
-            }
-        }
-        if (!foundOption) { // 매칭되는 옵션이 없으면 기본값으로 설정 (예: 알림 없음)
+        if (eventData.notifyTime !== undefined && eventData.notifyTime !== null) {
+            notificationSelect.value = eventData.notifyTime;
+        } else {
             notificationSelect.value = '0';
         }
 
@@ -881,7 +914,6 @@
                 return res.json();
             })
             .then(membersData => {
-                // 이미 참가중인 사람들
                 const attendenceIds = (data.attendences || []).map(m => m.userId);
 
                 membersData.forEach(member => {
@@ -891,12 +923,10 @@
                     checkbox.value = member.userId;
                     checkbox.id = 'update-' + member.userId;
 
-                    // 이미 체크된 사람 표시
                     if (attendenceIds.includes(member.userId)) {
                         checkbox.checked = true;
                     }
 
-                    // 본인은 숨김
                     if (member.userId === currentUserId) {
                         checkbox.checked = true;
                         checkbox.style.display = 'none';
@@ -916,48 +946,162 @@
                 });
             });
 
+        // 기존 파일 목록 불러오기 및 삭제 버튼 초기화
+        deletedFileIds = [];
+        newUpdateFiles = []; // 새 파일들을 저장할 배열 초기화
 
-        // 기존 파일 목록 불러오기 및 삭제 버튼
+        // 새 파일 첨부 컨테이너 초기화 및 첫 번째 파일 입력 필드 추가
+        const newFilesContainer = document.getElementById('update-new-files-container');
+        newFilesContainer.innerHTML = '';
+        addUpdateFileInput();
+
+        // 기존에 첨부된 파일 표시
+        displayUpdateFilesList(data.fileList);
+
+        document.getElementById('updateEventModal').style.display = 'flex';
+
+        setTimeout(function() {
+            map.relayout();
+        }, 0);
+    }
+
+    // 파일명을 '10자...확장자' 형식으로 포맷팅하는 함수
+    function formatFileName(fileName) {
+        const lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex === -1) {
+            return fileName.length > 15 ? fileName.substring(0, 15) + '...' : fileName;
+        }
+
+        const name = fileName.substring(0, lastDotIndex);
+        const extension = fileName.substring(lastDotIndex);
+
+        if (name.length > 10) {
+            return name.substring(0, 10) + '...' + extension;
+        }
+        return fileName;
+    }
+
+    // 수정 모달에 새 파일 입력 필드를 추가하는 함수
+    function addUpdateFileInput() {
+        const container = document.getElementById('update-new-files-container');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'file-input-container'; // 기존 file-input-container 클래스 재사용
+        wrapper.dataset.fileIndex = newUpdateFiles.length;
+
+        wrapper.innerHTML = `
+            <span class="icon icon-attach"></span>
+            <span class="file-select-text">파일 선택</span>
+            <input type="file" name="newFiles" onchange="handleUpdateFileChange(event)">
+            <span class="file-name-display" style="display: none;"></span>
+            <button type="button" class="new-file-delete-button" style="display: none;" onclick="removeUpdateFile(this)">❌</button>
+        `;
+        container.appendChild(wrapper);
+
+        const fileInput = wrapper.querySelector('input[type="file"]');
+        const selectTextSpan = wrapper.querySelector('.file-select-text');
+
+        selectTextSpan.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileInput.style.pointerEvents = 'auto';
+        fileInput.style.opacity = '0';
+    }
+
+    // 수정 모달에서 파일이 선택되었을 때 처리하는 함수
+    function handleUpdateFileChange(event) {
+        const input = event.target;
+        const wrapper = input.closest('.file-input-container');
+        if (!input.files || input.files.length === 0) return;
+
+        const file = input.files[0];
+        const fileIndex = parseInt(wrapper.dataset.fileIndex, 10);
+
+        // 파일명 길이 검증
+        if (file.name.length > MAX_FILENAME_LENGTH) {
+            alert(`첨부하신 파일 '${file.name}'의 이름이 너무 길어 업로드가 불가능합니다.`);
+            input.value = '';
+            return;
+        }
+
+        newUpdateFiles[fileIndex] = file;
+
+        wrapper.querySelector('.file-select-text').style.display = 'none';
+
+        const fileNameDisplay = wrapper.querySelector('.file-name-display');
+        fileNameDisplay.textContent = formatFileName(file.name);
+        fileNameDisplay.style.display = 'block';
+
+        const deleteButton = wrapper.querySelector('.new-file-delete-button');
+        deleteButton.style.display = 'block';
+        wrapper.classList.add('has-file');
+
+        input.style.pointerEvents = 'none';
+
+        const hasExistingEmptyInput = Array.from(wrapper.parentNode.children).some(child =>
+            child.classList.contains('file-input-container') && !child.classList.contains('has-file')
+        );
+        if (!hasExistingEmptyInput) {
+            addUpdateFileInput();
+        }
+    }
+
+    // 수정 모달에서 새로 추가한 파일을 제거하는 함수
+    function removeUpdateFile(button) {
+        const wrapper = button.closest('.file-input-container');
+        const fileIndex = parseInt(wrapper.dataset.fileIndex, 10);
+
+        newUpdateFiles[fileIndex] = null;
+
+        wrapper.remove();
+
+        const container = document.getElementById('update-new-files-container');
+        if (!container.querySelector('.file-input-container:not(.has-file)')) {
+            addUpdateFileInput();
+        }
+    }
+
+    // 기존 파일 목록 표시 함수
+    function displayUpdateFilesList(existingFiles) {
         const updateFilesUl = document.getElementById('updateFiles');
-        updateFilesUl.innerHTML = ''; // 초기화
-        deletedFileIds = []; // 삭제할 파일 ID 목록 초기화
+        updateFilesUl.innerHTML = '';
 
-        if (data.fileList && data.fileList.length > 0) {
-            data.fileList.forEach(file => {
+        if (existingFiles && existingFiles.length > 0) {
+            existingFiles.forEach(file => {
                 const li = document.createElement('li');
                 li.innerHTML = `
-                  <span>${file.fileNm}</span>
-                  <button type="button" class="file-delete-button" data-file-id="${file.fileId}" onclick="markFileForDeletion('${file.fileId}', this)">파일 삭제</button>
-              `;
+                    <span class="file-name-display">${file.fileNm}</span>
+                    <button type="button" class="file-delete-button" data-file-id="${file.fileId}" onclick="markFileForDeletion('${file.fileId}', this)">파일 삭제</button>
+                `;
                 updateFilesUl.appendChild(li);
             });
         } else {
             updateFilesUl.innerHTML = '<li>기존 첨부파일 없음</li>';
         }
-
-        document.getElementById('updateEventModal').style.display = 'flex'; // 모달 표시
-
-        setTimeout(function() {
-            map.relayout();
-        }, 0);
-
     }
+
 
     // 파일 삭제 버튼 눌렀을 때 삭제할 파일 아이디 임시로 저장
     function markFileForDeletion(fileId, buttonElement) {
-        if (!deletedFileIds.includes(fileId)) { // 중복 추가 방지
+        if (!deletedFileIds.includes(fileId)) {
             deletedFileIds.push(fileId);
         }
         buttonElement.closest('li').style.textDecoration = 'line-through';
-        buttonElement.disabled = true; // 버튼 비활성화
+        buttonElement.disabled = true;
         buttonElement.innerText = '삭제 예정';
     }
 
     function closeUpdateModal() {
         document.getElementById('updateEventModal').style.display = 'none';
-        deletedFileIds = []; // 모달 닫을 때 삭제 목록 초기화
-        document.getElementById('updateEventForm').reset(); // 폼 초기화
-        document.getElementById('updateFiles').innerHTML = ''; // 파일 목록 초기화
+        deletedFileIds = [];
+        newUpdateFiles = [];
+
+        const newFilesContainer = document.getElementById('update-new-files-container');
+        newFilesContainer.innerHTML = '';
+
+        document.getElementById('updateEventForm').reset();
+        document.getElementById('updateFiles').innerHTML = '';
     }
 
     // 수정사항 저장용
@@ -966,20 +1110,27 @@
         const formData = new FormData();
         const eventCd = document.getElementById('update-eventCd').value;
 
+        // 최종 파일명 길이 검증
+        for (const file of newUpdateFiles) {
+            if (file && file.name.length > MAX_FILENAME_LENGTH) {
+                alert(`첨부하신 파일 '${file.name}'의 이름이 너무 길어 업로드가 불가능합니다.`);
+                return;
+            }
+        }
+
         const requestBody = {
-            eventCd: eventCd, // 이미 히든 필드에서 가져옴
+            eventCd: eventCd,
             title: form.title.value,
             description: form.description.value,
-            startDatetime: form.startDatetime.value, // id 변경됨
-            endDatetime: form.endDatetime.value,     // id 변경됨
+            startDatetime: form.startDatetime.value,
+            endDatetime: form.endDatetime.value,
             color: form.color.value,
             priority: form.priority.value,
             progressStatus: document.getElementById('update-progressStatus').value,
-            isShared: form.isShared ? form.isShared.value : '1', // 팀 캘린더는 기본적으로 공유
-            userId: currentUserId, // 현재 유저 ID 사용 (작성자)
-            workspaceCd: workspaceCd, // 임시 워크스페이스 코드
-            notifyTime: parseInt(form.notification.value), // 숫자로 변환
-            // 장소정보 추가
+            isShared: form.isShared ? form.isShared.value : '1', // 팀 캘린더는 기본적으로 '1' (공유)
+            userId: currentUserId,
+            workspaceCd: workspaceCd,
+            notifyTime: parseInt(form.notification.value),
             placeName: document.getElementById('update-placeName').value,
             address: document.getElementById('update-placeAddress').value,
             placeId: document.getElementById('update-placeId').value,
@@ -987,39 +1138,48 @@
             lng: parseFloat(document.getElementById('update-placeLng').value)
         };
 
-        // 참가자 체크박스 값 추가
-        const attendenceIds = document.querySelectorAll('#update-workspaceMembers input[name="attendenceIds"]:checked');
-        attendenceIds.forEach(cb => {
-            formData.append("attendenceIds", cb.value);
-        });
-
         formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
+
+        const checkedCheckboxes = document.querySelectorAll('#update-workspaceMembers input[name="attendenceIds"]:checked');
+        const attendenceIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+        if (attendenceIds.length > 0) {
+            formData.append("attendenceIds", new Blob([JSON.stringify(attendenceIds)], { type: "application/json" }));
+        }
+
+        // 새 파일 추가 로직
+        const validNewFiles = newUpdateFiles.filter(file => file instanceof File && file.size > 0);
+        if (validNewFiles.length > 0) {
+            validNewFiles.forEach(file => {
+                formData.append("files", file);
+            });
+        } else {
+            formData.append("files", new Blob([], { type: "application/octet-stream" }));
+        }
+
         formData.append("deletedFileIds", new Blob([JSON.stringify(deletedFileIds)], { type: "application/json" }));
 
-        // 추가된 파일이 있을 경우
-        const fileInput = form.querySelector('input[name="files"]');
-        if (fileInput && fileInput.files.length > 0) {
-            for (const file of fileInput.files) {
-                formData.append("files", file);
-            }
-        }
 
         fetch(`/api/calendar/team/events/${eventCd}`, {
             method: 'PUT',
             body: formData
         })
             .then(res => {
-                if (!res.ok) throw new Error("수정 실패");
-                return res.text();
+                return res.text().then(text => {
+                    if (!res.ok) {
+                        console.error("서버 응답 오류 (텍스트):", text);
+                        throw new Error("수정 실패: " + text);
+                    }
+                    return text;
+                });
             })
             .then(data => {
                 alert("일정이 수정되었습니다!");
                 closeUpdateModal();
-                location.reload(); // 또는 FullCalendar 이벤트 갱신
+                location.reload();
             })
             .catch(err => {
                 console.error(err);
-                alert("수정에 실패했습니다.");
+                alert("수정에 실패했습니다. 콘솔을 확인해주세요.");
             });
     }
 
@@ -1028,26 +1188,35 @@
         const confirmDelete = confirm("정말로 이 일정을 삭제하시겠습니까?");
         if (confirmDelete) {
             const eventCd = window.selectedEventData?.event?.eventCd;
+            const userId = currentUser.userId; // [추가] 현재 로그인한 사용자 ID 가져오기
+
             if (!eventCd) {
                 alert("삭제할 이벤트 코드가 없습니다.");
                 return;
             }
 
-            fetch(`/api/calendar/team/events/${eventCd}`, {
+            // [수정] userId를 쿼리 파라미터로 추가
+            fetch(`/api/calendar/team/events/${eventCd}?userId=${userId}`, {
                 method: 'DELETE'
             })
                 .then(res => {
-                    if (!res.ok) throw new Error("삭제 실패");
-                    return res.text();
+                    // 서버 응답이 400이더라도, 응답 본문에서 상세 오류 메시지 가져오기
+                    return res.text().then(text => {
+                        if (!res.ok) {
+                            console.error("서버 응답 오류 (텍스트):", text);
+                            throw new Error("삭제 실패: " + text); // 서버에서 보낸 에러 메시지를 포함
+                        }
+                        return text;
+                    });
                 })
                 .then(data => {
                     alert("일정이 삭제되었습니다!");
                     closeDetailModal();
-                    location.reload(); // 캘린더 새로고침
+                    location.reload();
                 })
                 .catch(err => {
                     console.error(err);
-                    alert("삭제 중 오류가 발생했습니다.");
+                    alert("삭제 중 오류가 발생했습니다. 콘솔을 확인해주세요."); // 사용자에게 더 유용한 메시지
                 });
         } else {
             console.log("삭제 취소됨");
@@ -1062,36 +1231,29 @@
             level: 3
         };
 
-        // 지도와 마커, 장소 검색 객체 생성
         map = new kakao.maps.Map(mapContainer, mapOption);
         marker = new kakao.maps.Marker({ position: map.getCenter() });
         marker.setMap(map);
         ps = new kakao.maps.services.Places();
 
-        // [추가] 좌표를 주소로 변환하기 위한 지오코더 객체 생성
         const geocoder = new kakao.maps.services.Geocoder();
 
-        // [추가] 지도 클릭 이벤트를 등록합니다
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
-            // 1. 클릭한 위치에 마커를 표시합니다
             marker.setPosition(mouseEvent.latLng);
 
-            // 2. 클릭한 위치의 좌표로 주소를 검색합니다 (지오코딩)
             geocoder.coord2Address(mouseEvent.latLng.getLng(), mouseEvent.latLng.getLat(), function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
                     const address = result[0]?.road_address?.address_name || result[0]?.address?.address_name;
-                    // 3. 검색된 주소로 숨겨진 필드와 검색창의 값을 채웁니다
                     document.getElementById(searchInputId).value = address;
-                    document.getElementById(hiddenFields.name).value = address; // 장소명도 주소로 채움
+                    document.getElementById(hiddenFields.name).value = address;
                     document.getElementById(hiddenFields.address).value = address;
                     document.getElementById(hiddenFields.lat).value = mouseEvent.latLng.getLat();
                     document.getElementById(hiddenFields.lng).value = mouseEvent.latLng.getLng();
-                    document.getElementById(hiddenFields.id).value = ''; // 장소 ID는 없으므로 비움
+                    document.getElementById(hiddenFields.id).value = '';
                 }
             });
         });
 
-        // 검색 버튼 이벤트
         document.getElementById(searchBtnId).addEventListener('click', function () {
             const keyword = document.getElementById(searchInputId).value;
             if (!keyword.replace(/^\s+|\s+$/g, '')) {
@@ -1120,7 +1282,7 @@
     /** 검색 결과를 목록에 출력하는 함수 */
     function displayPlaces(places, listId, hiddenFields) {
         const listEl = document.getElementById(listId);
-        removeAllChildNods(listEl); // 기존 목록 제거
+        removeAllChildNods(listEl);
 
         for (let i = 0; i < places.length; i++) {
             const itemEl = getListItem(i, places[i], hiddenFields);
@@ -1140,23 +1302,20 @@
         el.innerHTML = itemStr;
 
         el.onclick = function() {
-            // 지도 이동
             const placePosition = new kakao.maps.LatLng(place.y, place.x);
             map.setCenter(placePosition);
             marker.setPosition(placePosition);
 
-            // 숨겨진 필드에 값 채우기
             document.getElementById(hiddenFields.name).value = place.place_name;
             document.getElementById(hiddenFields.address).value = place.road_address_name || place.address_name;
             document.getElementById(hiddenFields.id).value = place.id;
             document.getElementById(hiddenFields.lat).value = place.y;
             document.getElementById(hiddenFields.lng).value = place.x;
 
-            // 검색창에도 장소명 반영
-            const searchInputId = listId.replace('placesList', 'location'); // 'placesList' -> 'location', 'update-placesList' -> 'update-location'
+            const searchInputId = listId.replace('placesList', 'location');
             document.getElementById(searchInputId).value = place.place_name;
 
-            removeAllChildNods(document.getElementById(listId)); // 선택 후 목록 숨기기
+            removeAllChildNods(document.getElementById(listId));
         };
         return el;
     }

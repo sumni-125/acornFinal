@@ -554,6 +554,7 @@ body {
     padding: 8px 12px;
     cursor: pointer;
     transition: border-color 0.3s, box-shadow 0.3s;
+    margin-bottom: 8px;
 }
 
 .modal-content .file-input-container:hover {
@@ -568,6 +569,7 @@ body {
     height: 100%;
     opacity: 0;
     cursor: pointer;
+    z-index: 1; /* 파일 선택 영역이 텍스트 위에 오도록 */
 }
 
 .modal-content .file-input-container .icon {
@@ -661,6 +663,23 @@ body {
     background-position: right 12px center;
     background-size: 20px;
     padding-right: 40px;
+}
+
+/* "파일 선택" 텍스트 */
+.file-input-container .file-select-text { /* 새로 추가된 클래스 */
+    display: flex; /* 아이콘과 텍스트 정렬 */
+    align-items: center;
+    color: var(--text-light);
+    flex-grow: 1; /* 남은 공간 차지 */
+    cursor: pointer; /* 클릭 가능함을 시각적으로 표시 */
+}
+.file-input-container .file-select-text .icon {
+    margin-right: 10px;
+}
+
+
+ul#updateFiles{
+    padding-inline-start: 0px;
 }
 
 /* 모달 내 아이콘을 위한 기본 스타일 */
@@ -765,6 +784,7 @@ body {
     padding: 12px;
     min-height: 80px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 #eventDetailModal .attachments-list {
@@ -951,6 +971,7 @@ body {
 #updateEventModal .file-attach-label {
     margin-top: 15px; /* 상단 여백 추가 */
     margin-bottom: 8px; /* 하단 여백 추가 */
+    color: #bfd0ff;
 }
 
 /* 지도 검색 UI 관련 스타일 */
@@ -1127,4 +1148,124 @@ body {
     text-overflow: ellipsis; /* 넘치는 텍스트를 줄임표(...)로 표시 */
     flex-grow: 1; /* 남는 공간을 모두 차지하도록 하여 삭제 버튼을 오른쪽 끝으로 밀어냄 */
     margin-right: 5px; /* 삭제 버튼과의 간격 */
+}
+
+/* ===== 파일 첨부 UI 개선 (수정 모달) ===== */
+
+/* 새 파일 첨부 컨테이너 */
+#update-new-files-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* 개별 파일 입력 래퍼 */
+.file-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    padding: 8px 12px;
+    transition: border-color 0.3s;
+    min-height: 45px; /* 높이 고정 */
+}
+
+.file-input-wrapper.has-file {
+    justify-content: space-between;
+}
+
+.file-input-wrapper:hover {
+    border-color: var(--accent-blue);
+}
+
+/* 파일 입력(input) 숨기기 */
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* "파일 선택" 텍스트 */
+.file-input-wrapper .file-select-prompt {
+    display: flex;
+    align-items: center;
+    color: var(--text-light);
+}
+.file-input-wrapper .file-select-prompt .icon {
+    margin-right: 10px;
+}
+
+/* 선택된 파일명 표시 */
+.file-input-wrapper .file-name-display {
+    color: var(--text-light);
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px; /* X 버튼과의 간격 */
+    z-index: 2; /* 파일명 텍스트가 파일 선택 input 위에 오도록 */
+}
+
+/* 새 파일 삭제 버튼 */
+.new-file-delete-button {
+    position: absolute; /* [수정] 절대 위치 지정 */
+    right: 10px;        /* [수정] 오른쪽에서 10px */
+    top: 50%;           /* [수정] 상단에서 50% */
+    transform: translateY(-50%); /* [수정] Y축 중앙 정렬 */
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    font-size: 18px;    /* [수정] 아이콘 크기 조정 */
+    cursor: pointer;
+    padding: 5px;       /* [수정] 클릭 영역 확보 */
+    z-index: 3;         /* [수정] 가장 위에 오도록 z-index 높임 */
+}
+.new-file-delete-button:hover {
+    color: #cc0000;
+}
+
+
+/* ===== 상세 정보 모달 - 파일 다운로드 버튼 ===== */
+
+#eventDetailModal .attachments-list li {
+    justify-content: space-between; /* 기존 스타일 변경 */
+}
+
+#eventDetailModal .attachments-list .file-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1; /* 이름 영역이 늘어나도록 */
+    min-width: 0; /* flex 버그 방지 */
+}
+
+#eventDetailModal .attachments-list .file-info a {
+    text-decoration: none;
+    color: var(--accent-blue);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#eventDetailModal .file-download-button {
+    background-color: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+    text-decoration: none; /* 링크 스타일 제거 */
+    flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
+}
+
+#eventDetailModal .file-download-button:hover {
+    background-color: #0056b3;
 }
