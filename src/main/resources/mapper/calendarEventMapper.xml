@@ -34,14 +34,13 @@
 
     <select id="selectPersonalCalendar" resultType="com.example.ocean.dto.response.CalendarResponse">
         SELECT
-                E.EVENT_CD AS eventCd, E.TITLE, E.START_DATETIME AS startDatetime,
-                E.END_DATETIME AS endDatetime, E.COLOR
+            E.EVENT_CD AS eventCd, E.TITLE, E.START_DATETIME AS startDatetime,
+            E.END_DATETIME AS endDatetime, E.COLOR
         FROM   `EVENT_ATTENDENCES` EA
-        JOIN   `EVENTS` E
-        ON      EA.EVENT_CD = E.EVENT_CD
+                   JOIN   `EVENTS` E
+                          ON      EA.EVENT_CD = E.EVENT_CD
         WHERE   EA.USER_ID = #{userId}
-        AND     E.WORKSPACE_CD = #{workspaceCd}
-        OR     E.IS_SHARED = 0
+          AND     E.WORKSPACE_CD = #{workspaceCd}
     </select>
 
     <insert id="insertPersonalEvent" parameterType="com.example.ocean.domain.Event">
