@@ -38,12 +38,18 @@
         AND     ACTIVE_STATE = '1'
     </select>
 
-
     <update id="updateByEventCdAndFileId" parameterType="String">
         UPDATE `FILE`
         SET     ACTIVE_STATE = '0'
         WHERE   EVENT_CD = #{eventCd}
         AND     FILE_ID = #{fileId}
+    </update>
+
+    <update id="updateFileActiveByEventCdAndFileId">
+        UPDATE `FILE`
+        SET    ACTIVE_STATE = '0'
+        WHERE  EVENT_CD = #{eventCd}
+          AND  FILE_ID = #{fileId}
     </update>
 
     <delete id="deleteFileByEventCd" parameterType="String">
@@ -53,4 +59,5 @@
         WHERE EVENT_CD = #{eventCd}
 
     </delete>
+
 </mapper>

@@ -51,7 +51,7 @@ public class PersonalCalendarAPIController {
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createEvent(
             @RequestPart("request") EventCreateRequest eventCreateRequest,
-            @RequestParam(value = "attendenceIds", required = false) List<String> attendenceIds,
+            @RequestPart(value = "attendenceIds", required = false) List<String> attendenceIds,
             @RequestPart(value = "files", required = false) MultipartFile[] files
 
     ) {
@@ -68,7 +68,7 @@ public class PersonalCalendarAPIController {
             @RequestPart("request") EventUpdateRequest request,
             @RequestPart(required = false) MultipartFile[] files,
             @RequestPart(required = false) List<String> deletedFileIds,
-            @RequestParam(value = "attendenceIds", required = false) List<String> attendenceIds
+            @RequestPart(value = "attendenceIds", required = false) List<String> attendenceIds
     ) {
 
         int result = personalCalendarService.updatePersonalEvent(request, attendenceIds, deletedFileIds, files);

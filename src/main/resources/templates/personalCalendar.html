@@ -669,10 +669,17 @@
                 lat: parseFloat(document.getElementById('placeLat').value),
                 lng: parseFloat(document.getElementById('placeLng').value)
             };
+// 체크된 참가자 ID들을 하나의 배열로 만듭니다.
+            const checkedCheckboxes = document.querySelectorAll('#workspaceMembers input[name="attendenceIds"]:checked');
+            const attendenceIds = Array.from(checkedCheckboxes).map(cb => cb.value);
 
+            // 각 데이터를 JSON 형식으로 변환하여 FormData에 추가합니다.
             formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
 
-            const attendenceIds = document.querySelectorAll('input[name="attendenceIds"]:checked');
+            // 참가자 ID 배열도 JSON 형식으로 추가합니다.
+            if (attendenceIds) {
+                formData.append("attendenceIds", new Blob([JSON.stringify(attendenceIds)], { type: "application/json" }));
+            }
             attendenceIds.forEach(cb => {
                 formData.append("attendenceIds", cb.value);
             });
@@ -990,13 +997,17 @@
             };
 
             // 참가자 체크박스 값 추가
-            const attendenceIds = document.querySelectorAll('#update-workspaceMembers input[name="attendenceIds"]:checked');
-            attendenceIds.forEach(cb => {
-              formData.append("attendenceIds", cb.value);
-            });
+            const checkedCheckboxes = document.querySelectorAll('#update-workspaceMembers input[name="attendenceIds"]:checked');
+            const attendenceIds = Array.from(checkedCheckboxes).map(cb => cb.value);
 
+            // 2. FormData에 각 데이터를 JSON 형식으로 담아줌.
             formData.append("request", new Blob([JSON.stringify(requestBody)], { type: "application/json" }));
             formData.append("deletedFileIds", new Blob([JSON.stringify(deletedFileIds)], { type: "application/json" }));
+
+            // 3. 참가자 ID 배열도 JSON 형식으로 담아줌.
+            if (attendenceIds) {
+                formData.append("attendenceIds", new Blob([JSON.stringify(attendenceIds)], { type: "application/json" }));
+            }
 
             // 추가된 파일이 있을 경우
             const fileInput = form.querySelector('input[name="files"]');

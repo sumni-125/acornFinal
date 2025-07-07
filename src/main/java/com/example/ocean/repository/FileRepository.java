@@ -15,7 +15,7 @@ public interface FileRepository {
     int insertFile(File file);
     List<File> selectFileByEventCd(@Param("eventCd")String eventCd);
     File selectFileByFileId(@Param("fileId")String fileId);
-    int updateFileActiveByEventCdAndFileId(@Param("eventCd")String eventCd, @Param("fileId")String fileId);
+    int updateFileActiveByEventCdAndFileId(@Param("eventCd") String eventCd, @Param("fileId") String fileId);
 
     void deleteFileByEventCd(@Param("eventCd")String eventCd);
 }

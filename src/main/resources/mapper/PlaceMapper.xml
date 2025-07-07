@@ -89,5 +89,31 @@
 <!--    * **`SELECT` 쿼리**: `PLACE`, `EVENTS`, `WORKSPACE_MEMBERS` 세 테이블을 JOIN하여 `WORKSPACE_MEMBERS.USER_NICKNAME`을 `created_by`로 가져오도록 수정.-->
 <!--    * **`INSERT` 쿼리**: 실제 `PLACE` 테이블 스키마에 맞게 `CREATED_BY` 컬럼을 제거.-->
 
+
+
+    <select id="checkPlaceExistsByEventCd" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM `PLACE`
+        WHERE EVENT_CD = #{eventCd}
+    </select>
+
+    <update id="updatePlace" parameterType="com.example.ocean.domain.Place">
+        UPDATE `PLACE`
+        SET
+            PLACE_NM = #{place_nm},
+            ADDRESS = #{address},
+            PLACE_ID = #{place_id},
+            LAT = #{lat},
+            LNG = #{lng}
+        WHERE
+            EVENT_CD = #{event_cd}
+    </update>
+
+    <delete id="deletePlaceByEventCd" parameterType="String">
+        DELETE
+        FROM `PLACE`
+        WHERE EVENT_CD = #{eventCd}
+    </delete>
+
 </mapper>
 

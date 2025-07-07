@@ -7,6 +7,7 @@
     --accent-blue: #007bff;
     --border-color: #444;
     --input-bg: #3C3C3C;
+    --fc-page-bg-color: none;
 }
 
 body {
