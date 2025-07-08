@@ -1,5 +1,6 @@
 package com.example.ocean.mapper;
 
+import com.example.ocean.domain.Notification;
 import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
@@ -131,5 +132,12 @@ public interface WorkspaceMapper {
 
     String getUserStatus(@Param("workspaceCd") String workspaceCd,
                          @Param("userId") String userId);
+
+    // main_notification 테이블에 사용자 추가
+    void insertNewMemberNotification(@Param("workspaceCd") String workspaceCd,
+                                     @Param("userNickname") String userNickname);
+
+    List<Notification> selectRecentNotifications(@Param("workspaceCd") String workspaceCd);
+
 
 }

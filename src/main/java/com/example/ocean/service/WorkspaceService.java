@@ -1,5 +1,6 @@
 package com.example.ocean.service;
 
+import com.example.ocean.domain.Notification;
 import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
@@ -20,10 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -82,14 +80,25 @@ public class WorkspaceService {
     }
     */
 
-    public void approveInvitation(String workspaceCd, String invitedUserId) {
+    public void approveInvitation(String workspaceCd, String invitedUserId, String requesterId) {
+        WorkspaceMember requester = workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, requesterId);
+        if (requester == null || !"OWNER".equalsIgnoreCase(requester.getUserRole())) {
+            throw new RuntimeException("승인 권한이 없습니다.");
+        }
+
         workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, "ACCEPT");
         workspaceMapper.insertWorkspaceMember(workspaceCd, invitedUserId);
     }
 
-    public void rejectInvitation(String workspaceCd, String invitedUserId) {
+    public void rejectInvitation(String workspaceCd, String invitedUserId, String requesterId) {
+        WorkspaceMember requester = workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, requesterId);
+        if (requester == null || !"OWNER".equalsIgnoreCase(requester.getUserRole())) {
+            throw new RuntimeException("거절 권한이 없습니다.");
+        }
+
         workspaceMapper.rejectInvitation(workspaceCd, invitedUserId);
     }
+
 
     public List<Map<String, Object>> getAllPendingInvitations() {
         return workspaceMapper.getAllPendingInvitations();
@@ -240,16 +249,6 @@ public class WorkspaceService {
             String userImg
     ) {
         try {
-            log.info("=== 프로필 업데이트 시작 ===");
-            log.info("워크스페이스 코드: {}", workspaceCd);
-            log.info("사용자 ID: {}", userId);
-            log.info("닉네임: {}", userNickname);
-            log.info("상태메시지: {}", statusMsg);
-            log.info("이메일: {}", email);
-            log.info("전화번호: {}", phoneNum);
-            log.info("역할: {}", userRole);
-            log.info("이미지 경로: {}", userImg);  // ⭐ 이미지 경로 로그
-
             // ⭐ 매퍼 호출 (6개 파라미터)
             workspaceMapper.updateWorkspaceProfile(
                     workspaceCd,
@@ -284,17 +283,6 @@ public class WorkspaceService {
             String userImg
     ) {
         try {
-            log.info("=== 사용자 프로필 추가 시작 ===");
-            log.info("워크스페이스 코드: {}", workspaceCd);
-            log.info("사용자 ID: {}", userId);
-            log.info("닉네임: {}", userNickname);
-            log.info("상태메시지: {}", statusMsg);
-            log.info("이메일: {}", email);
-            log.info("전화번호: {}", phoneNum);
-            log.info("역할: {}", role);
-            log.info("이미지 경로: {}", userImg);  // ⭐ 이미지 경로 로그
-
-            // ⭐ 매퍼 호출 (8개 파라미터)
             workspaceMapper.insertUserProfile(
                     workspaceCd,
                     userId,
@@ -320,11 +308,6 @@ public class WorkspaceService {
      */
     public void updateProfileImage(String workspaceCd, String userId, String imageFileName) {
         try {
-            log.info("=== 프로필 이미지 업데이트 시작 ===");
-            log.info("워크스페이스 코드: {}", workspaceCd);
-            log.info("사용자 ID: {}", userId);
-            log.info("이미지 파일명: {}", imageFileName);
-
             workspaceMapper.updateProfileImageOnly(workspaceCd, userId, imageFileName);
 
             log.info("=== 프로필 이미지 업데이트 완료 ===");
@@ -404,6 +387,14 @@ public class WorkspaceService {
 
     public String getUserStatus(String workspaceCd, String userId) {
         return workspaceMapper.getUserStatus(workspaceCd, userId);
+    }
+
+    public void insertNewMemberNotification(String workspaceCd, String userNickname) {
+        workspaceMapper.insertNewMemberNotification(workspaceCd, userNickname);
+    }
+
+    public List<Notification> getRecentNotifications(String workspaceCd) {
+        return workspaceMapper.selectRecentNotifications(workspaceCd);
     }
 
 }

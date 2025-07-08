@@ -1,5 +1,6 @@
 package com.example.ocean.controller.workspace;
 
+import com.example.ocean.domain.Notification;
 import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
@@ -268,6 +269,12 @@ public class WorkspaceController {
 
         workspaceService.updateUserState(workspaceCd, userId, userState);
         return ResponseEntity.ok("상태가 업데이트되었습니다: " + userState);
+    }
+
+    @GetMapping("/{workspaceCd}/notifications")
+    @ResponseBody
+    public List<Notification> getRecentNotifications(@PathVariable String workspaceCd) {
+        return workspaceService.getRecentNotifications(workspaceCd);
     }
 
 }

@@ -161,7 +161,7 @@ public class WorkspacePageController {
         try {
             log.info("프로필 설정 시작 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
 
-            String userImgPath = null;  // ⭐ 전체 경로 저장
+            String userImgPath = null;
             if (userImgFile != null && !userImgFile.isEmpty()) {
                 userImgPath = saveProfileImage(userImgFile);
             }
@@ -169,8 +169,11 @@ public class WorkspacePageController {
             // 멤버 존재 여부 확인
             WorkspaceMember existingMember = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
 
+            // ✅ 최초 프로필 등록 여부 판단
+            boolean isFirstProfile = existingMember != null && existingMember.getUserNickname() == null;
+
             if (existingMember == null) {
-                // 새 멤버 추가 - userImgPath 포함
+                // 새 멤버 추가
                 workspaceService.insertUserProfileToWorkspace(
                         workspaceCd,
                         userPrincipal.getId(),
@@ -179,10 +182,10 @@ public class WorkspacePageController {
                         email,
                         phoneNum,
                         "MEMBER",
-                        userImgPath  // ⭐ 이미지 경로 추가
+                        userImgPath
                 );
             } else {
-                // 기존 멤버 업데이트 - userImgPath 포함
+                // 기존 멤버 업데이트
                 workspaceService.updateWorkspaceProfile(
                         workspaceCd,
                         userPrincipal.getId(),
@@ -191,8 +194,12 @@ public class WorkspacePageController {
                         email,
                         phoneNum,
                         "MEMBER",
-                        userImgPath != null ? userImgPath : existingMember.getUserImg() // ⭐ 기존 이미지 유지
+                        userImgPath != null ? userImgPath : existingMember.getUserImg()
                 );
+            }
+
+            if (isFirstProfile) {
+                workspaceService.insertNewMemberNotification(workspaceCd, userNickname);
             }
 
             // 부서 및 직급 정보 업데이트
@@ -211,6 +218,7 @@ public class WorkspacePageController {
             return "error: " + e.getMessage();
         }
     }
+
 
     // 프로필 이미지 저장 헬퍼 메소드 - 중복 제거!
     private String saveProfileImage(MultipartFile file) throws IOException {

@@ -16,6 +16,30 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
+    fetch(`/api/workspaces/${workspaceCd}/notifications`)
+        .then(res => res.json())
+        .then(notifications => {
+            const list = document.getElementById("recent-notifications");
+            list.innerHTML = "";
+
+            if (!notifications || notifications.length === 0) {
+                list.innerHTML = "<li>최근 알림이 없습니다.</li>";
+                return;
+            }
+
+            notifications.forEach(noti => {
+                const text = generateNotificationMessage(noti);
+                const li = document.createElement("li");
+                li.textContent = text;
+                list.appendChild(li);
+            });
+        })
+        .catch(err => {
+            console.error("❌ 알림 불러오기 실패:", err);
+            document.getElementById("recent-notifications").innerHTML = "<li>불러오기 실패</li>";
+        });
+
+
     // ✅ 누적 접속 시간 로딩
     fetch(`/api/events/${workspaceCd}/usage-time`)
         .then(res => res.json())
@@ -238,22 +262,22 @@ function submitEdit() {
         method: "POST",
         body: formData
     })
-    .then(res => res.text())
-    .then(msg => {
-        if (msg === "success") {
+    .then(res => res.text())  // ✅ JSON 아님! plain text 처리
+    .then(result => {
+        const trimmed = result.trim();
+        if (trimmed === "success") {
             alert("수정 완료!");
             document.getElementById("edit-info-modal").style.display = "none";
             goToMyPage();
         } else {
-            throw new Error(msg);
+            alert("수정 실패: " + trimmed);
         }
     })
     .catch(err => {
         console.error("❌ 수정 실패:", err);
-        alert("수정 실패: " + err.message);
+        alert("수정 중 오류 발생: " + err.message);
     });
 }
-
 
 function closeModal(id) {
     document.getElementById(id).style.display = "none";
@@ -367,3 +391,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+function generateNotificationMessage(noti) {
+    const date = new Date(noti.createdDate);
+    const time = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+    switch (noti.notiState) {
+        case "NEW_ATTENDENCE":
+            return `${noti.createdBy}님이 워크스페이스에 참여하였습니다 (${time})`;
+        case "NEW_EVENT":
+            return `${noti.createdBy}님이 새로운 일정을 등록하였습니다 (${time})`;
+        case "NEW_MEETING":
+            return `${noti.createdBy}님이 새로운 미팅을 등록하였습니다 (${time})`;
+        default:
+            return `${noti.createdBy}님의 활동이 감지되었습니다 (${time})`;
+    }
+}

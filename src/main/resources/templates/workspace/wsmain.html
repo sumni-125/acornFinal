@@ -106,7 +106,7 @@
     z-index: 1000; /* 중요! */
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-</style>
+    </style>
 </head>
 <body>
 
@@ -116,168 +116,139 @@
 <!-- 메인 콘텐츠 -->
 <div class="main">
 
-    <div class="top-banner">
-        <div class="title">프로젝트 마감까지</div>
-        <div class="d-day">D-21</div>
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
-        <div class="date">6월 10일 화요일</div>
+    <div class="recent-notifications-box">
+        <h3>최근 워크스페이스 활동</h3>
+        <ul id="recent-notifications">
+            <li>불러오는 중...</li>
+        </ul>
     </div>
 
-    <div class="main-section">
-        <div class="schedule">
-            <h2>오늘의 일정</h2>
-            <div class="event"><span class="dot blue"></span> 10:00 개발 스프린트 회의</div>
-            <div class="event"><span class="dot purple"></span> 12:00 디자인 리뷰</div>
-            <div class="event"><span class="dot green"></span> 14:00 신입사원 온보딩</div>
-        </div>
-
-        <div class="activity">
-            <h2>최근활동</h2>
-            <div class="log"><span class="badge">윤</span> 윤현기님이 새로운 미팅룸을 잡았어요</div>
-            <div class="log"><span class="badge">권</span> 권지언님이 일정을 수정했어요</div>
-            <div class="log"><span class="badge">임</span> 임형택님이 문서를 업로드했어요</div>
-        </div>
+    <div class="today-user-events">
+        <h3>나의 오늘 일정</h3>
+        <ul id="user-events-list">
+            <li>일정을 불러오는 중...</li>
+        </ul>
     </div>
 
-    <div class="bottom-section">
-        <div class="stats">
-            <div class="stat-box"><div class="big">24</div><div>새로운 일정</div></div>
-            <div class="stat-box"><div class="big">8</div><div>완료된 일정</div></div>
-            <div class="stat-box"><div class="big">78</div><div>총 활동 시간</div></div>
-        </div>
-        <div class="quote">
-            대부분의 프로젝트는 기술이 아니라<br>인적 자원과 프로젝트 관리의 문제로 실패한다.<br>
-            <b>- R. Thomsett</b>
-        </div>
-        <div class="today-user-events">
-            <h3>나의 오늘 일정</h3>
-            <ul id="user-events-list">
-                <li>일정을 불러오는 중...</li>
-            </ul>
-        </div>
-
-        <div class="this-week-completed">
-            <h3>이번 주 완료 일정</h3>
-            <p id="completed-this-week">불러오는 중...</p>
-        </div>
-
-        <div class="this-week-upcoming">
-            <h3>이번 주 다가오는 일정</h3>
-            <p id="upcoming-this-week">불러오는 중...</p>
-        </div>
-
-        <div class="this-week-created">
-            <h3>이번 주 생성된 일정</h3>
-            <p id="created-this-week">불러오는 중...</p>
-        </div>
-
-        <div id="usage-time-box">
-            이번 주 누적 사용 시간: <span id="usage-time">계산 중...</span>
-        </div>
-
-        <div class="workspace-members-box">
-            <h3>참여 중인 사용자</h3>
-            <ul id="workspace-members" style="list-style: none; padding-left: 0;">
-                <li>불러오는 중...</li>
-            </ul>
-        </div>
+    <div class="this-week-completed">
+        <h3>이번 주 완료 일정</h3>
+        <p id="completed-this-week">불러오는 중...</p>
     </div>
 
-    <div class="mini-profile-container">
-        <div class="mini-profile-summary">
-            <img id="mini-profile-img" src="/images/default-profile.png" alt="내 프로필" />
-            <div class="mini-profile-info">
-                <div id="mini-profile-name">이름</div>
-                <div id="mini-profile-role">역할</div>
-            </div>
-
-            <!-- ✅ 접속 상태 표시 (서버에서 가져온 값으로 JS가 덮어씀) -->
-            <div class="user-status-display" onclick="toggleStatusMenu()">상태 로딩중...</div>
-        </div>
-
-        <!-- ✅ 접속 상태 변경 모달 (슬라이드로 열리는 박스) -->
-        <div class="status-modal" id="status-modal" style="display:none;">
-            <ul>
-                <li onclick="changeStatus('online')">🟢 온라인</li>
-                <li onclick="changeStatus('away')">🟡 자리비움</li>
-                <li onclick="changeStatus('offline')">🔴 오프라인</li>
-            </ul>
-        </div>
-
-        <!-- ✅ 미니 메뉴 (hover 시 열리는 메뉴) -->
-        <div class="mini-profile-menu" style="display: none;">
-            <ul>
-                <li onclick="goToMyPage()">내 정보</li>
-                <li onclick="showStatus()">접속 상태</li>
-                <li onclick="logout()">로그아웃</li>
-            </ul>
-        </div>
+    <div class="this-week-upcoming">
+        <h3>이번 주 다가오는 일정</h3>
+        <p id="upcoming-this-week">불러오는 중...</p>
     </div>
 
-    <!-- ✅ 내 정보 보기 모달 -->
-    <div id="my-info-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeModal('my-info-modal')">&times;</span>
-            <button onclick="openEditModal()" style="position:absolute; top:15px; left:15px;">수정</button>
-            <img id="my-img" src="" alt="프로필 이미지" style="width:100px; border-radius:50%; margin-bottom:10px;">
-            <h3 id="my-name"></h3>
-            <p><strong>이메일:</strong> <span id="my-email"></span></p>
-            <p><strong>전화번호:</strong> <span id="my-phone"></span></p>
-            <p><strong>부서:</strong> <span id="my-dept"></span></p>
-            <p><strong>직급:</strong> <span id="my-position"></span></p>
-            <p><strong>상태 메시지:</strong> <span id="my-status"></span></p>
-        </div>
+    <div class="this-week-created">
+        <h3>이번 주 생성된 일정</h3>
+        <p id="created-this-week">불러오는 중...</p>
     </div>
 
-    <!-- ✅ 내 정보 수정 모달 -->
-    <div id="edit-info-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeModal('edit-info-modal')">&times;</span>
-            <h3>내 정보 수정</h3>
-
-            <div class="form-group">
-                <label for="edit-img">프로필 이미지</label>
-                <input type="file" id="edit-img" accept="image/*" />
-            </div>
-
-            <div class="form-group">
-                <label for="edit-nickname">닉네임</label>
-                <input id="edit-nickname" placeholder="닉네임" />
-            </div>
-
-            <div class="form-group">
-                <label for="edit-email">이메일</label>
-                <input id="edit-email" placeholder="이메일" />
-            </div>
-
-            <div class="form-group">
-                <label for="edit-phone">전화번호</label>
-                <input id="edit-phone" placeholder="전화번호" />
-            </div>
-
-            <div class="form-group">
-                <label for="edit-dept">부서</label>
-                <select id="edit-dept">
-                    <!-- JS에서 부서 옵션 동적 추가 -->
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="edit-position">직급</label>
-                <input id="edit-position" placeholder="직급" />
-            </div>
-
-            <div class="form-group">
-                <label for="edit-status">상태 메시지</label>
-                <input id="edit-status" placeholder="상태 메시지" />
-            </div>
-
-            <button onclick="submitEdit()">저장</button>
-        </div>
+    <div id="usage-time-box">
+        이번 주 누적 사용 시간: <span id="usage-time">계산 중...</span>
     </div>
 
+    <div class="workspace-members-box">
+        <h3>참여 중인 사용자</h3>
+        <ul id="workspace-members" style="list-style: none; padding-left: 0;">
+            <li>불러오는 중...</li>
+        </ul>
+    </div>
+</div>
+
+<div class="mini-profile-container">
+    <div class="mini-profile-summary">
+        <img id="mini-profile-img" src="/images/default-profile.png" alt="내 프로필"/>
+        <div class="mini-profile-info">
+            <div id="mini-profile-name">이름</div>
+            <div id="mini-profile-role">역할</div>
+        </div>
+
+        <!-- ✅ 접속 상태 표시 (서버에서 가져온 값으로 JS가 덮어씀) -->
+        <div class="user-status-display" onclick="toggleStatusMenu()">상태 로딩중...</div>
+    </div>
+
+    <!-- ✅ 접속 상태 변경 모달 (슬라이드로 열리는 박스) -->
+    <div class="status-modal" id="status-modal" style="display:none;">
+        <ul>
+            <li onclick="changeStatus('online')">🟢 온라인</li>
+            <li onclick="changeStatus('away')">🟡 자리비움</li>
+            <li onclick="changeStatus('offline')">🔴 오프라인</li>
+        </ul>
+    </div>
+
+    <!-- ✅ 미니 메뉴 (hover 시 열리는 메뉴) -->
+    <div class="mini-profile-menu" style="display: none;">
+        <ul>
+            <li onclick="goToMyPage()">내 정보</li>
+            <li onclick="showStatus()">접속 상태</li>
+            <li onclick="logout()">로그아웃</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ✅ 내 정보 보기 모달 -->
+<div id="my-info-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal('my-info-modal')">&times;</span>
+        <button onclick="openEditModal()" style="position:absolute; top:15px; left:15px;">수정</button>
+        <img id="my-img" src="" alt="프로필 이미지" style="width:100px; border-radius:50%; margin-bottom:10px;">
+        <h3 id="my-name"></h3>
+        <p><strong>이메일:</strong> <span id="my-email"></span></p>
+        <p><strong>전화번호:</strong> <span id="my-phone"></span></p>
+        <p><strong>부서:</strong> <span id="my-dept"></span></p>
+        <p><strong>직급:</strong> <span id="my-position"></span></p>
+        <p><strong>상태 메시지:</strong> <span id="my-status"></span></p>
+    </div>
+</div>
+
+<!-- ✅ 내 정보 수정 모달 -->
+<div id="edit-info-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal('edit-info-modal')">&times;</span>
+        <h3>내 정보 수정</h3>
+
+        <div class="form-group">
+            <label for="edit-img">프로필 이미지</label>
+            <input type="file" id="edit-img" accept="image/*"/>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-nickname">닉네임</label>
+            <input id="edit-nickname" placeholder="닉네임"/>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-email">이메일</label>
+            <input id="edit-email" placeholder="이메일"/>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-phone">전화번호</label>
+            <input id="edit-phone" placeholder="전화번호"/>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-dept">부서</label>
+            <select id="edit-dept">
+                <!-- JS에서 부서 옵션 동적 추가 -->
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-position">직급</label>
+            <input id="edit-position" placeholder="직급"/>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-status">상태 메시지</label>
+            <input id="edit-status" placeholder="상태 메시지"/>
+        </div>
+
+        <button onclick="submitEdit()">저장</button>
+    </div>
+</div>
 
 
 </div>
