@@ -48,7 +48,6 @@ dependencies {
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
@@ -59,9 +58,12 @@ dependencies {
 
 	// Spring Boot Actuator (health check용)
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
+	
 	// Spring Session
 	implementation 'org.springframework.session:spring-session-core'
+
+	// Email
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 	// aws s3버킷 사용
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'

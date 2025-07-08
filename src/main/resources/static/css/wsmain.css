@@ -8,6 +8,11 @@
   overflow-y: auto;
 }
 
+body {
+  margin: 0;
+  display: flex;
+}
+
 /* 상단 배너 */
 .top-banner {
   background: white;

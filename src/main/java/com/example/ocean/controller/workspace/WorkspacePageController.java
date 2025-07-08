@@ -26,8 +26,10 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+// 페이지 렌더링 전용 컨트롤러 (HTML 응답)
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -76,7 +78,9 @@ public class WorkspacePageController {
             List<Workspace> workspaces = workspaceService.getWorkspacesByUserId(userId);
             log.info("조회된 워크스페이스 개수: {}", workspaces != null ? workspaces.size() : 0);
 
+
             model.addAttribute("workspaceList", workspaces != null ? workspaces : new ArrayList<>());
+            //model.addAttribute("workspaceList", workspaces);
 
             return "workspace/workspace";
 
@@ -115,7 +119,7 @@ public class WorkspacePageController {
      * 워크스페이스 참가 페이지
      *
      * @param userPrincipal 인증된 사용자 정보
-     * @param model         뷰에 전달할 모델
+     * @param model 뷰에 전달할 모델
      * @return join-workspace 페이지
      */
     @GetMapping("/invitations/join")
@@ -157,7 +161,7 @@ public class WorkspacePageController {
         try {
             log.info("프로필 설정 시작 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
 
-            String userImgPath = null;  // ⭐ 전체 경로 저장
+            String userImgPath = null;
             if (userImgFile != null && !userImgFile.isEmpty()) {
                 userImgPath = saveProfileImage(userImgFile);
             }
@@ -165,8 +169,11 @@ public class WorkspacePageController {
             // 멤버 존재 여부 확인
             WorkspaceMember existingMember = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
 
+            // ✅ 최초 프로필 등록 여부 판단
+            boolean isFirstProfile = existingMember != null && existingMember.getUserNickname() == null;
+
             if (existingMember == null) {
-                // 새 멤버 추가 - userImgPath 포함
+                // 새 멤버 추가
                 workspaceService.insertUserProfileToWorkspace(
                         workspaceCd,
                         userPrincipal.getId(),
@@ -175,10 +182,10 @@ public class WorkspacePageController {
                         email,
                         phoneNum,
                         "MEMBER",
-                        userImgPath  // ⭐ 이미지 경로 추가
+                        userImgPath
                 );
             } else {
-                // 기존 멤버 업데이트 - userImgPath 포함
+                // 기존 멤버 업데이트
                 workspaceService.updateWorkspaceProfile(
                         workspaceCd,
                         userPrincipal.getId(),
@@ -187,8 +194,12 @@ public class WorkspacePageController {
                         email,
                         phoneNum,
                         "MEMBER",
-                        userImgPath  // ⭐ 이미지 경로 추가
+                        userImgPath != null ? userImgPath : existingMember.getUserImg()
                 );
+            }
+
+            if (isFirstProfile) {
+                workspaceService.insertNewMemberNotification(workspaceCd, userNickname);
             }
 
             // 부서 및 직급 정보 업데이트
@@ -207,6 +218,7 @@ public class WorkspacePageController {
             return "error: " + e.getMessage();
         }
     }
+
 
     // 프로필 이미지 저장 헬퍼 메소드 - 중복 제거!
     private String saveProfileImage(MultipartFile file) throws IOException {
@@ -263,6 +275,23 @@ public class WorkspacePageController {
             return "workspace/error";
         }
 
+        List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(workspaceCd);
+
+        LocalDate endDate = LocalDate.ofInstant(workspace.getEndDate().toInstant(), ZoneId.systemDefault());
+        LocalDate createdDate = LocalDate.ofInstant(workspace.getCreatedDate().toInstant(), ZoneId.systemDefault());
+        long dday = Math.max(ChronoUnit.DAYS.between(LocalDate.now(), endDate), 0);
+        long totalDays = ChronoUnit.DAYS.between(createdDate, endDate);
+        long passedDays = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
+        int progressPercent = totalDays > 0 ? (int) ((double) passedDays / totalDays * 100) : 100;
+
+        Map<String, Object> eventSummary = workspaceService.getEventSummary(workspaceCd);
+
+        model.addAttribute("workspace", workspace);
+        model.addAttribute("members", members);
+        model.addAttribute("dday", dday);
+        model.addAttribute("progressPercent", progressPercent);
+        model.addAttribute("eventSummary", eventSummary);
+
         // 5. 모든 조건을 만족하면 wsmain으로 리다이렉트
         return "redirect:/wsmain?workspaceCd=" + workspaceCd;
     }
@@ -287,4 +316,5 @@ public class WorkspacePageController {
 
         return "workspace/set-profile";
     }
+
 }

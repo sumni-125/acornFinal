@@ -1,5 +1,6 @@
 package com.example.ocean.mapper;
 
+import com.example.ocean.domain.Notification;
 import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
@@ -128,6 +129,17 @@ public interface WorkspaceMapper {
     // ⭐ 워크스페이스 멤버 조회
     List<WorkspaceMember> findMembersByWorkspaceCd(@Param("workspaceCd") String workspaceCd);
 
+    // 진행 상태에 따른 일정 출력
+    Map<String, Object> getEventSummaryByWorkspace(String workspaceCd);
+
+    String getUserStatus(@Param("workspaceCd") String workspaceCd,
+                         @Param("userId") String userId);
+
+    // main_notification 테이블에 사용자 추가
+    void insertNewMemberNotification(@Param("workspaceCd") String workspaceCd,
+                                     @Param("userNickname") String userNickname);
+
+    List<Notification> selectRecentNotifications(@Param("workspaceCd") String workspaceCd);
 
 
 }
