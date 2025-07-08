@@ -277,4 +277,32 @@ public class WorkspaceController {
         return workspaceService.getRecentNotifications(workspaceCd);
     }
 
+    // 📌 참가 요청 조회 (owner 전용)
+    @GetMapping("/{workspaceCd}/invitations/pending")
+    @ResponseBody
+    public List<Map<String, Object>> getPendingInvites(@PathVariable String workspaceCd) {
+        return workspaceService.getPendingInvitationsByWorkspace(workspaceCd);
+    }
+
+    // 📌 참가 요청 응답 (수락/거절)
+    @PostMapping("/{workspaceCd}/invitations/respond")
+    @ResponseBody
+    public String respondInvitation(@PathVariable String workspaceCd, @RequestBody Map<String, String> request) {
+        String invitedUserId = request.get("invitedUserId");
+        String status = request.get("status");
+
+        // 로그 추가
+        log.info("📥 참가 요청 응답 도착 - workspaceCd: {}, invitedUserId: {}, status: {}", workspaceCd, invitedUserId, status);
+
+        if ("ACCEPT".equalsIgnoreCase(status)) {
+            workspaceService.acceptInvitation(workspaceCd, invitedUserId);
+            return "수락 처리 완료";
+        } else if ("REJECT".equalsIgnoreCase(status)) {
+            workspaceService.rejectInvitation(workspaceCd, invitedUserId);
+            return "거절 처리 완료";
+        } else {
+            return "유효하지 않은 상태입니다";
+        }
+    }
+
 }

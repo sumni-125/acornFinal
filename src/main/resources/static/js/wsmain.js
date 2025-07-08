@@ -16,6 +16,46 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
+        // ✅ 참가 요청 목록 (owner만)
+        if (workspaceCd && userId) {
+            fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
+                .then(res => res.json())
+                .then(user => {
+                    // 만약 owner라면 요청 불러오기
+                    if (user.userRole === 'OWNER') {
+                        fetch(`/api/workspaces/${workspaceCd}/invitations/pending`)
+                            .then(res => res.json())
+                            .then(pendingList => {
+                                const box = document.getElementById("invitation-requests-box");
+                                const list = document.getElementById("invitation-requests-list");
+                                list.innerHTML = "";
+
+                                if (pendingList.length === 0) {
+                                    list.innerHTML = "<li>요청이 없습니다.</li>";
+                                    return;
+                                }
+
+                                box.style.display = "block";
+
+                                pendingList.forEach(req => {
+                                console.log("💬 받은 초대 요청 객체:", req);
+                                    const li = document.createElement("li");
+                                    li.style.marginBottom = "10px";
+
+                                    li.innerHTML = `
+                                      <strong>${req.userName}</strong>님이 워크스페이스에 참가 요청을 보냈습니다
+                                      <button onclick="respondToInvite('${req.INVITED_USER_ID}', 'ACCEPT')">수락</button>
+                                      <button onclick="respondToInvite('${req.INVITED_USER_ID}', 'REJECT')">거절</button>
+                                    `;
+                                    list.appendChild(li);
+                                });
+
+                            });
+                    }
+                });
+        }
+
+
     fetch(`/api/workspaces/${workspaceCd}/notifications`)
         .then(res => res.json())
         .then(notifications => {
@@ -405,4 +445,25 @@ function generateNotificationMessage(noti) {
         default:
             return `${noti.createdBy}님의 활동이 감지되었습니다 (${time})`;
     }
+}
+
+function respondToInvite(userId, action) {
+    const workspaceCd = localStorage.getItem("workspaceCd");
+
+    fetch(`/api/workspaces/${workspaceCd}/invitations/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invitedUserId: userId, status: action })
+    })
+    .then(res => {
+        console.log("✅ 응답 상태:", res.status);
+        return res.text();
+    })
+    .then(msg => {
+        alert("서버 응답:\n" + msg);
+        location.reload();  // 새로고침으로 리스트 갱신
+    })
+    .catch(err => {
+        alert("에러 발생: " + err.message);
+    });
 }

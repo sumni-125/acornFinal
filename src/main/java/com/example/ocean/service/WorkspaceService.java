@@ -397,4 +397,17 @@ public class WorkspaceService {
         return workspaceMapper.selectRecentNotifications(workspaceCd);
     }
 
+    public List<Map<String, Object>> getPendingInvitationsByWorkspace(String workspaceCd) {
+        return workspaceMapper.getPendingInvitationsByWorkspace(workspaceCd);
+    }
+
+    public void acceptInvitation(String workspaceCd, String invitedUserId) {
+        workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, "ACCEPT");
+        workspaceMapper.insertWorkspaceMember(workspaceCd, invitedUserId);
+    }
+
+    public void rejectInvitation(String workspaceCd, String invitedUserId) {
+        workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, "REJECT");
+    }
+
 }

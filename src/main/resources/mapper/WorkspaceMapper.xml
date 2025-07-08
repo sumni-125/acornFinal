@@ -328,4 +328,14 @@
         WHERE   WORKSPACE_CD = #{workspaceCd}
     </select>
 
+    <select id="getPendingInvitationsByWorkspace" resultType="java.util.HashMap">
+        SELECT i.WORKSPACE_CD,
+        i.INVITED_USER_ID,
+        u.USER_NM AS userName
+        FROM INVITATIONS i
+        JOIN USERS u ON i.INVITED_USER_ID = u.USER_ID
+        WHERE i.STATUS IS NULL
+        AND i.WORKSPACE_CD = #{workspaceCd}
+    </select>
+
 </mapper>

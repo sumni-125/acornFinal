@@ -141,5 +141,8 @@ public interface WorkspaceMapper {
 
     List<Notification> selectRecentNotifications(@Param("workspaceCd") String workspaceCd);
 
+    List<Map<String, Object>> getPendingInvitationsByWorkspace(String workspaceCd);
+
+
 
 }
