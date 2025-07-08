@@ -6,7 +6,7 @@
     <title>개인 캘린더</title>
     <link th:href="@{/css/lnb.css}" rel='stylesheet' />
     <link th:href="@{/css/calendar.css}" rel='stylesheet' />
-    <link rel="stylesheet" href="/static/css/calendar.css">
+    <link rel="stylesheet" href="/css/calendar.css">
 
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
@@ -431,7 +431,7 @@
                     });
             },
             events: function (fetchInfo, successCallback, failureCallback) {
-                fetch(`/api/calendar/team?workspaceCd=${workspaceCd}`)
+                fetch(`/api/calendar/personal/${currentUserId}?workspaceCd=${workspaceCd}`)
                     .then(response => {
                         if (!response.ok) {
                             return response.text().then(text => {
@@ -473,7 +473,7 @@
                 closeUpdateModal();
 
                 const eventCd = info.event.id;
-                fetch(`/api/calendar/team/events/${eventCd}`)
+                fetch(`/api/calendar/personal/events/${eventCd}`)
                     .then(res => {
                         console.log("응답 상태코드:", res.status);
                         if (!res.ok) throw new Error("상세정보 조회 실패");
@@ -548,7 +548,7 @@
                         if (data.fileList && data.fileList.length > 0) {
                             data.fileList.forEach(file => {
                                 const li = document.createElement('li');
-                                li.innerHTML = `<a href="/api/calendar/team/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span class="file-name-display">${file.fileNm}</span></a>`;
+                                li.innerHTML = `<a href="/api/calendar/personal/events/${event.eventCd}/files?fileId=${file.fileId}" target="_blank"><span class="file-name-display">${file.fileNm}</span></a>`;
                                 detailFilesUl.appendChild(li);
                             });
                         } else {
@@ -694,7 +694,7 @@
             formData.append("files", file);
         });
 
-        fetch('/api/calendar/team', {
+        fetch('/api/calendar/personal', {
             method: 'POST',
             body: formData
         })
@@ -1134,7 +1134,7 @@
         formData.append("deletedFileIds", new Blob([JSON.stringify(deletedFileIds)], { type: "application/json" }));
 
 
-        fetch(`/api/calendar/team/events/${eventCd}`, {
+        fetch(`/api/calendar/personal/events/${eventCd}`, {
             method: 'PUT',
             body: formData
         })
@@ -1169,7 +1169,7 @@
                 return;
             }
 
-            fetch(`/api/calendar/team/events/${eventCd}?userId=${userId}`, {
+            fetch(`/api/calendar/personal/events/${eventCd}?userId=${userId}`, {
                 method: 'DELETE'
             })
                 .then(res => {
