@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -24,7 +25,7 @@ import java.util.Map;
 public class MeetingController {
 
     private final MeetingService meetingService;
-    private final WorkspaceService workspaceService;  // final 추가!
+    private final WorkspaceService workspaceService;
 
     @GetMapping("/active")
     public ResponseEntity<List<ActiveMeetingDto>> getActiveMeetings(
@@ -191,6 +192,50 @@ public class MeetingController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("호스트 확인 실패: roomId={}, userId={}", roomId, user.getId(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 회의 재참여를 위한 정보 조회
+     * 기존 is-host API를 확장해서 재참여에 필요한 정보 제공
+     */
+    @GetMapping("/{roomId}/rejoin-info")
+    public ResponseEntity<Map<String, Object>> getRejoinInfo(
+            @PathVariable String roomId,
+            @AuthenticationPrincipal UserPrincipal user) {
+
+        try {
+            // 회의 활성 상태 확인
+            boolean isActive = meetingService.isMeetingActive(roomId);
+            if (!isActive) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "회의가 종료되었습니다");
+                return ResponseEntity.status(404).body(errorResponse);
+            }
+
+            // 호스트 정보 조회 (기존 메서드 활용)
+            boolean isHost = meetingService.isHost(roomId, user.getId());
+            String hostId = meetingService.getHostId(roomId);
+
+            // 재참여 처리 (기존 메서드 활용)
+            meetingService.rejoinParticipant(roomId, user.getId());
+
+            // 응답 데이터
+            Map<String, Object> response = new HashMap<>();
+            response.put("roomId", roomId);
+            response.put("hostId", hostId);
+            response.put("isHost", isHost);
+            response.put("userId", user.getId());
+            response.put("isActive", isActive);
+
+            log.info("재참여 정보 조회 - roomId: {}, userId: {}, isHost: {}",
+                    roomId, user.getId(), isHost);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("재참여 정보 조회 실패: roomId={}, userId={}", roomId, user.getId(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
