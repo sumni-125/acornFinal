@@ -178,17 +178,28 @@
 
         // 사용자 정보 가져오기
         const userInfo = getUserInfoFromToken();
+        console.log('사용자 정보:', userInfo); // 디버깅용
+
+        // userInfo가 없으면 토큰 확인
+        if (!userInfo || !userInfo.userId) {
+            console.error('사용자 정보를 가져올 수 없습니다');
+            // 토큰 재확인
+            const token = localStorage.getItem('accessToken');
+            console.log('토큰:', token);
+        }
 
         // URL 파라미터 구성
         const params = new URLSearchParams({
             roomId: roomId,
             workspaceId: workspaceId,
             meetingTitle: meetingTitle || '회의',
-            peerId: userInfo?.userId || '',
+            peerId: userInfo?.userId || 'unknown-user',
             displayName: userInfo?.userName || '참가자',
             userProfileImg: userInfo?.userProfileImg || '',
             rejoin: 'true'
         });
+
+        console.log('전송할 파라미터:', params.toString()); // 디버깅용
 
         // 회의 페이지로 이동
         window.location.href = `${mediaServerUrl}/ocean-video-chat-complete.html?${params.toString()}`;
