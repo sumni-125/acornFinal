@@ -36,6 +36,15 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+.place-list {
+    padding-top: 10px;
+    text-align: center;
+    background-color: var(--bg-content);
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
 .place-list-container {
     border-radius: 8px;
     overflow: hidden;
@@ -47,16 +56,13 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 2fr 2fr;
     padding: 15px 20px;
+    text-align: center;
     background-color: var(--bg-list-header);
     font-weight: 500;
     font-size: 14px;
     color: var(--text-secondary);
 }
-.place-list {
-    background-color: var(--bg-content);
-    overflow-y: auto;
-    flex-grow: 1;
-}
+
 .place-item {
     display: grid;
     grid-template-columns: 1fr 1fr 1.5fr 2.5fr 1fr;
@@ -103,6 +109,7 @@ body {
     display: flex;
     flex-direction: column;
     border-left: 1px solid var(--border-color);
+    overflow-y: auto
 }
 .detail-view, .empty-view, .add-schedule-view {
     width: 100%;
@@ -387,6 +394,7 @@ body {
 }
 
 .add-bottom-bar {
+    padding-bottom: 30px;
     display: flex;
 }
 .add-bottom-bar input {
@@ -503,6 +511,8 @@ body {
     width: 90px;
     text-align: right;
     margin-bottom: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
 }
 
 .add-schedule-view .form-item input[type="color"], .update-schedule-view .form-item input[type="color"] {
@@ -551,6 +561,7 @@ body {
     flex-direction: column; /* 세로 정렬 */
     gap: 10px; /* 각 줄 사이 간격 */
     margin-bottom: 15px;
+    padding-top: 20px;
 }
 
 .date-time-inputs .date-time-row { /* 각 라벨-입력필드 쌍을 위한 새로운 래퍼 */
@@ -623,3 +634,4 @@ body {
     display: flex;
     flex-direction: column;
 }
+

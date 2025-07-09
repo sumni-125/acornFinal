@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import java.util.UUID;
 
 import java.io.File;
 import java.io.IOException;
@@ -404,6 +405,18 @@ public class WorkspaceService {
     public void acceptInvitation(String workspaceCd, String invitedUserId) {
         workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, "ACCEPT");
         workspaceMapper.insertWorkspaceMember(workspaceCd, invitedUserId);
+
+        // 워크스페이스 닉네임 대신 소셜 이름 조회
+        String userName = workspaceMapper.findUserNameByUserId(invitedUserId);
+
+        String notiId = UUID.randomUUID().toString();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("notiId", notiId);
+        map.put("workspaceCd", workspaceCd);
+        map.put("createdBy", userName != null ? userName : invitedUserId); // fallback
+
+        workspaceMapper.insertNewMemberNotification(map);
     }
 
     public void rejectInvitation(String workspaceCd, String invitedUserId) {

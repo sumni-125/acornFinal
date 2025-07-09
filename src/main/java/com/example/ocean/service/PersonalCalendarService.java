@@ -228,10 +228,6 @@ public class PersonalCalendarService {
             }
         }
 
-
-        //
-
-
     }
 
 }

@@ -143,6 +143,11 @@ public interface WorkspaceMapper {
 
     List<Map<String, Object>> getPendingInvitationsByWorkspace(String workspaceCd);
 
+    void insertNewMemberNotification(Map<String, Object> map);
 
+    String findUserNameByUserId(@Param("userId") String userId);
+
+    String findNicknameByWorkspaceAndUser(@Param("workspaceCd") String workspaceCd,
+                                          @Param("userId") String userId);
 
 }

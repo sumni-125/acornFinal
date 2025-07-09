@@ -303,13 +303,15 @@
 
     <insert id="insertNewMemberNotification">
         INSERT INTO MAIN_NOTIFICATION (
+        NOTI_ID,
         WORKSPACE_CD,
         NOTI_STATE,
         CREATED_BY
         ) VALUES (
+        #{notiId},
         #{workspaceCd},
         'NEW_ATTENDENCE',
-        #{userNickname}
+        #{createdBy}
         )
     </insert>
 
@@ -337,5 +339,19 @@
         WHERE i.STATUS IS NULL
         AND i.WORKSPACE_CD = #{workspaceCd}
     </select>
+
+    <select id="findNicknameByWorkspaceAndUser" resultType="string">
+        SELECT USER_NICKNAME
+        FROM WORKSPACE_MEMBERS
+        WHERE WORKSPACE_CD = #{workspaceCd}
+        AND USER_ID = #{userId}
+    </select>
+
+    <select id="findUserNameByUserId" resultType="string">
+        SELECT USER_NM
+        FROM USERS
+        WHERE USER_ID = #{userId}
+    </select>
+
 
 </mapper>
