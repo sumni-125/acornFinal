@@ -25,10 +25,11 @@ public class EventController {
     private WorkspaceService workspaceService;
 
     @GetMapping("/today")
-    public List<Event> getTodayEvents(@RequestParam("userId") String userId) {
-        List<Event> result = eventService.getTodayEvents(userId);
-        return result;
+    public List<Event> getTodayEvents(@RequestParam String userId, @RequestParam String workspaceCd) {
+        System.out.println("📥 오늘 일정 요청: userId = " + userId + ", workspaceCd = " + workspaceCd);
+        return eventService.getTodayEvents(userId, workspaceCd);
     }
+
 
     @GetMapping("/this-week-completed-count")
     public int getThisWeekCompletedCount(@RequestParam("workspaceCd") String workspaceCd) {

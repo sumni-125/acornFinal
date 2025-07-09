@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
     // ✅ 오늘 일정 불러오기
-    fetch(`/api/events/today?userId=${userId}`)
+    fetch(`/api/events/today?userId=${userId}&workspaceCd=${workspaceCd}`)
         .then(response => response.json())
         .then(data => {
             const list = document.getElementById("user-events-list");

@@ -8,7 +8,7 @@ import java.util.List;
 
 @Mapper
 public interface EventMapper {
-    List<Event> selectTodayEvents(@Param("userId") String userId);
+    List<Event> selectTodayEvents(@Param("userId") String userId, @Param("workspaceCd") String workspaceCd);
 
     int countCompletedEventsThisWeekByWorkspace(@Param("workspaceCd") String workspaceCd);
 

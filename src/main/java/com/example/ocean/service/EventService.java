@@ -13,9 +13,11 @@ public class EventService {
     @Autowired
     private EventMapper eventMapper;
 
-    public List<Event> getTodayEvents(String userId) {
-        return eventMapper.selectTodayEvents(userId);
+    public List<Event> getTodayEvents(String userId, String workspaceCd) {
+        System.out.println("🛠 서비스 진입: userId = " + userId + ", workspaceCd = " + workspaceCd);
+        return eventMapper.selectTodayEvents(userId, workspaceCd);
     }
+
 
     public int countCompletedEventsThisWeekByWorkspace(String workspaceCd) {
         return eventMapper.countCompletedEventsThisWeekByWorkspace(workspaceCd);
