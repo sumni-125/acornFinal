@@ -80,8 +80,6 @@
             document.getElementById("myInfoBtn").addEventListener("click", async () => {
                 try {
                     const profileRes = await fetch(`/api/workspaces/${workspaceCd}/profile`);
-                    if (!profileRes.ok) throw new Error("내 프로필 API 실패");
-
                     const myProfile = await profileRes.json();
                     loggedInUserId = myProfile.userId; // 내 userId 저장
                     localStorage.setItem("userId", myProfile.userId);
@@ -172,6 +170,15 @@
             document.getElementById("myProgressBar").style.width = (myProfile.progress || 0) + "%";
             document.getElementById("myProgressPercent").textContent = (myProfile.progress || 0) + "%";
 
+            const progressRes = await fetch(`/api/workspaces/${workspaceCd}/progress`);
+            const progressData = await progressRes.json();
+
+            const percent = parseFloat(progressData.progressRate) || 0;
+
+            document.getElementById("myProgressBar").style.width = `${percent}%`;
+            document.getElementById("myProgressPercent").textContent = `${percent}%`;
+            document.getElementById("myProgressText").textContent = `${progressData.doneCount || 0} / ${progressData.totalCount || 0} 완료`;
+
             const mpImg = document.querySelector(".mini-profile .mpImg");
             const mpName = document.querySelector(".mini-profile .mp-name");
             const mpRole = document.querySelector(".mini-profile .mp-role");
@@ -218,39 +225,78 @@
                 });
             });
 
-            // ✅ UI 반영 함수 (상태 텍스트 & 아이콘 & 표시 텍스트)
-            function updateStatusDisplay(status) {
-                const display = document.querySelector(".user-status-display");
-                const icon = document.getElementById("statusIcon");
-                const text = document.getElementById("statusText");
+           function updateStatusDisplay(status) {
+               console.log("🔍 window.loggedInUserId:", window.loggedInUserId);
+               console.log("🔍 localStorage.getItem userId:", localStorage.getItem("userId"));
 
-                const statusMap = {
-                    online: {
-                        label: "온라인",
-                        icon: "/images/green_circle.png"
-                    },
-                    away: {
-                        label: "자리 비움",
-                        icon: "/images/red_circle.png"
-                    },
-                    offline: {
-                        label: "오프라인",
-                        icon: "/images/gray_circle.png"
-                    }
-                };
+               const displayText = document.getElementById("statusDisplayText");
+               const displayIcon = document.getElementById("statusDisplayIcon");
 
-                const { label, icon: iconSrc } = statusMap[status.toLowerCase()] || statusMap["online"];
+               const statusMap = {
+                   online: {
+                       label: "온라인",
+                       icon: "/images/green_circle.png"
+                   },
+                   away: {
+                       label: "자리 비움",
+                       icon: "/images/red_circle.png"
+                   },
+                   offline: {
+                       label: "오프라인",
+                       icon: "/images/gray_circle.png"
+                   }
+               };
 
-                if (display) display.textContent = label;
-                if (icon) icon.src = iconSrc;
-                if (text) text.textContent = label;
+               const { label, icon } = statusMap[status?.toLowerCase()] || statusMap.online;
 
-                console.log("✅ 상태 표시됨:", label);
+               if (displayText) displayText.textContent = label;
+               if (displayIcon) displayIcon.src = icon;
+
+               const statusBtnIcon = document.getElementById("statusIcon");
+               const statusBtnText = document.getElementById("statusText");
+
+               if (statusBtnIcon) statusBtnIcon.src = icon;
+               if (statusBtnText) statusBtnText.textContent = label;
+
+               // ✅ 내 멤버 리스트 아이콘도 업데이트
+               if (window.loggedInUserId) {
+                   console.log("🧾 로그인된 유저 ID:", window.loggedInUserId);
+
+                   const myMemberImgWrapper = document.querySelector(`.member a[onclick*="${window.loggedInUserId}"] .status-overlay-icon`);
+                   if (myMemberImgWrapper) {
+                       console.log("🟢 멤버 리스트 내 상태 아이콘 찾음 → 업데이트");
+                       myMemberImgWrapper.src = icon;
+                   } else {
+                       console.warn("🔴 멤버 리스트에서 나의 상태 아이콘을 찾지 못함");
+                   }
+               } else {
+                   console.warn("⚠️ window.loggedInUserId 값이 비어 있음");
+               }
+
+
+               console.log("✅ 상태 업데이트 완료:", label);
+           }
+
+            function changeStatus(newStatus) {
+                console.log("📤 changeStatus 호출됨:", newStatus);
+
+                fetch(`/api/workspaces/${workspaceCd}/status`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("상태 변경 실패");
+                    return res.text();
+                })
+                .then(() => {
+                    console.log("✅ 상태 변경 성공: 상태가 업데이트되었습니다:", newStatus);
+                    updateStatusDisplay(newStatus);  // 🔥 이게 있어야 아이콘과 텍스트 갱신됨
+                })
+                .catch(err => {
+                    console.error("❌ 상태 변경 실패:", err);
+                });
             }
-
-
-
-
 
 
 
@@ -266,15 +312,27 @@
             members.forEach(member => {
                 const memberDiv = document.createElement("div");
                 memberDiv.classList.add("member");
+                const statusIconMap = {
+                  online: "/images/green_circle.png",
+                  away: "/images/red_circle.png",
+                  offline: "/images/gray_circle.png"
+                };
+
+                const statusIcon = statusIconMap[member.userState?.toLowerCase()] || "/images/gray_circle.png";
+
                 memberDiv.innerHTML = `
-                    <a href="javascript:void(0);" class="member-link" onclick="showProfileModel('${member.userId}')">
-                        <img src="${getImagePath(member.userImg)}" alt="멤버이미지">
-                        <div class="info">
-                            <span class="m-name">${member.userNickname}</span>
-                            <span class="m-role">${member.position}</span>
-                        </div>
-                    </a>
+                  <a href="javascript:void(0);" class="member-link" onclick="showProfileModel('${member.userId}')">
+                      <div class="member-img-wrapper">
+                          <img src="${getImagePath(member.userImg)}" alt="멤버이미지" class="member-img">
+                          <img src="${statusIcon}" class="status-overlay-icon" />
+                      </div>
+                      <div class="info">
+                          <span class="m-name">${member.userNickname}</span>
+                          <span class="m-role">${member.position}</span>
+                      </div>
+                  </a>
                 `;
+
                 memberContainer.appendChild(memberDiv);
             });
 
@@ -348,6 +406,9 @@
             });
 
               document.getElementById("toggleEditBtn").addEventListener("click", () => {
+
+
+
                   const isEditMode = document.getElementById("toggleEditBtn").dataset.editing === "true";
                   const imgEl = document.getElementById("viewProfileImg");
 
@@ -432,8 +493,62 @@
                   }
               });
 
+               // 🔔 초대 요청 불러오기 함수
+               async function loadPendingInvitations() {
+                   try {
+                       const userId = localStorage.getItem("userId");
+                       if (!userId) return;
+
+                       const res = await fetch(`/api/workspaces/${workspaceCd}/invitations/pending?userId=${encodeURIComponent(userId)}`);
+                       const invites = await res.json();
 
 
+                       const alertArea = document.getElementById("invitationAlerts");
+                       if (!alertArea) return;
+
+                       alertArea.innerHTML = "";
+
+                       if (invites.length === 0) return;
+
+                       invites.forEach(invite => {
+                           const wrapper = document.createElement("div");
+                           wrapper.className = "invitation-alert";
+                           wrapper.innerHTML = `
+                               <div class="invite-text"><b>${invite.userName}</b> 님의 참가 요청이 있습니다.</div>
+                               <div class="invite-actions">
+                                   <button class="btn-accept">승인</button>
+                                   <button class="btn-reject">거절</button>
+                               </div>
+                           `;
+
+                           wrapper.querySelector(".btn-accept").addEventListener("click", () => respondToInvitation(invite.invitedUserId, "ACCEPT"));
+                           wrapper.querySelector(".btn-reject").addEventListener("click", () => respondToInvitation(invite.invitedUserId, "REJECT"));
+
+                           alertArea.appendChild(wrapper);
+                       });
+                   } catch (err) {
+                       console.error("❌ 초대 요청 불러오기 실패:", err);
+                   }
+               }
+
+               // 🔁 초대 응답 함수
+               async function respondToInvitation(invitedUserId, status) {
+                   try {
+                       const res = await fetch(`/api/workspaces/${workspaceCd}/invitations/respond`, {
+                           method: "POST",
+                           headers: { "Content-Type": "application/json" },
+                           body: JSON.stringify({ invitedUserId, status })
+                       });
+                       const msg = await res.text();
+                       alert(msg);
+                       loadPendingInvitations(); // 목록 다시 로딩
+                   } catch (err) {
+                       console.error("❌ 초대 응답 실패:", err);
+                   }
+               }
+
+               // ✅ 함수 실행 (OWNER인 경우 서버에서만 응답 내려옴)
+               loadPendingInvitations();
 
         } catch (err) {
             console.error("🔴 RNB 전체 로딩 중 에러:", err);
@@ -478,4 +593,47 @@ function bindStatusChangeEvents() {
             dropdown.style.display = "none";
         });
     });
+}
+
+async function showMyProfile() {
+    try {
+        const profileRes = await fetch(`/api/workspaces/${workspaceCd}/profile`);
+        if (!profileRes.ok) throw new Error("내 프로필 API 실패");
+
+        const myProfile = await profileRes.json();
+        loggedInUserId = myProfile.userId;
+        window.loggedInUserId = myProfile.userId;
+        localStorage.setItem("userId", myProfile.userId);
+        localStorage.setItem("workspaceCd", workspaceCd);
+
+        document.getElementById("viewProfileImg").src = getImagePath(myProfile.userImg);
+        document.getElementById("viewNickname").textContent = myProfile.userNickname || "-";
+        document.getElementById("viewPhone").textContent = myProfile.phoneNum || "-";
+        document.getElementById("viewPosition").textContent = myProfile.position || "-";
+        document.getElementById("viewEmail").textContent = myProfile.email || "-";
+        document.getElementById("viewDept").textContent = myProfile.deptNm || "-";
+
+        document.getElementById("toggleEditBtn").style.display = "inline-block";
+        document.getElementById("toggleEditBtn").dataset.editing = "false"; // 🔑 편집 상태 초기화
+
+        document.getElementById("profileModal").style.display = "block";
+        document.getElementById("profileModalOverlay").style.display = "block";
+    } catch (e) {
+        console.error("내 정보 모달 로딩 실패:", e);
+    }
+}
+
+function syncStatusIconByText() {
+    const text = document.getElementById("statusDisplayText")?.textContent?.trim();
+    const icon = document.getElementById("statusDisplayIcon");
+
+    if (!text || !icon) return;
+
+    const statusIconMap = {
+        "온라인": "/images/green_circle.png",
+        "자리 비움": "/images/red_circle.png",
+        "오프라인": "/images/gray_circle.png"
+    };
+
+    icon.src = statusIconMap[text] || "/images/green_circle.png"; // 기본값 온라인
 }

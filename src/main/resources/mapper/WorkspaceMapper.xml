@@ -340,7 +340,7 @@
 
     <select id="getPendingInvitationsByWorkspace" resultType="java.util.HashMap">
         SELECT i.WORKSPACE_CD,
-        i.INVITED_USER_ID,
+        i.INVITED_USER_ID AS invitedUserId,
         u.USER_NM AS userName
         FROM INVITATIONS i
         JOIN USERS u ON i.INVITED_USER_ID = u.USER_ID

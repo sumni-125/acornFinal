@@ -79,12 +79,6 @@ public class WorkspaceService {
         workspaceMapper.insertInvitation(workspaceCd, invitedUserId, inviteCd);
     }
 
-    /*
-    public List<Map<String, Object>> getPendingInvitations(String workspaceCd) {
-        return workspaceMapper.selectPendingInvitations(workspaceCd);
-    }
-    */
-
     public void approveInvitation(String workspaceCd, String invitedUserId, String requesterId) {
         WorkspaceMember requester = workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, requesterId);
         if (requester == null || !"OWNER".equalsIgnoreCase(requester.getUserRole())) {
@@ -504,8 +498,11 @@ public class WorkspaceService {
         return response;
     }
 
+    public List<Map<String, Object>> getPendingInvitations(String workspaceCd) {
+        return workspaceMapper.getPendingInvitationsByWorkspace(workspaceCd);
+    }
 
-
-
-
+    public void respondToInvitation(String workspaceCd, String invitedUserId, String status) {
+        workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, status);
+    }
 }

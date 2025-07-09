@@ -4,7 +4,12 @@
                 <img id="myProfileImg" class="user-img" src="/images/default.png" alt="프로필 이미지">
             <div class="user-info">
                 <div id="myProfileName" class="name">사용자명</div>
-                <div id="myProfileRole" class="role">직급  </div><span class="user-status-display" style="color:white">aa</span>
+                <div id="myProfileRole" class="role">직급  </div>
+                <span class="user-status-display">
+                    <img id="statusDisplayIcon" src="/images/green_circle.png"
+                        style="width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle;" />
+                    <span id="statusDisplayText">온라인</span>
+                </span>
             </div>
 
             <div class="mini-profile">
@@ -49,14 +54,13 @@
             </div>
         </div>
 
-
-
     <div class="progress-box">
         <label>전체 진도율</label>
         <div class="bar">
             <span id="myProgressBar" style="width: 0%"></span>
         </div>
         <div id="myProgressPercent" class="percent">0%</div>
+        <div id="myProgressText" class="progress-text">0 / 0 완료</div>
     </div>
 
     <div class="member-list-box">
@@ -69,9 +73,12 @@
             </button>
         </div>
 
+        <div id="invitationAlerts" class="invitation-alerts"></div>
+
     </div>
 
     <button class="rnb-toggle-btn">
         <img id="toggleArrow" src="/images/arrow-right.png" alt="토글">
     </button>
 </div>
+

@@ -5,8 +5,10 @@ import com.example.ocean.domain.Workspace;
 import com.example.ocean.domain.WorkspaceDept;
 import com.example.ocean.domain.WorkspaceMember;
 import com.example.ocean.mapper.MemberTransactionMapper;
+import com.example.ocean.mapper.WorkspaceMapper;
 import com.example.ocean.service.WorkspaceService;
 import com.example.ocean.security.oauth.UserPrincipal;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
@@ -34,6 +36,7 @@ import java.util.*;
 public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
+    private final WorkspaceMapper workspaceMapper;
 
     // 워크스페이스 목록 조회
     @GetMapping
@@ -348,7 +351,19 @@ public class WorkspaceController {
     // 📌 참가 요청 조회 (owner 전용)
     @GetMapping("/{workspaceCd}/invitations/pending")
     @ResponseBody
-    public List<Map<String, Object>> getPendingInvites(@PathVariable String workspaceCd) {
+    public List<Map<String, Object>> getPendingInvites(@PathVariable String workspaceCd,
+                                                       @RequestParam String userId) {
+        if (userId == null || userId.isBlank()) {
+            log.warn("❌ userId 누락");
+            return List.of();
+        }
+
+        WorkspaceMember member = workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, userId);
+        if (!"OWNER".equals(member.getUserRole())) {
+            log.warn("❌ 권한 없음 - userId: {}", userId);
+            return List.of();
+        }
+
         return workspaceService.getPendingInvitationsByWorkspace(workspaceCd);
     }
 
@@ -371,6 +386,12 @@ public class WorkspaceController {
         } else {
             return "유효하지 않은 상태입니다";
         }
+    }
+
+    @GetMapping("/{workspaceCd}/progress")
+    @ResponseBody
+    public Map<String, Object> getWorkspaceProgress(@PathVariable String workspaceCd) {
+        return workspaceService.getEventSummary(workspaceCd);
     }
 
 }
