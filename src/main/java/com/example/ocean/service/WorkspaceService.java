@@ -21,7 +21,11 @@ import java.util.UUID;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Slf4j
@@ -99,7 +103,6 @@ public class WorkspaceService {
 
         workspaceMapper.rejectInvitation(workspaceCd, invitedUserId);
     }
-
 
     public List<Map<String, Object>> getAllPendingInvitations() {
         return workspaceMapper.getAllPendingInvitations();
@@ -250,6 +253,16 @@ public class WorkspaceService {
             String userImg
     ) {
         try {
+            log.info("=== 프로필 업데이트 시작 ===");
+            log.info("워크스페이스 코드: {}", workspaceCd);
+            log.info("사용자 ID: {}", userId);
+            log.info("닉네임: {}", userNickname);
+            log.info("상태메시지: {}", statusMsg);
+            log.info("이메일: {}", email);
+            log.info("전화번호: {}", phoneNum);
+            log.info("역할: {}", userRole);
+            log.info("이미지 경로: {}", userImg);  // ⭐ 이미지 경로 로그
+
             // ⭐ 매퍼 호출 (6개 파라미터)
             workspaceMapper.updateWorkspaceProfile(
                     workspaceCd,
@@ -284,6 +297,17 @@ public class WorkspaceService {
             String userImg
     ) {
         try {
+            log.info("=== 사용자 프로필 추가 시작 ===");
+            log.info("워크스페이스 코드: {}", workspaceCd);
+            log.info("사용자 ID: {}", userId);
+            log.info("닉네임: {}", userNickname);
+            log.info("상태메시지: {}", statusMsg);
+            log.info("이메일: {}", email);
+            log.info("전화번호: {}", phoneNum);
+            log.info("역할: {}", role);
+            log.info("이미지 경로: {}", userImg);  // ⭐ 이미지 경로 로그
+
+            // ⭐ 매퍼 호출 (8개 파라미터)
             workspaceMapper.insertUserProfile(
                     workspaceCd,
                     userId,
@@ -309,6 +333,11 @@ public class WorkspaceService {
      */
     public void updateProfileImage(String workspaceCd, String userId, String imageFileName) {
         try {
+            log.info("=== 프로필 이미지 업데이트 시작 ===");
+            log.info("워크스페이스 코드: {}", workspaceCd);
+            log.info("사용자 ID: {}", userId);
+            log.info("이미지 파일명: {}", imageFileName);
+
             workspaceMapper.updateProfileImageOnly(workspaceCd, userId, imageFileName);
 
             log.info("=== 프로필 이미지 업데이트 완료 ===");
@@ -324,6 +353,12 @@ public class WorkspaceService {
                                       String deptCd, String position) {
         workspaceMapper.updateDeptAndPosition(workspaceCd, userId, deptCd, position);
     }
+
+    public void updateDeptAndPosition2(String workspaceCd, String userId,
+                                        String position) {
+        workspaceMapper.updateDeptAndPosition2(workspaceCd, userId,   position);
+    }
+
 
     public WorkspaceMember findMemberByWorkspaceAndUser(String workspaceCd, String userId) {
         return workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, userId);
@@ -422,5 +457,55 @@ public class WorkspaceService {
     public void rejectInvitation(String workspaceCd, String invitedUserId) {
         workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, "REJECT");
     }
+
+    public Workspace getWorkspaceByCd(String workspaceCd) {
+        return workspaceMapper.findWorkspaceByCd(workspaceCd);
+    }
+
+    public Map<String, Object> getWorkspaceInfo(String workspaceCd) {
+        Workspace workspace = workspaceMapper.findWorkspaceByCd(workspaceCd);
+        if (workspace == null) return null;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("workspaceName", workspace.getWorkspaceNm());
+        response.put("inviteCode", workspace.getInviteCd());
+
+        LocalDate today = LocalDate.now();
+
+        // ✅ D-day 및 남은 날짜 계산
+        if (workspace.getEndDate() != null) {
+            LocalDate endDate = workspace.getEndDate().toLocalDateTime().toLocalDate();
+            long dday = ChronoUnit.DAYS.between(today, endDate);
+            response.put("dday", dday);
+
+            // ✅ 마감일 포맷
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월 d일 E요일", Locale.KOREA);
+            String dueDateFormatted = endDate.format(formatter);
+            response.put("dueDateFormatted", dueDateFormatted);
+
+            // ✅ D-day 기준 진행률 계산
+            if (workspace.getCreatedDate() != null) {
+                LocalDate startDate = workspace.getCreatedDate().toLocalDateTime().toLocalDate();
+                long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
+                long passedDays = ChronoUnit.DAYS.between(startDate, today);
+
+                int progressPercent = (totalDays <= 0) ? 100
+                        : (int) ((Math.min(passedDays, totalDays) * 100.0) / totalDays);
+                response.put("progressPercent", progressPercent);
+            } else {
+                response.put("progressPercent", 0);
+            }
+        } else {
+            response.put("dday", null);
+            response.put("dueDateFormatted", "");
+            response.put("progressPercent", 0);
+        }
+
+        return response;
+    }
+
+
+
+
 
 }

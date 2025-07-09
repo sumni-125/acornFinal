@@ -16,69 +16,45 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
-        // ✅ 참가 요청 목록 (owner만)
-        if (workspaceCd && userId) {
-            fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
-                .then(res => res.json())
-                .then(user => {
-                    // 만약 owner라면 요청 불러오기
-                    if (user.userRole === 'OWNER') {
-                        fetch(`/api/workspaces/${workspaceCd}/invitations/pending`)
-                            .then(res => res.json())
-                            .then(pendingList => {
-                                const box = document.getElementById("invitation-requests-box");
-                                const list = document.getElementById("invitation-requests-list");
-                                list.innerHTML = "";
+    document.querySelectorAll(".close-button").forEach(btn => {
+        btn.addEventListener("click", function () {
+            this.closest(".modal").style.display = "none";
+        });
+    });
 
-                                if (pendingList.length === 0) {
-                                    list.innerHTML = "<li>요청이 없습니다.</li>";
-                                    return;
-                                }
-
-                                box.style.display = "block";
-
-                                pendingList.forEach(req => {
-                                console.log("💬 받은 초대 요청 객체:", req);
-                                    const li = document.createElement("li");
-                                    li.style.marginBottom = "10px";
-
-                                    li.innerHTML = `
-                                      <strong>${req.userName}</strong>님이 워크스페이스에 참가 요청을 보냈습니다
-                                      <button onclick="respondToInvite('${req.INVITED_USER_ID}', 'ACCEPT')">수락</button>
-                                      <button onclick="respondToInvite('${req.INVITED_USER_ID}', 'REJECT')">거절</button>
-                                    `;
-                                    list.appendChild(li);
-                                });
-
-                            });
-                    }
-                });
-        }
-
-
-    fetch(`/api/workspaces/${workspaceCd}/notifications`)
+    // ✅ 상단 배너 정보 세팅
+    fetch(`/api/workspaces/${workspaceCd}/info`)
         .then(res => res.json())
-        .then(notifications => {
-            const list = document.getElementById("recent-notifications");
-            list.innerHTML = "";
+        .then(data => {
+            console.log(data);
+            console.log(data.workspaceName);
 
-            if (!notifications || notifications.length === 0) {
-                list.innerHTML = "<li>최근 알림이 없습니다.</li>";
-                return;
+            document.querySelector('.workspace-title').textContent = data.workspaceName || '워크스페이스 이름';
+
+            const ddayElem = document.getElementById("top-banner-dday");
+            ddayElem.textContent = data.dday || '남음' || data.dueDateFormatted;
+
+            const dateElem = document.getElementById("top-banner-date");
+            if (dateElem) {
+                const today = new Date();
+                const formatter = new Intl.DateTimeFormat('ko-KR', {
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                dateElem.textContent = formatter.format(today);
             }
 
-            notifications.forEach(noti => {
-                const text = generateNotificationMessage(noti);
-                const li = document.createElement("li");
-                li.textContent = text;
-                list.appendChild(li);
-            });
+            const progressFill = document.querySelector(".progress-bar .progress-fill");
+            let progressPercent = data.progressPercent;
+
+            const project_end_date = document.getElementById("project_endDate");
+            project_end_date.textContent = data.dueDateFormatted;
         })
         .catch(err => {
-            console.error("❌ 알림 불러오기 실패:", err);
-            document.getElementById("recent-notifications").innerHTML = "<li>불러오기 실패</li>";
+            console.error(" ^^^^^^^^  ~~~~");
+            console.error("❌ 상단 배너 정보 로딩 실패:", err);
         });
-
 
     // ✅ 누적 접속 시간 로딩
     fetch(`/api/events/${workspaceCd}/usage-time`)
@@ -92,8 +68,8 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("usage-time").textContent = "불러오기 실패";
         });
 
-    // ✅ 오늘 일정 불러오기
-    fetch(`/api/events/today?userId=${userId}&workspaceCd=${workspaceCd}`)
+    // ✅ 오늘 일정
+    fetch(`/api/events/today?userId=${userId}`)
         .then(response => response.json())
         .then(data => {
             const list = document.getElementById("user-events-list");
@@ -125,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch(`/api/events/this-week-completed-count?workspaceCd=${workspaceCd}`)
         .then(res => res.json())
         .then(count => {
-            document.getElementById('completed-this-week').innerText = `총 ${count}개 완료됨`;
+            document.getElementById('completed-this-week').innerText = `${count}`;
         })
         .catch(err => {
             document.getElementById('completed-this-week').innerText = '불러오기 실패';
@@ -135,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch(`/api/events/this-week-upcoming-count?workspaceCd=${workspaceCd}`)
         .then(res => res.json())
         .then(count => {
-            document.getElementById('upcoming-this-week').innerText = `총 ${count}개 예정됨`;
+            document.getElementById('upcoming-this-week').innerText = `${count}`;
         })
         .catch(err => {
             document.getElementById('upcoming-this-week').innerText = '불러오기 실패';
@@ -145,44 +121,47 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch(`/api/events/this-week-created-count?workspaceCd=${workspaceCd}`)
         .then(res => res.json())
         .then(count => {
-            document.getElementById('created-this-week').innerText = `총 ${count}개 생성됨`;
+            document.getElementById('created-this-week').innerText = `${count}`;
         })
         .catch(err => {
             document.getElementById('created-this-week').innerText = '불러오기 실패';
         });
 
-    // ✅ 워크스페이스 참여 사용자 목록 로딩
-    fetch(`/api/workspaces/${workspaceCd}/members`)
-        .then(res => res.json())
-        .then(data => {
-            const members = data.members;
-            const list = document.getElementById("workspace-members");
-            list.innerHTML = "";
+    // ✅ 사용자 정보 로딩
+//    fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
+//        .then(res => res.json())
+//        .then(user => {
+//            document.getElementById("mini-profile-img").src = user.userImg || "/images/default.png";
+//            document.getElementById("mini-profile-name").textContent = user.userNickname || user.userId;
+//            document.getElementById("mini-profile-role").textContent = user.userRole || "MEMBER";
+//        });
 
-            if (!members || members.length === 0) {
-                list.innerHTML = "<li>참여자가 없습니다.</li>";
-                return;
-            }
+    // ✅ 상태 불러오기
+    fetch(`/api/workspaces/${workspaceCd}/member/${userId}/status`)
+        .then(res => {
+            if (!res.ok) throw new Error("서버 응답 오류");
+            return res.text();
+        })
+        .then(status => {
+            console.log( "status  ===>  ", status);
+            //updateStatusDisplay(status);
+              setTimeout(() => {
 
-            members.forEach(member => {
-                const li = document.createElement("li");
-                li.textContent = member.userNickname || member.userId;
-                li.style.cursor = "pointer";
-                li.style.padding = "6px 0";
+              updateStatusDisplay(status);
 
-                // ✅ 모달 함수로 연결
-                li.onclick = () => {
-                    showUserDetailModal(member.userId);
-                };
+              } ,0);
 
-                list.appendChild(li);
-            });
+
+
+
+
         })
         .catch(err => {
-            console.error("❗ 워크스페이스 멤버 불러오기 실패:", err);
-            document.getElementById("workspace-members").innerHTML = "<li>불러오기 실패</li>";
+            console.error("❌ 상태 불러오기 실패:", err);
+           // updateStatusDisplay("online");
         });
 });
+
 
 function showUserDetailModal(userId) {
     const workspaceCd = localStorage.getItem("workspaceCd");
@@ -190,7 +169,7 @@ function showUserDetailModal(userId) {
     fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
         .then(res => res.json())
         .then(user => {
-            document.getElementById("detail-img").src = user.userImg || "/images/default-profile.png";
+            document.getElementById("detail-img").src = user.userImg || "/images/default.png";
             document.getElementById("detail-name").textContent = user.userNickname || user.userId;
             document.getElementById("detail-email").textContent = user.email || "-";
             document.getElementById("detail-phone").textContent = user.phoneNum || "-";
@@ -206,45 +185,6 @@ function showUserDetailModal(userId) {
         });
 }
 
-// 모달 닫기
-document.addEventListener("DOMContentLoaded", function () {
-    const closeBtn = document.querySelector(".close-button");
-    if (closeBtn) {
-        closeBtn.onclick = () => {
-            document.getElementById("user-detail-modal").style.display = "none";
-        };
-    }
-});
-
-// ✅ hover 시 메뉴 보이기
-document.addEventListener("DOMContentLoaded", function () {
-    const profileContainer = document.querySelector(".mini-profile-container");
-    const menu = document.querySelector(".mini-profile-menu");
-
-    if (profileContainer && menu) {
-        profileContainer.addEventListener("mouseenter", () => {
-            menu.style.display = "block";
-        });
-        profileContainer.addEventListener("mouseleave", () => {
-            menu.style.display = "none";
-        });
-    }
-
-    // ✅ 사용자 정보 불러오기
-
-
-    if (workspaceCd && userId) {
-        fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
-            .then(res => res.json())
-            .then(user => {
-                document.getElementById("mini-profile-img").src = user.userImg || "/images/default-profile.png";
-                document.getElementById("mini-profile-name").textContent = user.userNickname || user.userId;
-                document.getElementById("mini-profile-role").textContent = user.userRole || "MEMBER";
-            });
-    }
-});
-
-// ✅ 클릭 동작 정의
 function goToMyPage() {
     const workspaceCd = localStorage.getItem("workspaceCd");
     const userId = localStorage.getItem("userId");
@@ -252,7 +192,7 @@ function goToMyPage() {
     fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
         .then(res => res.json())
         .then(user => {
-            document.getElementById("my-img").src = user.userImg || "/images/default-profile.png";
+            document.getElementById("my-img").src = user.userImg || "/images/default.png";
             document.getElementById("my-name").textContent = user.userNickname || user.userId;
             document.getElementById("my-email").textContent = user.email || "-";
             document.getElementById("my-phone").textContent = user.phoneNum || "-";
@@ -260,7 +200,6 @@ function goToMyPage() {
             document.getElementById("my-position").textContent = user.position || "-";
             document.getElementById("my-status").textContent = user.statusMsg || "-";
 
-            // 수정 모달에 값 미리 세팅
             document.getElementById("edit-email").value = user.email || "";
             document.getElementById("edit-nickname").value = user.userNickname || "";
             document.getElementById("edit-phone").value = user.phoneNum || "";
@@ -302,21 +241,20 @@ function submitEdit() {
         method: "POST",
         body: formData
     })
-    .then(res => res.text())  // ✅ JSON 아님! plain text 처리
-    .then(result => {
-        const trimmed = result.trim();
-        if (trimmed === "success") {
-            alert("수정 완료!");
-            document.getElementById("edit-info-modal").style.display = "none";
-            goToMyPage();
-        } else {
-            alert("수정 실패: " + trimmed);
-        }
-    })
-    .catch(err => {
-        console.error("❌ 수정 실패:", err);
-        alert("수정 중 오류 발생: " + err.message);
-    });
+        .then(res => res.text())
+        .then(msg => {
+            if (msg === "success") {
+                alert("수정 완료!");
+                document.getElementById("edit-info-modal").style.display = "none";
+                goToMyPage();
+            } else {
+                throw new Error(msg);
+            }
+        })
+        .catch(err => {
+            console.error("❌ 수정 실패:", err);
+            alert("수정 실패: " + err.message);
+        });
 }
 
 function closeModal(id) {
@@ -331,51 +269,29 @@ function showStatus() {
     toggleStatusMenu();
 }
 
-// ✅ 상태 메뉴 열기/닫기
 function toggleStatusMenu() {
     const modal = document.getElementById("status-modal");
     modal.style.display = modal.style.display === "block" ? "none" : "block";
 }
 
-// ✅ 상태 표시 업데이트
 function updateStatusDisplay(status) {
+
+    alert( status);
     const display = document.querySelector(".user-status-display");
+
+    console.log(  display );
     if (!display) return;
 
     const statusMap = {
-        online: "🟢 온라인",
-        away: "🟡 자리비움",
-        offline: "🔴 오프라인"
+        online: "🟢 온라인 ^^",
+        away: "🟡 자리비움 ^^",
+        offline: "🔴 오프라인 ^^"
     };
 
     const label = statusMap[status.toLowerCase()] || "🟢 온라인";
     display.textContent = label;
-    console.log("✅ 현재 사용자 상태:", status); // 디버깅용 출력
+    console.log("✅ 현재 사용자 상태:", status);
 }
-
-// ✅ 상태 불러오기
-document.addEventListener("DOMContentLoaded", function () {
-    const workspaceCd = localStorage.getItem("workspaceCd");
-    const userId = localStorage.getItem("userId");
-
-    if (!workspaceCd || !userId) {
-        console.warn("⚠️ workspaceCd 또는 userId가 localStorage에 없습니다.");
-        return;
-    }
-
-    fetch(`/api/workspaces/${workspaceCd}/member/${userId}/status`)
-        .then(res => {
-            if (!res.ok) throw new Error("서버 응답 오류");
-            return res.text();
-        })
-        .then(status => {
-            updateStatusDisplay(status);
-        })
-        .catch(err => {
-            console.error("❌ 상태 불러오기 실패:", err);
-            updateStatusDisplay("online");
-        });
-});
 
 function changeStatus(newStatus) {
     const workspaceCd = localStorage.getItem("workspaceCd");
@@ -386,22 +302,21 @@ function changeStatus(newStatus) {
         headers: { "Content-Type": "text/plain" },
         body: newStatus
     })
-    .then(res => {
-        if (!res.ok) throw new Error("업데이트 실패");
-        return res.text();
-    })
-    .then(msg => {
-        console.log("✅ 상태 변경 성공:", msg);
-        updateStatusDisplay(newStatus); // UI 갱신
-        document.getElementById("status-modal").style.display = "none"; // 모달 닫기
-    })
-    .catch(err => {
-        console.error("❌ 상태 업데이트 실패:", err);
-        alert("상태 변경 중 오류 발생");
-    });
+        .then(res => {
+            if (!res.ok) throw new Error("업데이트 실패");
+            return res.text();
+        })
+        .then(msg => {
+            console.log("✅ 상태 변경 성공:", msg);
+            updateStatusDisplay(newStatus);
+            document.getElementById("status-modal").style.display = "none";
+        })
+        .catch(err => {
+            console.error("❌ 상태 업데이트 실패:", err);
+            alert("상태 변경 중 오류 발생");
+        });
 }
 
-// 부서 불러오기
 function loadDepartmentOptions() {
     const workspaceCd = localStorage.getItem("workspaceCd");
     const select = document.getElementById("edit-dept");
@@ -409,7 +324,7 @@ function loadDepartmentOptions() {
     fetch(`/api/workspaces/${workspaceCd}/departments`)
         .then(res => res.json())
         .then(depts => {
-            select.innerHTML = ""; // 초기화
+            select.innerHTML = "";
             depts.forEach(dept => {
                 const option = document.createElement("option");
                 option.value = dept.deptCd;
@@ -420,50 +335,4 @@ function loadDepartmentOptions() {
         .catch(err => {
             console.error("부서 목록 불러오기 실패", err);
         });
-}
-
-// ✅ 모든 close-button 에 이벤트 연결
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".close-button").forEach(btn => {
-        btn.addEventListener("click", function () {
-            this.closest(".modal").style.display = "none";
-        });
-    });
-});
-
-function generateNotificationMessage(noti) {
-    const date = new Date(noti.createdDate);
-    const time = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-
-    switch (noti.notiState) {
-        case "NEW_ATTENDENCE":
-            return `${noti.createdBy}님이 워크스페이스에 참여하였습니다 (${time})`;
-        case "NEW_EVENT":
-            return `${noti.createdBy}님이 새로운 일정을 등록하였습니다 (${time})`;
-        case "NEW_MEETING":
-            return `${noti.createdBy}님이 새로운 미팅을 등록하였습니다 (${time})`;
-        default:
-            return `${noti.createdBy}님의 활동이 감지되었습니다 (${time})`;
-    }
-}
-
-function respondToInvite(userId, action) {
-    const workspaceCd = localStorage.getItem("workspaceCd");
-
-    fetch(`/api/workspaces/${workspaceCd}/invitations/respond`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invitedUserId: userId, status: action })
-    })
-    .then(res => {
-        console.log("✅ 응답 상태:", res.status);
-        return res.text();
-    })
-    .then(msg => {
-        alert("서버 응답:\n" + msg);
-        location.reload();  // 새로고침으로 리스트 갱신
-    })
-    .catch(err => {
-        alert("에러 발생: " + err.message);
-    });
 }
