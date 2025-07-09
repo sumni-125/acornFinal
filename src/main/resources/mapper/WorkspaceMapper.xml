@@ -252,15 +252,6 @@
         WHERE wm.WORKSPACE_CD = #{workspaceCd}
     </select>
 
-    <!-- countActiveMembers 쿼리 추가 -->
-    <select id="countActiveMembers" parameterType="map" resultType="int">
-        SELECT COUNT(*)
-        FROM WORKSPACE_MEMBERS
-        WHERE WORKSPACE_CD = #{workspaceCd}
-        AND USER_ID = #{userId}
-        AND ACTIVE_STATE = 'Y'
-    </select>
-
     <!-- 특정 워크스페이스와 사용자에 대한 멤버 상세 정보 조회 -->
     <select id="findMemberByWorkspaceAndUser" parameterType="map" resultType="com.example.ocean.domain.WorkspaceMember">
         SELECT
@@ -281,6 +272,9 @@
         WHERE wm.WORKSPACE_CD = #{workspaceCd}
         AND wm.USER_ID = #{userId}
     </select>
+
+
+
 
     <!-- 사용자 상태 업데이트 -->
     <update id="updateUserState" parameterType="map">
