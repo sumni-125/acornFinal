@@ -145,4 +145,7 @@ public interface WorkspaceMapper {
 
 
 
+
+    Integer countActiveMembers(Map<String, Object> params);
+
 }
