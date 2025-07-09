@@ -360,6 +360,7 @@
     let detailMarker;
     let infowindow;
     let ps;
+    let calendar;
 
     console.log("currentUser: " + currentUser.userId);
     console.log("workspaceCd: " + workspaceCd);
@@ -373,7 +374,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'ko',
             headerToolbar: {
@@ -593,6 +594,19 @@
         });
 
         calendar.render();
+
+        // FullCalendar 크기 업데이트를 위한 ResizeObserver 추가
+        const calendarObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.target.id === 'calendar') {
+                    // 캘린더 컨테이너의 크기 변경을 감지하면 FullCalendar를 다시 그립니다.
+                    calendar.updateSize();
+                }
+            }
+        });
+
+        // 'calendar' div를 관찰 대상에 추가
+        calendarObserver.observe(calendarEl);
 
         document.getElementById('prevMonthBtn').addEventListener('click', function () {
             calendar.prev();
