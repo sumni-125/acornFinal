@@ -160,7 +160,7 @@ public class WorkspacePageController {
 
         try {
             log.info("프로필 설정 시작 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
-
+            log.info("deptcd===> {}", deptCd);
             String userImgPath = null;  // ⭐ 전체 경로 저장
             if (userImgFile != null && !userImgFile.isEmpty()) {
                 userImgPath = saveProfileImage(userImgFile);
@@ -195,13 +195,86 @@ public class WorkspacePageController {
                 );
             }
 
-            // 부서 및 직급 정보 업데이트
+          // 부서 및 직급 정보 업데이트
             workspaceService.updateDeptAndPosition(
                     workspaceCd,
                     userPrincipal.getId(),
                     deptCd,
                     position
             );
+
+
+
+            log.info("프로필 설정 완료 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
+            return "success";
+
+        } catch (Exception e) {
+            log.error("프로필 설정 중 오류 발생", e);
+            return "error: " + e.getMessage();
+        }
+    }
+
+    //
+    @PostMapping("/workspace/{workspaceCd}/set-profile2")
+    @ResponseBody
+    public String handleSetProfile2(
+            @PathVariable String workspaceCd,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam("userNickname") String userNickname,
+            @RequestParam("email") String email,
+            @RequestParam(value = "phoneNum", required = false) String phoneNum,
+            @RequestParam(value = "statusMsg", required = false) String statusMsg,
+            @RequestParam("deptCd") String deptCd,
+            @RequestParam("position") String position,
+            @RequestParam(value = "userImg", required = false) MultipartFile userImgFile) {
+
+        try {
+            log.info("프로필 설정 시작 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
+            log.info("deptcd===> {}", deptCd);
+            String userImgPath = null;  // ⭐ 전체 경로 저장
+            if (userImgFile != null && !userImgFile.isEmpty()) {
+                userImgPath = saveProfileImage(userImgFile);
+            }
+
+            // 멤버 존재 여부 확인
+            WorkspaceMember existingMember = workspaceService.findMemberByWorkspaceAndUser(workspaceCd, userPrincipal.getId());
+
+            if (existingMember == null) {
+                // 새 멤버 추가 - userImgPath 포함
+                workspaceService.insertUserProfileToWorkspace(
+                        workspaceCd,
+                        userPrincipal.getId(),
+                        userNickname,
+                        statusMsg,
+                        email,
+                        phoneNum,
+                        "MEMBER",
+                        userImgPath  // ⭐ 이미지 경로 추가
+                );
+            } else {
+                // 기존 멤버 업데이트 - userImgPath 포함
+                workspaceService.updateWorkspaceProfile(
+                        workspaceCd,
+                        userPrincipal.getId(),
+                        userNickname,
+                        statusMsg,
+                        email,
+                        phoneNum,
+                        "MEMBER",
+                        userImgPath != null ? userImgPath : existingMember.getUserImg() // ⭐ 기존 이미지 유지
+                );
+            }
+
+
+
+            // 부서 및 직급 정보 업데이트
+            workspaceService.updateDeptAndPosition2(
+                    workspaceCd,
+                    userPrincipal.getId(),
+                    position
+            );
+
+
 
             log.info("프로필 설정 완료 - workspaceCd: {}, userId: {}", workspaceCd, userPrincipal.getId());
             return "success";

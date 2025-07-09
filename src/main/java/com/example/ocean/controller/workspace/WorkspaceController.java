@@ -270,4 +270,37 @@ public class WorkspaceController {
         return ResponseEntity.ok("상태가 업데이트되었습니다: " + userState);
     }
 
+    // 이메일 전송
+    @PostMapping("/invite-email")
+    @ResponseBody
+    public ResponseEntity<String> sendWorkspaceInvite(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String inviteCode = request.get("inviteCode");
+
+        try {
+            workspaceService.sendInviteEmail(email, inviteCode);
+            return ResponseEntity.ok("이메일 전송 완료");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("이메일 전송 실패: " + e.getMessage());
+        }
+    }
+
+    //워크스페이스 배너용 정보 가져오기 (이름, 초대코드, 마감일, D-Day, 진행률)
+    @GetMapping("/{workspaceCd}/info")
+    public ResponseEntity<?> getWorkspaceInfo(@PathVariable String workspaceCd) {
+        try {
+            Map<String, Object> info = workspaceService.getWorkspaceInfo(workspaceCd);
+            if (info == null || info.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("워크스페이스 정보를 찾을 수 없습니다.");
+            }
+            return ResponseEntity.ok(info);
+        } catch (Exception e) {
+            log.error("워크스페이스 배너 정보 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("워크스페이스 정보 조회 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+
+
 }

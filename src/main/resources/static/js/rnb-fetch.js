@@ -1,172 +1,387 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const rnbContainer = document.getElementById("rnbContainer");
+(() => {
+    let workspaceCd = null;
+    let loggedInUserId = null; // 내 userId 저장
 
-  try {
-    const workspaceCd = rnbContainer?.dataset.workspaceCd;
-    if (!workspaceCd) {
-      console.error("workspaceCd 없음");
-      return;
+    function showProfileModel(userId) {
+        if (!workspaceCd) {
+            console.error("⛔workspaceCd가 설정되어 있지 않습니다.");
+            return;
+        }
+
+        fetch(`/api/workspaces/${workspaceCd}/member/${userId}`)
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data);
+
+                const modal = document.getElementById("profileModal");
+
+                const viewProfileImg = document.getElementById("viewProfileImg");
+                viewProfileImg.src = data.userImg || "/images/default.png";
+
+                document.getElementById("viewNickname").textContent = data.userNickname || "-";
+                document.getElementById("viewPhone").textContent = data.phoneNum || "-";
+                document.getElementById("viewPosition").textContent = data.position || "-";
+                document.getElementById("viewEmail").textContent = data.email || "-";
+                document.getElementById("viewDept").textContent = data.deptNm || "-";
+
+                // 🔸 내 정보일 때만 편집 버튼 보이기
+                const toggleBtn = document.getElementById("toggleEditBtn");
+                if (loggedInUserId === data.userId) {
+                    toggleBtn.style.display = "inline-block";
+                } else {
+                    toggleBtn.style.display = "none";
+                }
+
+                modal.style.display = "block";
+                document.getElementById("profileModalOverlay").style.display = "block";
+            });
     }
 
-    // 🔹 RNB HTML 삽입
-    const rnbHtml = await fetch("/html/rnb.html").then(res => {
-      if (!res.ok) throw new Error("rnb.html 불러오기 실패");
-      return res.text();
-    });
-    rnbContainer.innerHTML = rnbHtml;
-
-    await new Promise(resolve => setTimeout(resolve, 10));
-
-    // 🔹 RNB 토글 기능
-    const btnImg = document.querySelector('.rnb-toggle-btn img');
-    const body = document.body;
-    if (btnImg) {
-      btnImg.style.transform = 'rotate(0deg)';
-      document.querySelector('.rnb-toggle-btn').addEventListener('click', () => {
-        const isClosed = body.classList.contains('rnb-closed');
-        body.classList.toggle('rnb-closed');
-        btnImg.style.transform = isClosed ? 'rotate(0deg)' : 'rotate(180deg)';
-      });
+    function closeProfileModal() {
+        document.getElementById("profileModal").style.display = "none";
+        document.getElementById("profileModalOverlay").style.display = "none";
     }
 
-    // 🔹 이미지 경로 처리
-    const getImagePath = (img) => {
-      if (!img) return "/images/default.png";
-      if (img.startsWith("/") || img.startsWith("http")) return img;
-      return `/images/${img}`;
-    };
+    document.addEventListener("DOMContentLoaded", async () => {
+        const closeBtn = document.getElementById("closeProfileModal");
+        const overlay = document.getElementById("profileModalOverlay");
 
-    // 🔹 내 프로필
-    const profileRes = await fetch(`/api/workspaces/${workspaceCd}/profile`);
-    if (!profileRes.ok) throw new Error("프로필 API 실패");
-    const myProfile = await profileRes.json();
-
-    document.getElementById("myProfileImg").src = getImagePath(myProfile.userImg);
-    document.getElementById("myProfileName").textContent = myProfile.userNickname || "이름없음";
-    document.getElementById("myProfileRole").textContent = myProfile.position || "직급없음";
-    document.getElementById("myProgressBar").style.width = (myProfile.progress || 0) + "%";
-    document.getElementById("myProgressPercent").textContent = (myProfile.progress || 0) + "%";
-
-    // 🔹 멤버 목록
-    const memberRes = await fetch(`/api/workspaces/${workspaceCd}/members`);
-    if (!memberRes.ok) throw new Error("멤버 API 실패");
-    const data = await memberRes.json();
-    const members = data.members || [];
-
-    document.getElementById("memberCount").textContent = members.length;
-    const memberContainer = document.getElementById("memberListContainer");
-
-    members.forEach(member => {
-      const memberDiv = document.createElement("div");
-      memberDiv.classList.add("member");
-      memberDiv.innerHTML = `
-        <img src="${getImagePath(member.userImg)}" alt="멤버이미지">
-        <div class="info">
-          <span class="m-name">${member.userNickname}</span>
-          <span class="m-role">${member.position}</span>
-        </div>
-      `;
-      memberContainer.appendChild(memberDiv);
-    });
-
-    // 🔹 초대 모달 삽입
-    const modalRes = await fetch("/html/invite-modal.html");
-    if (!modalRes.ok) throw new Error("invite-modal.html 로딩 실패");
-    const modalHtml = await modalRes.text();
-    document.body.insertAdjacentHTML("beforeend", modalHtml);
-
-    await new Promise(resolve => setTimeout(resolve, 10));
-
-    // 🔹 워크스페이스 정보 가져오기 (inviteCode, workspaceName)
-    const infoRes = await fetch(`/api/workspaces/${workspaceCd}/info`);
-    if (!infoRes.ok) throw new Error("워크스페이스 정보 API 실패");
-    const workspaceInfo = await infoRes.json();
-
-    // 🔹 모달 요소 바인딩
-    const inviteBtn = document.querySelector(".invite-member");
-    const modal = document.getElementById("inviteModal");
-    const overlay = document.getElementById("inviteOverlay");
-    const closeBtn = modal?.querySelector(".close-btn");
-
-    const emailInput = document.getElementById("inviteEmail");
-    const emailError = document.getElementById("emailError");
-    const emailSuccess = document.getElementById("emailSuccess");
-    const copySuccess = document.getElementById("copySuccess");
-    const sendBtn = document.querySelector(".send-btn");
-    const copyBtn = document.querySelector(".copy-btn");
-    const inviteCode = document.getElementById("inviteCode");
-    const workspaceNameHeader = document.getElementById("workspaceNameHeader");
-
-    // 🔹 실제 워크스페이스 이름과 코드 표시
-    workspaceNameHeader.textContent = `${workspaceInfo.workspaceName}(으)로 초대하기`;
-    inviteCode.textContent = workspaceInfo.inviteCode;
-
-    // 🔹 모달 열기
-    inviteBtn?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      modal.style.display = "block";
-      overlay.style.display = "block";
-      emailInput.value = "";
-      emailError.style.display = "none";
-      emailSuccess.style.display = "none";
-      copySuccess.style.display = "none";
-    });
-
-    // 🔹 모달 닫기
-    const closeModal = () => {
-      modal.style.display = "none";
-      overlay.style.display = "none";
-    };
-    closeBtn?.addEventListener("click", closeModal);
-    overlay?.addEventListener("click", (e) => {
-      if (e.target === overlay) closeModal();
-    });
-
-    modal?.addEventListener("click", (e) => {
-      e.stopPropagation();
-    });
-
-    // 🔹 이메일 전송
-    sendBtn?.addEventListener("click", () => {
-      const email = emailInput.value.trim();
-      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      emailError.style.display = "none";
-      emailSuccess.style.display = "none";
-
-      if (!regex.test(email)) {
-        emailError.style.display = "block";
-        return;
-      }
-
-      fetch("/api/workspaces/invite-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, inviteCode: workspaceInfo.inviteCode })
-      })
-        .then(res => {
-          if (!res.ok) throw new Error("전송 실패");
-          return res.text();
-        })
-        .then(() => {
-          emailSuccess.style.display = "block";
-        })
-        .catch(err => {
-          emailError.textContent = "전송 실패: " + err.message;
-          emailError.style.display = "block";
+        if (closeBtn) closeBtn.addEventListener("click", closeProfileModal);
+        if (overlay) overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) closeProfileModal();
         });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeProfileModal();
+        });
+
+        const rnbContainer = document.getElementById("rnbContainer");
+        const inviteModalContainer = document.getElementById("inviteModalContainer");
+        const profileModalContainer = document.getElementById("profileModalContainer");
+
+        try {
+            workspaceCd = rnbContainer?.dataset.workspaceCd;
+            if (!workspaceCd) {
+                console.error("workspaceCd 없음");
+                return;
+            }
+
+            const rnbHtml = await fetch("/html/rnb.html").then(res => res.text());
+            rnbContainer.innerHTML = rnbHtml;
+
+            const modelHtml = await fetch("/html/invite-modal.html").then(res => res.text());
+            inviteModalContainer.innerHTML = modelHtml;
+
+            const profileModelHtml = await fetch("/html/profile-modal.html").then(res => res.text());
+            profileModalContainer.innerHTML = profileModelHtml;
+
+            document.getElementById("myInfoBtn").addEventListener("click", async () => {
+                try {
+                    const profileRes = await fetch(`/api/workspaces/${workspaceCd}/profile`);
+                    if (!profileRes.ok) throw new Error("내 프로필 API 실패");
+
+                    const myProfile = await profileRes.json();
+                    loggedInUserId = myProfile.userId; // 내 userId 저장
+
+                    // 데이터 렌더링
+                    document.getElementById("viewProfileImg").src = getImagePath(myProfile.userImg);
+                    document.getElementById("viewNickname").textContent = myProfile.userNickname || "-";
+                    document.getElementById("viewPhone").textContent = myProfile.phoneNum || "-";
+                    document.getElementById("viewPosition").textContent = myProfile.position || "-";
+                    document.getElementById("viewEmail").textContent = myProfile.email || "-";
+                    document.getElementById("viewDept").textContent = myProfile.deptNm || "-";
+
+                    document.getElementById("toggleEditBtn").style.display = "inline-block";
+
+                    document.getElementById("profileModal").style.display = "block";
+                    document.getElementById("profileModalOverlay").style.display = "block";
+                } catch (e) {
+                    console.error("내 정보 모달 로딩 실패:", e);
+                }
+            });
+
+            const profileCloseBtn = document.getElementById("closeProfileModal");
+            const profileOverlay = document.getElementById("profileModalOverlay");
+
+            if (profileCloseBtn) {
+                profileCloseBtn.addEventListener("click", closeProfileModal);
+            }
+            if (profileOverlay) {
+                profileOverlay.addEventListener("click", (e) => {
+                    if (e.target === profileOverlay) closeProfileModal();
+                });
+            }
+
+            setTimeout(() => {
+                const inviteBtn = document.querySelector(".invite-member");
+                const modal = document.getElementById("inviteModal");
+                const overlay = document.getElementById("inviteOverlay");
+
+                const emailInput = document.getElementById("inviteEmail");
+                const emailError = document.getElementById("emailError");
+                const emailSuccess = document.getElementById("emailSuccess");
+                const copySuccess = document.getElementById("copySuccess");
+
+                inviteBtn.addEventListener("click", () => {
+                    modal.style.display = "block";
+                    overlay.style.display = "block";
+
+                    if (emailInput) emailInput.value = "";
+                    if (emailError) emailError.style.display = "none";
+                    if (emailSuccess) emailSuccess.style.display = "none";
+                    if (copySuccess) copySuccess.style.display = "none";
+                });
+            }, 0);
+
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            const btnImg = document.querySelector('.rnb-toggle-btn img');
+            const body = document.body;
+            if (btnImg) {
+                btnImg.style.transform = 'rotate(0deg)';
+                document.querySelector('.rnb-toggle-btn').addEventListener('click', () => {
+                    const isClosed = body.classList.contains('rnb-closed');
+                    body.classList.toggle('rnb-closed');
+                    btnImg.style.transform = isClosed ? 'rotate(0deg)' : 'rotate(180deg)';
+                });
+            }
+
+            const getImagePath = (img) => {
+                if (!img) return "/images/default.png";
+                if (img.startsWith("/") || img.startsWith("http")) return img;
+                return `/images/${img}`;
+            };
+
+            const profileRes = await fetch(`/api/workspaces/${workspaceCd}/profile`);
+            if (!profileRes.ok) throw new Error("프로필 API 실패");
+            const myProfile = await profileRes.json();
+
+            document.getElementById("myProfileImg").src = getImagePath(myProfile.userImg);
+            document.getElementById("myProfileName").textContent = myProfile.userNickname || "이름없음";
+            document.getElementById("myProfileRole").textContent = myProfile.position || "직급없음";
+            document.getElementById("myProgressBar").style.width = (myProfile.progress || 0) + "%";
+            document.getElementById("myProgressPercent").textContent = (myProfile.progress || 0) + "%";
+
+            const mpImg = document.querySelector(".mini-profile .mpImg");
+            const mpName = document.querySelector(".mini-profile .mp-name");
+            const mpRole = document.querySelector(".mini-profile .mp-role");
+
+            if (mpImg) mpImg.src = getImagePath(myProfile.userImg);
+            if (mpName) mpName.textContent = myProfile.userNickname || "이름없음";
+            if (mpRole) mpRole.textContent = myProfile.position || "직급없음";
+
+            const toggleBtn = document.getElementById("statusToggleBtn");
+            const dropdown = document.getElementById("statusDropdown");
+            const icon = document.getElementById("statusIcon");
+            const text = document.getElementById("statusText");
+
+            toggleBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+            });
+
+            document.addEventListener("click", () => {
+                dropdown.style.display = "none";
+            });
+
+            const options = dropdown.querySelectorAll(".status-option");
+            options.forEach(option => {
+                option.addEventListener("click", () => {
+                    const newIcon = option.getAttribute("data-icon");
+                    const newText = option.getAttribute("data-text");
+
+                    icon.src = newIcon;
+                    text.textContent = newText;
+
+                    dropdown.style.display = "none";
+                });
+            });
+
+            const memberRes = await fetch(`/api/workspaces/${workspaceCd}/members`);
+            if (!memberRes.ok) throw new Error("멤버 API 실패");
+            const data = await memberRes.json();
+            const members = data.members || [];
+
+            document.getElementById("memberCount").textContent = members.length;
+            const memberContainer = document.getElementById("memberListContainer");
+
+            members.forEach(member => {
+                const memberDiv = document.createElement("div");
+                memberDiv.classList.add("member");
+                memberDiv.innerHTML = `
+                    <a href="javascript:void(0);" class="member-link" onclick="showProfileModel('${member.userId}')">
+                        <img src="${getImagePath(member.userImg)}" alt="멤버이미지">
+                        <div class="info">
+                            <span class="m-name">${member.userNickname}</span>
+                            <span class="m-role">${member.position}</span>
+                        </div>
+                    </a>
+                `;
+                memberContainer.appendChild(memberDiv);
+            });
+
+            const infoRes = await fetch(`/api/workspaces/${workspaceCd}/info`);
+            if (!infoRes.ok) throw new Error("워크스페이스 정보 API 실패");
+            const workspaceInfo = await infoRes.json();
+
+            const inviteBtn = document.querySelector(".invite-member");
+            const modal = document.getElementById("inviteModal");
+            const overlay = document.getElementById("inviteOverlay");
+            const closeBtn = modal?.querySelector(".close-btn");
+
+            const emailInput = document.getElementById("inviteEmail");
+            const emailError = document.getElementById("emailError");
+            const emailSuccess = document.getElementById("emailSuccess");
+            const copySuccess = document.getElementById("copySuccess");
+            const sendBtn = document.querySelector(".send-btn");
+            const copyBtn = document.querySelector(".copy-btn");
+            const inviteCode = document.getElementById("inviteCode");
+            const workspaceNameHeader = document.getElementById("workspaceNameHeader");
+
+            workspaceNameHeader.textContent = `${workspaceInfo.workspaceName}(으)로 초대하기`;
+            inviteCode.textContent = workspaceInfo.inviteCode;
+
+            const closeModal = () => {
+                modal.style.display = "none";
+                overlay.style.display = "none";
+            };
+            closeBtn?.addEventListener("click", closeModal);
+            overlay?.addEventListener("click", (e) => {
+                if (e.target === overlay) closeModal();
+            });
+            modal?.addEventListener("click", (e) => e.stopPropagation());
+
+            sendBtn?.addEventListener("click", () => {
+                const email = emailInput.value.trim();
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                emailError.style.display = "none";
+                emailSuccess.style.display = "none";
+
+                if (!regex.test(email)) {
+                    emailError.style.display = "block";
+                    return;
+                }
+
+                fetch("/api/workspaces/invite-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email, inviteCode: workspaceInfo.inviteCode })
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error("전송 실패");
+                        return res.text();
+                    })
+                    .then(() => {
+                        emailSuccess.style.display = "block";
+                    })
+                    .catch(err => {
+                        emailError.textContent = "전송 실패: " + err.message;
+                        emailError.style.display = "block";
+                    });
+            });
+
+
+
+            copyBtn?.addEventListener("click", () => {
+                navigator.clipboard.writeText(workspaceInfo.inviteCode)
+                    .then(() => copySuccess.style.display = "block")
+                    .catch(() => alert("복사 실패"));
+            });
+
+              document.getElementById("toggleEditBtn").addEventListener("click", () => {
+                  const isEditMode = document.getElementById("toggleEditBtn").dataset.editing === "true";
+                  const imgEl = document.getElementById("viewProfileImg");
+
+                  if (!isEditMode) {
+                      // 편집모드 전환
+                      const fields = ["Nickname", "Phone", "Position", "Email"];
+                      fields.forEach(f => {
+                          const el = document.getElementById(`view${f}`);
+                          const text = el.textContent;
+                          const input = document.createElement("input");
+                          input.type = "text";
+                          input.id = `edit${f}`;
+                          input.classList.add("edit-input");
+                          input.value = text === "-" ? "" : text;
+                          el.replaceWith(input);
+                      });
+
+                      imgEl.style.cursor = "pointer";
+                      const fileInput = document.createElement("input");
+                      fileInput.type = "file";
+                      fileInput.accept = "image/*";
+                      fileInput.style.display = "none";
+                      fileInput.id = "editProfileImgInput";
+                      imgEl.parentNode.appendChild(fileInput);
+
+                      imgEl.addEventListener("click", () => fileInput.click());
+                      fileInput.addEventListener("change", () => {
+                          const file = fileInput.files[0];
+                          if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                  imgEl.src = e.target.result;
+                              };
+                              reader.readAsDataURL(file);
+                          }
+                      });
+
+                      document.getElementById("toggleEditBtn").textContent = "저장하기";
+                      document.getElementById("toggleEditBtn").dataset.editing = "true";
+
+                  } else {
+                      // 저장하기
+                      const formData = new FormData();
+                      formData.append("userNickname", document.getElementById("editNickname").value);
+                      formData.append("phoneNum", document.getElementById("editPhone").value);
+                      formData.append("position", document.getElementById("editPosition").value);
+                      formData.append("email", document.getElementById("editEmail").value);
+
+                      // 🔹 deptCd는 수정 불가지만 서버에서 필수이므로 현재 값 전달
+                      const deptSpan = document.getElementById("viewDept");
+                      if (deptSpan && deptSpan.dataset.deptCd) {
+                          formData.append("deptCd", deptSpan.dataset.deptCd);
+                      } else {
+                          alert("부서 정보가 없습니다.");
+                          return;
+                      }
+
+                      const fileInput = document.getElementById("editProfileImgInput");
+                      if (fileInput && fileInput.files.length > 0) {
+                          formData.append("userImg", fileInput.files[0]);
+                      }
+
+                      fetch(`/workspace/${workspaceCd}/set-profile2`, {
+                          method: "POST",
+                          body: formData
+                      })
+                      .then(res => res.text())
+                      .then(msg => {
+
+
+                          if (msg === "success") {
+                              alert("수정 완료!");
+                              document.getElementById("myInfoBtn").click(); // reload trigger
+                          } else {
+                              throw new Error(msg);
+                          }
+                      })
+                      .catch(err => {
+                          console.error("❌ 저장 실패:", err);
+                          alert("저장 실패: " + err.message);
+                      });
+                  }
+              });
+
+
+
+
+        } catch (err) {
+            console.error("🔴 RNB 전체 로딩 중 에러:", err);
+        }
     });
 
-    // 🔹 초대 코드 복사
-    copyBtn?.addEventListener("click", () => {
-      navigator.clipboard.writeText(workspaceInfo.inviteCode)
-        .then(() => {
-          copySuccess.style.display = "block";
-        })
-        .catch(() => alert("복사 실패"));
-    });
-
-  } catch (err) {
-    console.error("🔴 RNB 전체 로딩 중 에러:", err);
-  }
-});
+    window.showProfileModel = showProfileModel;
+    window.closeProfileModal = closeProfileModal;
+})();

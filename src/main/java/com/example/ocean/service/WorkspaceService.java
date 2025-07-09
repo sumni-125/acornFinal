@@ -19,11 +19,11 @@ import org.springframework.mail.javamail.JavaMailSender;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -341,6 +341,12 @@ public class WorkspaceService {
         workspaceMapper.updateDeptAndPosition(workspaceCd, userId, deptCd, position);
     }
 
+    public void updateDeptAndPosition2(String workspaceCd, String userId,
+                                        String position) {
+        workspaceMapper.updateDeptAndPosition2(workspaceCd, userId,   position);
+    }
+
+
     public WorkspaceMember findMemberByWorkspaceAndUser(String workspaceCd, String userId) {
         return workspaceMapper.findMemberByWorkspaceAndUser(workspaceCd, userId);
     }
@@ -405,5 +411,55 @@ public class WorkspaceService {
     public String getUserStatus(String workspaceCd, String userId) {
         return workspaceMapper.getUserStatus(workspaceCd, userId);
     }
+
+    public Workspace getWorkspaceByCd(String workspaceCd) {
+        return workspaceMapper.findWorkspaceByCd(workspaceCd);
+    }
+
+    public Map<String, Object> getWorkspaceInfo(String workspaceCd) {
+        Workspace workspace = workspaceMapper.findWorkspaceByCd(workspaceCd);
+        if (workspace == null) return null;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("workspaceName", workspace.getWorkspaceNm());
+        response.put("inviteCode", workspace.getInviteCd());
+
+        LocalDate today = LocalDate.now();
+
+        // ✅ D-day 및 남은 날짜 계산
+        if (workspace.getEndDate() != null) {
+            LocalDate endDate = workspace.getEndDate().toLocalDateTime().toLocalDate();
+            long dday = ChronoUnit.DAYS.between(today, endDate);
+            response.put("dday", dday);
+
+            // ✅ 마감일 포맷
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월 d일 E요일", Locale.KOREA);
+            String dueDateFormatted = endDate.format(formatter);
+            response.put("dueDateFormatted", dueDateFormatted);
+
+            // ✅ D-day 기준 진행률 계산
+            if (workspace.getCreatedDate() != null) {
+                LocalDate startDate = workspace.getCreatedDate().toLocalDateTime().toLocalDate();
+                long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
+                long passedDays = ChronoUnit.DAYS.between(startDate, today);
+
+                int progressPercent = (totalDays <= 0) ? 100
+                        : (int) ((Math.min(passedDays, totalDays) * 100.0) / totalDays);
+                response.put("progressPercent", progressPercent);
+            } else {
+                response.put("progressPercent", 0);
+            }
+        } else {
+            response.put("dday", null);
+            response.put("dueDateFormatted", "");
+            response.put("progressPercent", 0);
+        }
+
+        return response;
+    }
+
+
+
+
 
 }

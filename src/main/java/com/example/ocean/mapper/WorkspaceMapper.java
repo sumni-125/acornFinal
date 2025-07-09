@@ -55,6 +55,10 @@ public interface WorkspaceMapper {
                                @Param("deptCd") String deptCd,
                                @Param("position") String position);
 
+    void updateDeptAndPosition2(@Param("workspaceCd") String workspaceCd,
+                               @Param("userId") String userId,
+                               @Param("position") String position);
+
     // ⭐ 특정 워크스페이스와 사용자에 대한 멤버 상세 정보 조회
     WorkspaceMember findMemberByWorkspaceAndUser(@Param("workspaceCd") String workspaceCd,
                                                  @Param("userId") String userId);

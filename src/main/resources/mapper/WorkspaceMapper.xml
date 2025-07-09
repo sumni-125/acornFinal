@@ -75,6 +75,14 @@
         AND USER_ID = #{userId}
     </update>
 
+
+    <update id="updateDeptAndPosition2">
+        UPDATE WORKSPACE_MEMBERS
+        SET    POSITION = #{position}
+        WHERE WORKSPACE_CD = #{workspaceCd}
+        AND USER_ID = #{userId}
+    </update>
+
     <!-- 초대코드 대소문자 무시하고 워크스페이스 조회 -->
     <select id="findByInviteCode" resultType="com.example.ocean.domain.Workspace">
         SELECT
