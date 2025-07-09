@@ -69,6 +69,8 @@
             const rnbHtml = await fetch("/html/rnb.html").then(res => res.text());
             rnbContainer.innerHTML = rnbHtml;
 
+            bindStatusChangeEvents();
+
             const modelHtml = await fetch("/html/invite-modal.html").then(res => res.text());
             inviteModalContainer.innerHTML = modelHtml;
 
@@ -82,6 +84,8 @@
 
                     const myProfile = await profileRes.json();
                     loggedInUserId = myProfile.userId; // 내 userId 저장
+                    localStorage.setItem("userId", myProfile.userId);
+                    localStorage.setItem("workspaceCd", workspaceCd);
 
                     // 데이터 렌더링
                     document.getElementById("viewProfileImg").src = getImagePath(myProfile.userImg);
@@ -170,32 +174,80 @@
             if (mpName) mpName.textContent = myProfile.userNickname || "이름없음";
             if (mpRole) mpRole.textContent = myProfile.position || "직급없음";
 
-            const toggleBtn = document.getElementById("statusToggleBtn");
-            const dropdown = document.getElementById("statusDropdown");
-            const icon = document.getElementById("statusIcon");
-            const text = document.getElementById("statusText");
 
-            toggleBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-            });
 
-            document.addEventListener("click", () => {
-                dropdown.style.display = "none";
-            });
 
-            const options = dropdown.querySelectorAll(".status-option");
-            options.forEach(option => {
-                option.addEventListener("click", () => {
-                    const newIcon = option.getAttribute("data-icon");
-                    const newText = option.getAttribute("data-text");
 
-                    icon.src = newIcon;
-                    text.textContent = newText;
+            document.addEventListener("DOMContentLoaded", function () {
+                const toggleBtn = document.getElementById("statusToggleBtn");
+                const dropdown = document.getElementById("statusDropdown");
+                const icon = document.getElementById("statusIcon");
+                const text = document.getElementById("statusText");
 
+                // ✅ 드롭다운 열고 닫기
+                toggleBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+                });
+
+                document.addEventListener("click", () => {
                     dropdown.style.display = "none";
                 });
+
+                // ✅ 상태 옵션 클릭 → 실제 서버에 PATCH 요청
+                const options = dropdown.querySelectorAll(".status-option");
+                options.forEach(option => {
+                    option.addEventListener("click", () => {
+                        const newText = option.getAttribute("data-text");
+                        let newStatus = "online";
+
+                        if (newText === "자리 비움") newStatus = "away";
+                        else if (newText === "오프라인") newStatus = "offline";
+
+                        // 실제 DB 상태 변경 + UI 반영
+                        changeStatus(newStatus);
+
+                        dropdown.style.display = "none";
+                    });
+                });
             });
+
+            // ✅ UI 반영 함수 (상태 텍스트 & 아이콘 & 표시 텍스트)
+            function updateStatusDisplay(status) {
+                const display = document.querySelector(".user-status-display");
+                const icon = document.getElementById("statusIcon");
+                const text = document.getElementById("statusText");
+
+                const statusMap = {
+                    online: {
+                        label: "온라인",
+                        icon: "/images/green_circle.png"
+                    },
+                    away: {
+                        label: "자리 비움",
+                        icon: "/images/red_circle.png"
+                    },
+                    offline: {
+                        label: "오프라인",
+                        icon: "/images/gray_circle.png"
+                    }
+                };
+
+                const { label, icon: iconSrc } = statusMap[status.toLowerCase()] || statusMap["online"];
+
+                if (display) display.textContent = label;
+                if (icon) icon.src = iconSrc;
+                if (text) text.textContent = label;
+
+                console.log("✅ 상태 표시됨:", label);
+            }
+
+
+
+
+
+
+
 
             const memberRes = await fetch(`/api/workspaces/${workspaceCd}/members`);
             if (!memberRes.ok) throw new Error("멤버 API 실패");
@@ -385,3 +437,39 @@
     window.showProfileModel = showProfileModel;
     window.closeProfileModal = closeProfileModal;
 })();
+
+function bindStatusChangeEvents() {
+    const toggleBtn = document.getElementById("statusToggleBtn");
+    const dropdown = document.getElementById("statusDropdown");
+    const icon = document.getElementById("statusIcon");
+    const text = document.getElementById("statusText");
+
+    if (!toggleBtn || !dropdown || !icon || !text) {
+        console.warn("🔴 상태 관련 요소가 없습니다 (rnb 미삽입 시)");
+        return;
+    }
+
+    // 드롭다운 열기
+    toggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+
+    document.addEventListener("click", () => {
+        dropdown.style.display = "none";
+    });
+
+    // 상태 클릭 시 실제 요청
+    const options = dropdown.querySelectorAll(".status-option");
+    options.forEach(option => {
+        option.addEventListener("click", () => {
+            const newText = option.getAttribute("data-text");
+            let newStatus = "online";
+            if (newText === "자리 비움") newStatus = "away";
+            else if (newText === "오프라인") newStatus = "offline";
+
+            changeStatus(newStatus);
+            dropdown.style.display = "none";
+        });
+    });
+}

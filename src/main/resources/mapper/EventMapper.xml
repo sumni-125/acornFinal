@@ -25,7 +25,7 @@
         AND WORKSPACE_CD = #{workspaceCd}
         AND CURDATE() BETWEEN DATE(START_DATETIME) AND DATE(END_DATETIME)
         ORDER BY END_DATETIME ASC
-        LIMIT 3
+        LIMIT 5
     </select>
 
     <select id="countCompletedEventsThisWeekByWorkspace" resultType="int">

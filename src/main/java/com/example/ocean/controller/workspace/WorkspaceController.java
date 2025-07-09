@@ -260,14 +260,21 @@ public class WorkspaceController {
         return ResponseEntity.ok(status);
     }
 
-    // 사용자 상태 변경 (온라인,오프라인,자리비움)
+    // 사용자 상태 변경 (온라인, 오프라인, 자리비움)
     @PatchMapping("/{workspaceCd}/member/{userId}/status")
     public ResponseEntity<String> updateUserStatus(
             @PathVariable String workspaceCd,
             @PathVariable String userId,
             @RequestBody String userState) {
 
+        log.info("🔄 [PATCH] 사용자 상태 변경 요청 수신");
+        log.info("📌 workspaceCd: {}", workspaceCd);
+        log.info("👤 userId: {}", userId);
+        log.info("📝 변경할 상태값: {}", userState);
+
         workspaceService.updateUserState(workspaceCd, userId, userState);
+
+        log.info("✅ 상태 업데이트 완료: {}", userState);
         return ResponseEntity.ok("상태가 업데이트되었습니다: " + userState);
     }
 
@@ -302,12 +309,40 @@ public class WorkspaceController {
         }
     }
 
-
-
     @GetMapping("/{workspaceCd}/notifications")
     @ResponseBody
-    public List<Notification> getRecentNotifications(@PathVariable String workspaceCd) {
-        return workspaceService.getRecentNotifications(workspaceCd);
+    public List<Map<String, String>> getRecentNotifications(@PathVariable String workspaceCd) {
+        List<Notification> notis = workspaceService.getRecentNotifications(workspaceCd);
+
+        log.info("📥 [Controller] 최근 알림 수: {}", notis.size());
+
+        List<Map<String, String>> responseList = new ArrayList<>();
+        SimpleDateFormat formatter = new SimpleDateFormat("MM월 dd일 HH:mm");
+
+        for (Notification n : notis) {
+            String formattedTime = formatter.format(n.getCreatedDate());
+            String message;
+
+            switch (n.getNotiState()) {
+                case "NEW_EVENT":
+                    message = "새로운 일정을 추가했습니다";
+                    break;
+                case "NEW_ATTENDENCE":
+                    message = "워크스페이스에 참가했습니다";
+                    break;
+                default:
+                    message = "활동을 했습니다";
+            }
+
+            Map<String, String> map = new HashMap<>();
+            map.put("senderName", n.getCreatedBy());
+            map.put("content", message + " [" + formattedTime + "]");
+
+            log.info("🧾 [알림] {}님이 {}", n.getCreatedBy(), message);
+            responseList.add(map);
+        }
+
+        return responseList;
     }
 
     // 📌 참가 요청 조회 (owner 전용)

@@ -26,35 +26,77 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch(`/api/workspaces/${workspaceCd}/info`)
         .then(res => res.json())
         .then(data => {
-            console.log(data);
-            console.log(data.workspaceName);
+            console.log("✅ 워크스페이스 정보:", data);
 
+            // 워크스페이스 이름
             document.querySelector('.workspace-title').textContent = data.workspaceName || '워크스페이스 이름';
 
-            const ddayElem = document.getElementById("top-banner-dday");
-            ddayElem.textContent = data.dday || '남음' || data.dueDateFormatted;
+            // 마감 날짜
+            document.getElementById("project_endDate").textContent = data.dueDateFormatted;
 
-            const dateElem = document.getElementById("top-banner-date");
-            if (dateElem) {
-                const today = new Date();
-                const formatter = new Intl.DateTimeFormat('ko-KR', {
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'long'
-                });
-                dateElem.textContent = formatter.format(today);
+            // ✅ D-day 숫자 조합해서 표시 (ex: D-8)
+            const ddayElem = document.getElementById("top-banner-dday");
+            if (typeof data.dday === 'number') {
+                ddayElem.textContent = `D-${data.dday}`;
+            } else if (typeof data.dday === 'string' && data.dday.startsWith('D-')) {
+                ddayElem.textContent = data.dday;
+            } else {
+                ddayElem.textContent = `D-${data.dday || "?"}`;
             }
 
-            const progressFill = document.querySelector(".progress-bar .progress-fill");
-            let progressPercent = data.progressPercent;
+            // 오늘 날짜
+            const dateElem = document.getElementById("top-banner-date");
+            const today = new Date();
+            const formatter = new Intl.DateTimeFormat('ko-KR', {
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            dateElem.textContent = formatter.format(today);
 
-            const project_end_date = document.getElementById("project_endDate");
-            project_end_date.textContent = data.dueDateFormatted;
+            // ✅ 진행도 퍼센트 설정
+            const progressFill = document.getElementById("progress-fill");
+
+            let progressPercent = parseInt(data.progressPercent);
+            if (isNaN(progressPercent) || progressPercent < 0) progressPercent = 0;
+            if (progressPercent > 100) progressPercent = 100;
+
+            progressFill.style.width = `${progressPercent}%`;
         })
         .catch(err => {
-            console.error(" ^^^^^^^^  ~~~~");
             console.error("❌ 상단 배너 정보 로딩 실패:", err);
         });
+
+
+        // ✅ 최근 활동 알림 불러오기
+        fetch(`/api/workspaces/${workspaceCd}/notifications`)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.querySelector(".activity");
+                container.innerHTML = "<h2>최근활동</h2>";
+
+                if (!data || data.length === 0) {
+                    container.innerHTML += "<div class='log'>최근 활동이 없습니다.</div>";
+                    return;
+                }
+
+                data.forEach(noti => {
+                    const div = document.createElement("div");
+                    div.classList.add("log");
+
+                    const initial = noti.senderName?.charAt(0) || "?";
+                    const content = noti.content || "알 수 없는 활동";
+
+                    div.innerHTML = `<span class="badge">${initial}</span> ${noti.senderName}님이 ${content}`;
+                    container.appendChild(div);
+                });
+            })
+            .catch(err => {
+                console.error("❌ 최근 활동 알림 불러오기 실패:", err);
+                const container = document.querySelector(".activity");
+                container.innerHTML += "<div class='log'>활동 정보를 불러올 수 없습니다.</div>";
+            });
+
 
     // ✅ 누적 접속 시간 로딩
     fetch(`/api/events/${workspaceCd}/usage-time`)
@@ -69,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
     // ✅ 오늘 일정
-    fetch(`/api/events/today?userId=${userId}`)
+    fetch(`/api/events/today?userId=${userId}&workspaceCd=${workspaceCd}`)
         .then(response => response.json())
         .then(data => {
             const list = document.getElementById("user-events-list");
@@ -150,11 +192,6 @@ document.addEventListener("DOMContentLoaded", function () {
               updateStatusDisplay(status);
 
               } ,0);
-
-
-
-
-
         })
         .catch(err => {
             console.error("❌ 상태 불러오기 실패:", err);
@@ -275,47 +312,55 @@ function toggleStatusMenu() {
 }
 
 function updateStatusDisplay(status) {
-
-    alert( status);
     const display = document.querySelector(".user-status-display");
-
-    console.log(  display );
-    if (!display) return;
+    const icon = document.getElementById("statusIcon");
+    const text = document.getElementById("statusText");
 
     const statusMap = {
-        online: "🟢 온라인 ^^",
-        away: "🟡 자리비움 ^^",
-        offline: "🔴 오프라인 ^^"
+        online: {
+            label: "온라인",
+            icon: "/images/green_circle.png"
+        },
+        away: {
+            label: "자리 비움",
+            icon: "/images/red_circle.png"
+        },
+        offline: {
+            label: "오프라인",
+            icon: "/images/gray_circle.png"
+        }
     };
 
-    const label = statusMap[status.toLowerCase()] || "🟢 온라인";
-    display.textContent = label;
-    console.log("✅ 현재 사용자 상태:", status);
+    const { label, icon: iconSrc } = statusMap[status.toLowerCase()] || statusMap["online"];
+
+    if (display) display.textContent = label;
+    if (icon) icon.src = iconSrc;
+    if (text) text.textContent = label;
+
+    console.log("✅ 상태 표시됨:", label);
 }
 
-function changeStatus(newStatus) {
-    const workspaceCd = localStorage.getItem("workspaceCd");
-    const userId = localStorage.getItem("userId");
 
-    fetch(`/api/workspaces/${workspaceCd}/member/${userId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "text/plain" },
-        body: newStatus
-    })
-        .then(res => {
-            if (!res.ok) throw new Error("업데이트 실패");
-            return res.text();
-        })
-        .then(msg => {
-            console.log("✅ 상태 변경 성공:", msg);
-            updateStatusDisplay(newStatus);
-            document.getElementById("status-modal").style.display = "none";
-        })
-        .catch(err => {
-            console.error("❌ 상태 업데이트 실패:", err);
-            alert("상태 변경 중 오류 발생");
-        });
-}
+   // ✅ 실제 상태 PATCH 요청
+            function changeStatus(newStatus) {
+                const workspaceCd = localStorage.getItem("workspaceCd");
+                const userId = localStorage.getItem("userId");
+
+                fetch(`/api/workspaces/${workspaceCd}/member/${userId}/status`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "text/plain" },
+                    body: newStatus
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error("업데이트 실패");
+                        return res.text(); // ✅ 절대 res.json() 쓰지 마!
+                    })
+                    .then(msg => {
+                        console.log("✅ 상태 변경 성공:", msg);
+                        updateStatusDisplay(newStatus);  // UI 반영
+                    })
+
+            }
 
 function loadDepartmentOptions() {
     const workspaceCd = localStorage.getItem("workspaceCd");
@@ -336,3 +381,18 @@ function loadDepartmentOptions() {
             console.error("부서 목록 불러오기 실패", err);
         });
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const statusOptions = document.querySelectorAll(".status-option");
+
+    statusOptions.forEach(option => {
+        option.addEventListener("click", () => {
+            const text = option.getAttribute("data-text");
+            let newStatus = "online";
+            if (text === "자리 비움") newStatus = "away";
+            else if (text === "오프라인") newStatus = "offline";
+
+            changeStatus(newStatus);
+        });
+    });
+});

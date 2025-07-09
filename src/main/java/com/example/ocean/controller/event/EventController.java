@@ -30,7 +30,6 @@ public class EventController {
         return eventService.getTodayEvents(userId, workspaceCd);
     }
 
-
     @GetMapping("/this-week-completed-count")
     public int getThisWeekCompletedCount(@RequestParam("workspaceCd") String workspaceCd) {
         int count = eventService.countCompletedEventsThisWeekByWorkspace(workspaceCd);

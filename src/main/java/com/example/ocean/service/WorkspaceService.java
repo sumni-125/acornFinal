@@ -472,18 +472,17 @@ public class WorkspaceService {
 
         LocalDate today = LocalDate.now();
 
-        // ✅ D-day 및 남은 날짜 계산
+        // ✅ D-day 및 날짜 정보
         if (workspace.getEndDate() != null) {
             LocalDate endDate = workspace.getEndDate().toLocalDateTime().toLocalDate();
             long dday = ChronoUnit.DAYS.between(today, endDate);
             response.put("dday", dday);
 
-            // ✅ 마감일 포맷
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월 d일 E요일", Locale.KOREA);
             String dueDateFormatted = endDate.format(formatter);
             response.put("dueDateFormatted", dueDateFormatted);
 
-            // ✅ D-day 기준 진행률 계산
+            // ✅ 진행률 계산: (오늘 - 시작일) / (마감일 - 시작일)
             if (workspace.getCreatedDate() != null) {
                 LocalDate startDate = workspace.getCreatedDate().toLocalDateTime().toLocalDate();
                 long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
@@ -491,6 +490,7 @@ public class WorkspaceService {
 
                 int progressPercent = (totalDays <= 0) ? 100
                         : (int) ((Math.min(passedDays, totalDays) * 100.0) / totalDays);
+
                 response.put("progressPercent", progressPercent);
             } else {
                 response.put("progressPercent", 0);
