@@ -7,7 +7,7 @@ function formatSecondsToHHMMSS(seconds) {
 
 document.addEventListener("DOMContentLoaded", function () {
     const userId = localStorage.getItem("userId");
-    const workspaceCd = localStorage.getItem("workspaceCd");
+    const workspaceCd = new URLSearchParams(window.location.search).get("workspaceCd"); // ✅ 쿼리스트링에서 추출
 
     console.log("📦 로딩 시작 - userId:", userId, ", workspaceCd:", workspaceCd);
 
@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.warn("⚠️ userId 또는 workspaceCd가 localStorage에 없습니다.");
         return;
     }
+
 
     document.querySelectorAll(".close-button").forEach(btn => {
         btn.addEventListener("click", function () {
@@ -396,3 +397,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+function getWorkspaceCdFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("workspaceCd");
+}
