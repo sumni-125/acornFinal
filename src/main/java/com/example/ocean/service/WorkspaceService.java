@@ -27,6 +27,7 @@ import java.util.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -505,4 +506,56 @@ public class WorkspaceService {
     public void respondToInvitation(String workspaceCd, String invitedUserId, String status) {
         workspaceMapper.updateInvitationStatus(workspaceCd, invitedUserId, status);
     }
+
+    /**
+     * 워크스페이스 접근 권한 확인
+     */
+    public boolean hasAccess(String workspaceCd, String userId) {
+        try {
+            List<WorkspaceMember> members = getWorkspaceMembers(workspaceCd);
+
+            // 단순히 해당 워크스페이스의 멤버인지만 확인
+            return members.stream()
+                    .anyMatch(member -> member.getUserId().equals(userId));
+
+        } catch (Exception e) {
+            log.error("워크스페이스 접근 권한 확인 실패: workspaceCd={}, userId={}",
+                    workspaceCd, userId, e);
+            return false;
+        }
+    }
+
+    /**
+     * 워크스페이스 이름 조회
+     */
+    public String getWorkspaceName(String workspaceCd) {
+        try {
+            Workspace workspace = workspaceMapper.findWorkspaceByCd(workspaceCd);
+            return workspace != null ? workspace.getWorkspaceNm() : null;
+
+        } catch (Exception e) {
+            log.error("워크스페이스 이름 조회 실패: workspaceCd={}", workspaceCd, e);
+            return null;
+        }
+    }
+
+    /**
+     * 워크스페이스의 활성 멤버 조회
+     */
+    public List<WorkspaceMember> getActiveMembers(String workspaceCd) {
+        try {
+            // 이미 getWorkspaceMembers 메서드가 있으므로 활용
+            List<WorkspaceMember> allMembers = getWorkspaceMembers(workspaceCd);
+
+            // 활성 상태(userState가 null이 아닌) 멤버만 필터링 getUserState() != null
+            return allMembers.stream()
+                    .filter(member ->"Y". equals(member.getActiveState()))
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("활성 멤버 조회 실패: workspaceCd={}", workspaceCd, e);
+            return new ArrayList<>();
+        }
+    }
+
 }
